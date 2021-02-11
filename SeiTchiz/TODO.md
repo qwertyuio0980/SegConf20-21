@@ -1,6 +1,10 @@
 Trabalho todo
 
 
+Dúvidas: Argumentos Cliente????
+         Argumentos Server????
+
+
 Autenticação-
 
 SeiTchizServer 45678 - Port para aceitar clients.

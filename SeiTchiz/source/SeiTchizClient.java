@@ -13,11 +13,16 @@ import java.net.Socket;
 import javax.print.event.PrintEvent;
 
 public class SeiTchizClient {
+
+    //POR VER
+    public String sAdress = "45678";
+
     public static void main(String[] args) {
         System.out.println("cliente: main");
 
         //-- Iniciar cliente 
-
+        
+    
         // Conectar com servidor 
         conectarServidor(args[1]);
 
@@ -30,7 +35,7 @@ public class SeiTchizClient {
         
         //--
 
-        
+
 
 
         // Criar Socket do cliente e conectar com o servidor
