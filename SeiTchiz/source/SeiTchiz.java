@@ -12,30 +12,53 @@ import java.net.Socket;
 
 import javax.print.event.PrintEvent;
 
-public class SeiTchizClient {
-
-    //POR VER
-    public String sAdress = "45678";
+public class SeiTchiz {
 
     public static void main(String[] args) {
-        System.out.println("cliente: main");
+        System.out.println("cliente iniciado");
 
-        //-- Iniciar cliente 
-        
-    
-        // Conectar com servidor 
-        conectarServidor(args[1]);
-
-        // Verificar se o password foi passado e fazer login
-        if(args.length = 3) {
-            login(args[2], null);
-        } else {
-            login(args[2], args[3]);
+        //numero de argumentos errado
+        if(args.length > 4 || args.length < 2) {
+            System.out.println("Numero de argumentos dado errado. Usar SeiTchiz <hostname ou IP:Porto> <clientID> [password]" +
+            "\n Ou SeiTchiz <clientID> [password] \n Ou  SeiTchiz <hostname ou IP:Porto> <clientID> \n Ou SeiTchiz <clientID>");
+            System.exit(-1);
         }
+
+        //-- Iniciar cliente -- maybe temos de verificar se tem porto or not default 45678
+        if(conectarServidor(args[1]) == 1) {
+            System.out.println("Houve um erro a fazer ligação com o servidor SeiTchiz");
+            System.exit(-1);
+        }
+
+        //A partir deste momento a ligação com o servidor foi estabelecida
+
+        // Usuário não passou a passwrd
+        String passwrd = null;
+        if(args.length == 3) {
+            // Ler Input
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            System.out.println("Indique uma password (password nao deve conter espaços e ter no minimo um caracter):");
+            //TODO
+            while() {
+                try {
+                    passwrd = reader.readLine();
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                    System.exit(-1);
+                }
+
+            }            
+        } else {
+            passwrd = args[3];
+        }
+
+        // Tentar efetuar o login(COM PASSWORD DADA NOS ARGUMENTOS)
+        if(!login(args[2], passwrd)) {
+            System.out.println("Login não foi bem sucedido... \n A terminar o cliente agora");
+            System.exit(-1);
+        }
+
         
-        //--
-
-
 
 
         // Criar Socket do cliente e conectar com o servidor

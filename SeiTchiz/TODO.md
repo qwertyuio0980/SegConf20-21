@@ -7,9 +7,9 @@ Dúvidas: Argumentos Cliente????
 
 Autenticação-
 
-SeiTchizServer 45678 - Port para aceitar clients.
+SeiTchizServer 45678 - Port para aceitar clients. (CRIAR UM DEFAULT PARA PODERMOS TESTAR A CONEXÃO COM O CLIENTE).
 
-SeiTchiz <serverAddress> <clientID> [password] Faz o registo caso não exista ainda a conta e dá add no ficheiro, ou entao dá login.
+SeiTchiz <serverAddress> <clientID> [password] Faz o registo caso não exista ainda a conta e dá add no ficheiro, ou entao dá login. (CODIGO) (AINDA PARA TESTAR)
 
 Methods:
 
