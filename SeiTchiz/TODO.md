@@ -1,9 +1,4 @@
-Trabalho todo
-
-
-Dúvidas: Argumentos Cliente????
-         Argumentos Server????
-
+TODO
 
 Autenticação-
 

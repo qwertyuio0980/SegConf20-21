@@ -21,10 +21,14 @@ public class SeiTchizClientStub {
         } else if(ipPorto.length == 2) {
             return network.conectarServidor(ipPorto[0], ipPorto[1]);
         } else {
-            System.out.println("serverAddress não possui o formato <ip:porto> ou <hostname:porto> ou <ip> ou <hostname>")
+            System.out.println("serverAddress não possui o formato <ip:porto> ou <hostname:porto> ou <ip> ou <hostname>");
         }
         return -1;
     }
+
+    //faltam os metodos do enunciado
+
+}
 
     
 

@@ -15,7 +15,7 @@ import javax.print.event.PrintEvent;
 public class SeiTchiz {
 
     public static void main(String[] args) {
-        System.out.println("cliente iniciado");
+        System.out.println("---cliente iniciado---");
 
         //numero de argumentos errado
         if(args.length > 4 || args.length < 2) {
@@ -37,29 +37,28 @@ public class SeiTchiz {
         if(args.length == 3) {
             // Ler Input
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            System.out.println("Indique uma password (password nao deve conter espaços e ter no minimo um caracter):");
-            //TODO
-            while() {
+            System.out.println("Indique uma password :");
+            while(passwrd == null) {
                 try {
                     passwrd = reader.readLine();
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
                     System.exit(-1);
                 }
-
+                if(passwrd.contains(" ") || passwrd.equals("")){
+                    passwrd = null;
+                    System.out.println("Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter) \n Indique uma password:");
+                }
             }            
         } else {
             passwrd = args[3];
         }
 
-        // Tentar efetuar o login(COM PASSWORD DADA NOS ARGUMENTOS)
-        if(!login(args[2], passwrd)) {
+        // Tentar efetuar o login
+        if(login(args[2], passwrd)) {
             System.out.println("Login não foi bem sucedido... \n A terminar o cliente agora");
             System.exit(-1);
         }
-
-        
-
 
         // Criar Socket do cliente e conectar com o servidor
         Socket clientSocket = null;
