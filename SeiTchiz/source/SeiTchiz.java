@@ -14,30 +14,46 @@ import javax.print.event.PrintEvent;
 
 public class SeiTchiz {
 
+    private static Socket clientSocket;
+    private static String username;
+    private static String passwrd;
+    
+    /*               0         1      2
+    SeiThciz 127.0.0.1:24569 martim pass
+    SeiThciz 127.0.0.1 martim pass
+    SeiThciz 127.0.0.1:24569 martim
+    SeiThciz 127.0.0.1 martim
+    */
+
     public static void main(String[] args) {
         System.out.println("---cliente iniciado---");
 
+        int arglen = args.length;
+
         //numero de argumentos errado
-        if(args.length > 3 || args.length < 1) {
+        if(arglen > 3 || arglen <= 1) {
             System.out.println("Numero de argumentos dado errado. Usar SeiTchiz <hostname ou IP:Porto> <clientID> [password]" +
             "\n Ou SeiTchiz <clientID> [password] \n Ou  SeiTchiz <hostname ou IP:Porto> <clientID> \n Ou SeiTchiz <clientID>");
             System.exit(-1);
         }
 
-        //-- Iniciar cliente -- maybe temos de verificar se tem porto or not default 45678
-        if(conectarServidor(args[0]) == 1) {
+        //tratamento do ServerAdress
+        String[] ipPort = handlerIpPort(args[0]);
+        if(conectServer(ipPort) == -1) {
             System.out.println("Houve um erro a fazer ligação com o servidor SeiTchiz");
             System.exit(-1);
         }
-
-        System.out.println("A partir deste momento a ligação com o servidor foi estabelecida");
         
-        // Usuário não passou a passwrd
-        String passwrd = null;
-        if(args.length == 3) {
+        //guardar username
+        username = args[1];
+        
+        //casos 2 ou 3 argumentos passados
+        if(arglen == 2) {
+         // Usuario não passou a passwrd
+            
             // Ler Input
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            System.out.println("Indique uma password :");
+            System.out.println("Indique uma password: ");
             while(passwrd == null) {
                 try {
                     passwrd = reader.readLine();
@@ -48,15 +64,21 @@ public class SeiTchiz {
                 if(passwrd.contains(" ") || passwrd.equals("")){
                     passwrd = null;
                     System.out.println("Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter)" +
-                    " \n Indique uma password valida:");
+                    " \n Indique uma password valida: ");
                 }
             }            
         } else {
-            passwrd = args[3];
+            
+            // Usuario passou a passwrd
+            passwrd = args[2];
         }
 
+        System.out.println("A partir deste momento a ligação com o servidor foi estabelecida");
+        
+        //-- Iniciar cliente --
+        
         // Tentar efetuar o login
-        if(login(args[1], passwrd)) {
+        if(login(username, passwrd)) {
             System.out.println("Login não foi bem sucedido... \n A terminar o cliente agora");
             System.exit(-1);
         }
@@ -190,4 +212,59 @@ public class SeiTchiz {
         System.out.println("cliente:... ficheiro enviado ao servidor");
         
     }
+
+    /**
+     * Método que efetua o login do cliente na plataforma SeiTchiz, ou seja,
+     * envia ao servidor o seu id e password e este trata de verificar se o
+     * login foi feito com sucesso ou se aconteceu de anormal sem sucesso 
+     * 
+     * @param clientID
+     * @param passwd
+     * @return true se login for sucedido e false caso contrario
+     */
+    public boolean login(String username, String passwd) {
+        //TODO
+    }
+
+    /**
+     * Conectar com o servidor com o ip passado e pelo porto 45678
+     * 
+     * @param ip String representando o ip do servidor
+     * @param port int representando o porto pelo qual se dará a conexão 
+     * @return 0 caso a conexão seja bem sucedida, -1 caso contrário
+     * @requires ip != null
+     */
+    public static int conectServer(String[] ipPort) {
+        try {
+            clientSocket = new Socket(ipPort[0], Integer.parseInt(ipPort[1]));
+            return 0;
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+        }
+        return -1;
+    }
+
+
+    /**
+     * TODO
+     * 
+     * @param ipPort
+     * @return
+     */
+    public static String[] handlerIpPort(String ipPort) {
+        String[] separado = new String[2];
+        if(ipPort.contains(":")) {
+            //caso ip:port
+            
+            separado = ipPort.split(":");
+        } else {
+            //caso localhost
+            
+            separado[0] = ipPort;
+            separado[1] = "45678";
+        }
+        return separado;
+    }
+
 }

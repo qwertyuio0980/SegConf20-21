@@ -20,17 +20,21 @@ public class SeiTchizServer {
 		System.out.println("---servidor iniciado---");
 
 		//numero/formato de argumentos errado
-        if(args.length != 1) {
-            System.out.println("Numero dos argumentos passados errado. Usar SeiTchizServer <port>");
+        if(args.length > 1) {
+            System.out.println("Numero dos argumentos passados errado. Usar SeiTchizServer <port> ou apenas SeiTchizServer e port por default sera 45678");
             System.exit(-1);
         }
-        try {
-            port = Integer.parseInt(args[0]);
-        } catch(NumberFormatException e) {  
-            System.out.println("Formato dos argumentos passados errado. Usar SeiTchizServer <port>");
-            System.exit(-1);
-        }
-
+		if(args.length == 0) {
+			port = 45678;
+		} else {
+			try {
+				port = Integer.parseInt(args[0]);
+			} catch(NumberFormatException e) {  
+				System.out.println("Formato dos argumentos passados errado. Usar SeiTchizServer <port>");
+				System.exit(-1);
+			}
+		}
+        
 		//criacao do folder de files e os files vazios por default
 		try {
 		    
@@ -69,7 +73,6 @@ public class SeiTchizServer {
 		    catch (IOException e) {
 		        e.printStackTrace();
 		    }
-		    
 		}
 
         //por enquanto isto e dead code
@@ -84,7 +87,7 @@ public class SeiTchizServer {
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
-			System.out.println("nova thread criada novo cada cliente");
+			System.out.println("nova thread criada para novo cliente");
 		}
  
 		public void run(){
@@ -103,15 +106,22 @@ public class SeiTchizServer {
 					e1.printStackTrace();
 				}
  			
-				//alterar codigo a partir daqui
 				//autenticacao
-				if(isAuthenticated(user, passwd) != 0) {
+				if(isAuthenticated(user, passwd) == -1) {
 				    outStream.writeObject("password errada");
-				    System.out.println("Login do utilizador nao ocorreu. Par Id/Password errados");
+				    System.out.println("SignIn do utilizador nao ocorreu. Id/Password errados");
+				} else if(isAuthenticated(user, passwd) == 0) {
+				    outStream.writeObject("password certa");
+                    System.out.println("SignIn do utilizador ocorreu. Id/Password certos");
+				} else {
+				    outStream.writeObject("nova conta autenticada");
+                    System.out.println("SignUp do utilizador ocorreu pela primeira vez.");
 				}
 				
+				//---------------------------------------------------------------------------------------------------------
 				
-				//----------------------------------------
+				//alterar codigo a partir daqui
+				
 				if(user.length() != 0){
 					outStream.writeObject(Boolean.valueOf(true));
 				}
