@@ -2,7 +2,7 @@ public class SeiTchizNetworkClient {
 
     private Socket clientSocket;
 
-    private int port = 45678;
+    private int defaultPort = 45678;
     
     public SeiTchizNetworkClient();
 
@@ -14,7 +14,7 @@ public class SeiTchizNetworkClient {
      */
     public int conectarServidor(String ip) {
         try {
-            clientSocket = new Socket(ip, this.port);
+            clientSocket = new Socket(ip, defaultPort);
             return 0;
         } catch (IOException e) {
             System.err.println(e.getMessage());

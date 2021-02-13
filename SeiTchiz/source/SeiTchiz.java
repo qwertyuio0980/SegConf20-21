@@ -18,20 +18,20 @@ public class SeiTchiz {
         System.out.println("---cliente iniciado---");
 
         //numero de argumentos errado
-        if(args.length > 4 || args.length < 2) {
+        if(args.length > 3 || args.length < 1) {
             System.out.println("Numero de argumentos dado errado. Usar SeiTchiz <hostname ou IP:Porto> <clientID> [password]" +
             "\n Ou SeiTchiz <clientID> [password] \n Ou  SeiTchiz <hostname ou IP:Porto> <clientID> \n Ou SeiTchiz <clientID>");
             System.exit(-1);
         }
 
         //-- Iniciar cliente -- maybe temos de verificar se tem porto or not default 45678
-        if(conectarServidor(args[1]) == 1) {
+        if(conectarServidor(args[0]) == 1) {
             System.out.println("Houve um erro a fazer ligação com o servidor SeiTchiz");
             System.exit(-1);
         }
 
-        //A partir deste momento a ligação com o servidor foi estabelecida
-
+        System.out.println("A partir deste momento a ligação com o servidor foi estabelecida");
+        
         // Usuário não passou a passwrd
         String passwrd = null;
         if(args.length == 3) {
@@ -47,7 +47,8 @@ public class SeiTchiz {
                 }
                 if(passwrd.contains(" ") || passwrd.equals("")){
                     passwrd = null;
-                    System.out.println("Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter) \n Indique uma password:");
+                    System.out.println("Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter)" +
+                    " \n Indique uma password valida:");
                 }
             }            
         } else {
@@ -55,7 +56,7 @@ public class SeiTchiz {
         }
 
         // Tentar efetuar o login
-        if(login(args[2], passwrd)) {
+        if(login(args[1], passwrd)) {
             System.out.println("Login não foi bem sucedido... \n A terminar o cliente agora");
             System.exit(-1);
         }
