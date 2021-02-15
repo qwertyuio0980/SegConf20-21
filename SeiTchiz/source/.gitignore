@@ -3,3 +3,5 @@
 /SeiTchizNetworkClient.class
 /SeiTchizServer$ServerThread.class
 /SeiTchizServer.class
+/ClientNetwork.class
+/ClientStub.class

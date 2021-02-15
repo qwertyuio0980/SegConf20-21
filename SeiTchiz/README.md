@@ -7,4 +7,4 @@ David Rodrigues
 
 ----------------------
 Limitações da Fase 1
-Username e passwords passados como argumento em SeiTchiz não devem conter espaços
+Username e passwords passados como argumento em SeiTchiz não devem conter espaços nem dois pontos (:).
