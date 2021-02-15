@@ -12,7 +12,6 @@ public class SeiTchiz {
 
         // numero de argumentos errado
         if (arglen > 3 || arglen < 2) {
-
             // TODO: O ip e username sempre vão ser passados, password é opcional e o
             // sistema vai pedir ao utilizador que introduza uma na linha de comando
             System.out.println(

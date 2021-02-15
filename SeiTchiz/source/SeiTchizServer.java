@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
@@ -203,11 +202,18 @@ public class SeiTchizServer{
 				e.printStackTrace();
 			}
 		}
-
 	}
 }
 
-	// import java.io.File;
+
+// import java.io.IOException;
+// import java.io.ObjectInputStream;
+// import java.io.ObjectOutputStream;
+// import java.io.Writer;
+// import java.net.ServerSocket;
+// import java.net.Socket;
+// import java.io.BufferedWriter;
+// import java.io.File;
 // import java.io.FileNotFoundException;
 // import java.io.FileWriter;
 // import java.util.Scanner;
@@ -230,6 +236,32 @@ public class SeiTchizServer{
 
 	
 
+// 		int port = 45678;
+
+// 		if(args.length == 2) {
+// 			try {
+// 				port = Integer.parseInt(args[1]);
+// 			} catch(NumberFormatException e) {  
+// 				System.out.println("Formato dos argumentos passados errado. O porto deve ser um inteiro");
+// 				System.exit(-1);
+// 			}
+// 		}
+        
+// 		//criacao do folder de files e os files vazios por default
+// 		// try {
+		    
+// 		// 	folderFile = new File("files");
+// 		// 	folderFile.mkdir();
+// 		// 	userpassFile = new File("files/userpassFile.txt");
+// 		// 	userpassFile.createNewFile();
+			
+// 		// 	System.out.println("ficheiros de esqueleto do servidor criados no novo diretorio \"files\"");
+// 		// } catch(IOException e) {
+// 		// 	System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
+//         //     System.exit(-1);
+// 		// }
+		
+		
 // 		int port = 45678;
 
 // 		if(args.length == 2) {
