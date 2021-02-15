@@ -33,6 +33,8 @@ public class SeiTchiz {
 
         //ciclo principal do cliente
         while(!stop) {
+            
+            //abstrair noutra classe??
             //mostrar menu com opcoes
             System.out.println("Que opção pretende executar? \n" +
             "f ou follow <userID> \n" +
