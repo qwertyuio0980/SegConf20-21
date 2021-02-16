@@ -1,14 +1,13 @@
 TODO
 
-------------------------------------------------------------------------------------------------------------------------------------------------------
-NOTA
-Sera que temos de manter +1 ficheiro de variaveis de servidor que guarda variaveis importantes?
-ex: o "usernumber" ao fechar o server e reabrir o server o ficheiro de users mantem-se como esta e o proximo user a 
-fazer signup ia acabar por ter usernumber = 1 porque o servidor nao manteu o valor da variavel da ultima vez que estava 
-ligado o que gera problemas mais tarde com as operacoes do server
-------------------------------------------------------------------------------------------------------------------------------------------------------
+Autenticação-
+
+SeiTchizServer 45678 - Port para aceitar clients. (CRIAR UM DEFAULT PARA PODERMOS TESTAR A CONEXÃO COM O CLIENTE).
+
+SeiTchiz <serverAddress> <clientID> [password] Faz o registo caso não exista ainda a conta e dá add no ficheiro, ou entao dá login. (CODIGO) (AINDA PARA TESTAR)
 
 Methods:
+
 
 follow <userID> –
 
