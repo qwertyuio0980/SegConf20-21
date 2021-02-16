@@ -30,6 +30,7 @@ public class SeiTchiz {
         
         boolean stop = false;
 
+        
         //ciclo principal do cliente
         while(!stop) {
             
@@ -64,9 +65,9 @@ public class SeiTchiz {
                 System.exit(-1);
             }
             
-            
             switch(option[0]) {
                 case "f": case "follow":
+
 
                     break;
                 case "u": case "unfollow":
@@ -106,7 +107,7 @@ public class SeiTchiz {
 
                     break;
                 case "s": case "stop":
-
+                    //caso extra para fechar a aplicacao por conta propria do cliente
                     stop = true;
                     break;
                 default:

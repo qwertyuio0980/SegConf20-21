@@ -8,14 +8,18 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
 import java.io.FileWriter;
-
-
+import java.io.Writer;
 
 public class SeiTchizServer{
 
     public int port;
-	public File folderFile;
+
+	public File filesFolder;
+	public File serverStuffFolder;
+	public File userStuffFolder;
+
 	public File userpassFile;
+
 	private int usernumber;
 
 	public static void main(String[] args) {
@@ -42,17 +46,24 @@ public class SeiTchizServer{
 			System.exit(-1);
 		}
 
-		// criacao do folder de files e os files vazios por default
+		// criacao dos folders e files vazios por default
 		try {
 
-			folderFile = new File("../files");
-			folderFile.mkdir();
-			userpassFile = new File("../files/userpassFile.txt");
+			filesFolder = new File("../files");
+			filesFolder.mkdir();
+
+			serverStuffFolder = new File("../files/serverStuff");
+			serverStuffFolder.mkdir();
+
+			userStuffFolder = new File("../files/userStuff");
+			userStuffFolder.mkdir();
+
+			userpassFile = new File("../files/serverStuff/userpassFile.txt");
 			userpassFile.createNewFile();
 			
-			System.out.println("ficheiros de esqueleto do servidor criados no novo diretório \"files\"");
+			System.out.println("Folders e ficheiros de esqueleto criados");
 		} catch(IOException e) {
-			System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
+			System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
 			System.exit(-1);
 		}
          
@@ -111,21 +122,49 @@ public class SeiTchizServer{
 	}
 
 	/**
-	 * Metodo que adiciona um par user password á lista do servidor
+	 * Metodo que adiciona um par user password á lista de users
+	 * nos ficheiros do servidor e cria os ficheiros base para um cliente novo
 	 * 
 	 * @param user
 	 * @param passwd
 	 * @return 0 se coloca com sucesso -1 caso contrario
 	 */
 	public int addUserPasswd(String user, String passwd) {
-		try (Writer output = new BufferedWriter(new FileWriter("../files/userpassFile.txt", true))){               
-			output.append(this.usernumber + ":" +user + ":" + passwd + "\n");
+		try (Writer output = new BufferedWriter(new FileWriter("../files/serverStuff/userpassFile.txt", true))) {
+			
+			//adiciona userID:usernumber:password a userpassFile.txt
+			output.append(this.usernumber + ":" + user + ":" + passwd + "\n");
+
+			//adiciona folder de ficheiros para o novo user especifico
+			if(createDefaultUserFolder(usernumber) == -1) {
+				return -1;
+			}
+
+
 			this.usernumber++;
 			return 0;
 		} catch (IOException e) {
 			System.out.println("nao foi possivel autenticar este user");
 			e.printStackTrace();
 		}
+		return -1;
+	}
+
+	/**
+	 * Metodo que cria o folder para o user dado e os ficheiros base associados ao mesmo
+	 * 
+	 * @param user
+	 * @return 0 se tudo foi criado com sucesso, -1 caso contrario
+	 */
+	private int createDefaultUserFolder(int usernum) {
+		//criar folder <userUSERNUM> em ../files/userStuff
+		File userFolder = new File("../files/userStuff/user" + usernum);
+		userFolder.mkdir();
+
+		//criar os ficheiros e sub-folders de base
+		
+		//USERID E CLIENTID???QUAL E O IDENTIFICADOR PARA O SERVIDOR?
+
 		return -1;
 	}
 
@@ -139,7 +178,7 @@ public class SeiTchizServer{
 			System.out.println("thread do server para cada cliente");
 		}
  
-		public void run(){
+		public void run() {
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
