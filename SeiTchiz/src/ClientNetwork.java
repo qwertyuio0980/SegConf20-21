@@ -12,19 +12,15 @@ public class ClientNetwork {
     public ClientNetwork() {
         // Criar Streams de leitura e escrita
         this.in = null;
-        try {
-            in = new ObjectInputStream(clientSocket.getInputStream());
-        } catch (IOException e1) {
-            System.err.println(e1.getMessage());
-            System.exit(-1);
-        }
         this.out = null;
         try {
+            in = new ObjectInputStream(clientSocket.getInputStream());
             out = new ObjectOutputStream(clientSocket.getOutputStream());
         } catch (IOException e1) {
             System.err.println(e1.getMessage());
             System.exit(-1);
         }
+   
     }
 
     /**
@@ -62,7 +58,7 @@ public class ClientNetwork {
             System.err.println(e.getMessage());
             System.exit(-1);
         }
-        System.out.println("cliente:... enviou user e passwd para o servidor.");
+        System.out.println("UserID e password enviados para o servidor.");
 
         // Receber resposta do servidor
         Boolean fromServer = null;
@@ -77,9 +73,6 @@ public class ClientNetwork {
         }
         System.out.println("cliente:... resposta recebida = " + Boolean.toString(fromServer));
 
-
 	}
 
-
-    
 }

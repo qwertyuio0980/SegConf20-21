@@ -4,19 +4,17 @@ import java.io.InputStreamReader;
 
 public class SeiTchiz {
 
-
     public static void main(String[] args) {
-        System.out.println("---cliente iniciado---");
-
-        int arglen = args.length;
+       
+    	int arglen = args.length;
 
         // numero de argumentos errado
         if (arglen > 3 || arglen < 2) {
             // TODO: O ip e username sempre vão ser passados, password é opcional e o
             // sistema vai pedir ao utilizador que introduza uma na linha de comando
             System.out.println(
-                    "Numero de argumentos dado errado. Usar SeiTchiz <hostname ou IP:Porto> <clientID> [password]"
-                            + "\n Ou SeiTchiz <clientID> [password] \n Ou  SeiTchiz <hostname ou IP:Porto> <clientID> \n Ou SeiTchiz <clientID>");
+                    "Numero de argumentos dado errado. Usar SeiTchiz <IP:45678> <clientID> [password]"
+                    + "\n Ou SeiTchiz <IP> <clientID> [password] \n Ou  SeiTchiz <IP:45678> <clientID> \n Ou SeiTchiz <IP> <clientID>");
             System.exit(-1);
         }
 
@@ -27,6 +25,9 @@ public class SeiTchiz {
         } else if(arglen == 2) {
             cs.login(args[1]);
         }
+        
+        System.out.println("---Sessao cliente iniciada---");
+        
         
         boolean stop = false;
 
@@ -67,7 +68,8 @@ public class SeiTchiz {
             
             switch(option[0]) {
                 case "f": case "follow":
-
+                    //cs.follow
+                    
                     break;
                 case "u": case "unfollow":
 
@@ -106,7 +108,8 @@ public class SeiTchiz {
 
                     break;
                 case "s": case "stop":
-
+                    
+                    System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");
                     stop = true;
                     break;
                 default:
@@ -115,5 +118,7 @@ public class SeiTchiz {
                     break;
             }
         }
+        
+        System.out.println("---Sessao cliente terminada---");
     }
 }
