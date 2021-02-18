@@ -8,32 +8,32 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
 import java.io.FileWriter;
+import java.io.Writer;
 
+public class SeiTchizServer {
 
-
-public class SeiTchizServer{
-
-    public int port;
-	public File folderFile;
-	public File userpassFile;
-	private int usernumber;
+    //martim mudado 17.2
+	public int port;
+	
+	public File filesFolder; //
+	public File serverStuffFolder;
+	public File userStuffFolder;	
+	public File usersFile; //database de usersID:name:pwd
 
 	public static void main(String[] args) {
-		System.out.println("servidor: main");
+		System.out.println("---servidor iniciado---");
 		SeiTchizServer server = new SeiTchizServer();
-		if(args.length == 1) {
+		if (args.length == 1 && args[0].contentEquals("45678")) {
 			server.startServer(args[0]);
 		} else {
-			System.out.println("número de argumentos inválido");
+			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\"");
 		}
-		
+
 	}
 
-	public void startServer (String port){
+	public void startServer(String port) {
 
 		ServerSocket sSoc = null;
-
-		this.usernumber = 0;
 
 		try {
 			sSoc = new ServerSocket(Integer.parseInt(port));
@@ -42,85 +42,98 @@ public class SeiTchizServer{
 			System.exit(-1);
 		}
 
-		// criacao do folder de files e os files vazios por default
+		// criacao dos folders e files vazios por default
 		try {
-
-			folderFile = new File("../files");
-			folderFile.mkdir();
-			userpassFile = new File("../files/userpassFile.txt");
-			userpassFile.createNewFile();
 			
-			System.out.println("ficheiros de esqueleto do servidor criados no novo diretório \"files\"");
-		} catch(IOException e) {
-			System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
+			filesFolder = new File("../files");
+            filesFolder.mkdir();
+
+            serverStuffFolder = new File("../files/serverStuff");
+            serverStuffFolder.mkdir();
+
+            userStuffFolder = new File("../files/userStuff");
+            userStuffFolder.mkdir();
+
+            usersFile = new File("../files/serverStuff/users.txt");
+            usersFile.createNewFile();
+
+			System.out.println("ficheiros de esqueleto do servidor criados");
+		} catch (IOException e) {
+		    System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
 			System.exit(-1);
 		}
-         
-		while(true) {
+
+		while (true) {
 			try {
 				Socket inSoc = sSoc.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
-		    }
-		    catch (IOException e) {
-		        e.printStackTrace();
-		    }
-		    
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
 		}
-		
-		//sSoc.close();
+
+		// sSoc.close();
 	}
 
 	/**
-	 * Metodo que verifica se um par user/passwd ja estao na lista de ficheiros
-	 * do servidor
+	 * Metodo que verifica se um par user/passwd ja estao na lista de ficheiros do
+	 * servidor
 	 * 
 	 * @return -1 se o par nao corresponde ao que esta no ficheiro do servidor ou
-	 * houve algum erro que impossibilitou a autenticacao
-	 * 0 se autenticacao foi bem sucedida e 1 se "conta" nao existia antes e foi
-	 * agora criada e autenticada
+	 *         houve algum erro que impossibilitou a autenticacao 0 se autenticacao
+	 *         foi bem sucedida e 1 se "conta" nao existia antes e foi agora criada
+	 *         e autenticada
 	 */
-	public int isAuthenticated(String user, String passwd) {
+	public int isAuthenticated(String clientID, String passwd) {
 		String line;
 		String[] currentUserPasswd;
-		try(Scanner scanner = new Scanner(userpassFile)) {
-			while(scanner.hasNextLine()) {
+		try (Scanner scanner = new Scanner(usersFile)) {
+			while (scanner.hasNextLine()) {
 				line = scanner.nextLine();
 				currentUserPasswd = line.split(":");
-				if(user.equals(currentUserPasswd[0])) {
-					//o usuario ja existe na lista de users
-					if(passwd.equals(currentUserPasswd[1])) {
-						//o par user/passwd checks out
+				if (clientID.equals(currentUserPasswd[0])) {
+					// o usuario ja existe na lista de users
+					if (passwd.equals(currentUserPasswd[2])) {
+						// o par user/passwd checks out
 						return 0;
 					}
 					return -1;
 				}
 			}
-			//toda a lista foi percorrida e o user nao foi encontrado
-			//entao na linha seguinte adiciona-se este user/pass e
-			//autentica-se o user
-			if(addUserPasswd(user,passwd) == 0) {
-				return 1;
-			}
+			
 		} catch (FileNotFoundException e) {
 			System.out.println("lista de users/passwords nao existe");
 			e.printStackTrace();
 		}
-
-		return -1;
+		
+		// toda a lista foi percorrida e o user nao foi encontrado
+		// por isso trata-se de um novo user
+		return 1;
 	}
 
 	/**
 	 * Metodo que adiciona um par user password á lista do servidor
 	 * 
-	 * @param user
+	 * @param clientID
+	 * @param userName
 	 * @param passwd
 	 * @return 0 se coloca com sucesso -1 caso contrario
 	 */
-	public int addUserPasswd(String user, String passwd) {
-		try (Writer output = new BufferedWriter(new FileWriter("../files/userpassFile.txt", true))){               
-			output.append(this.usernumber + ":" +user + ":" + passwd + "\n");
-			this.usernumber++;
+	public int addUserPasswd(String clientID, String userName, String passwd) {
+
+		try  {
+			Writer output = new BufferedWriter(new FileWriter("../files/serverStuff/users.txt", true));
+			output.append(clientID + ":" + userName + ":" + passwd + "\n");
+			
+			File userPage = new File("../files/userStuff/" + clientID);
+            userPage.mkdir();
+			Writer userFollowers = new BufferedWriter(new FileWriter("../files/userStuff/"+clientID+ "/followers.txt", true));
+			Writer userFollowing = new BufferedWriter(new FileWriter("../files/userStuff/"+clientID+ "/following.txt", true));						
+
+
+			System.out.println("Dados do utilizador adicionados a base de dados");
 			return 0;
 		} catch (IOException e) {
 			System.out.println("nao foi possivel autenticar este user");
@@ -129,7 +142,7 @@ public class SeiTchizServer{
 		return -1;
 	}
 
-	//Threads utilizadas para comunicacao com os clientes
+	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 
 		private Socket socket = null;
@@ -138,41 +151,53 @@ public class SeiTchizServer{
 			socket = inSoc;
 			System.out.println("thread do server para cada cliente");
 		}
- 
-		public void run(){
+
+		public void run() {
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				String user = null;
+				String userID = null;
 				String passwd = null;
-			
+
 				try {
-					user = (String) inStream.readObject();
+				    userID = (String) inStream.readObject();
 					passwd = (String) inStream.readObject();
-					System.out.println("thread:... depois de receber a password e o user");
-				}catch (ClassNotFoundException e1) {
+
+					System.out.println("UserID e password recebidos");
+
+					// autenticacao
+					int isAuth = isAuthenticated(userID, passwd);
+					if (isAuth == -1) {
+						outStream.writeObject(-1);
+						System.out.println("SignIn do utilizador nao ocorreu. UserID/Password errados");
+					} else if (isAuth == 0) {
+						outStream.writeObject(0);
+						System.out.println("SignIn do utilizador ocorreu. UserID/Password certos");
+					} else {
+						outStream.writeObject(1);
+						System.out.println("SignUp do utilizador ocorreu pela primeira vez." + 
+						" A espera do nome do utilizador para finalizar o SignUp");
+						String userName = (String) inStream.readObject();	
+						addUserPasswd(userID, userName, passwd);	
+
+					}
+
+				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
 				}
- 			
-				//autenticacao
-				if(isAuthenticated(user, passwd) == -1) {
-				    outStream.writeObject(-1);
-				    System.out.println("SignIn do utilizador nao ocorreu. Id/Password errados");
-				} else if(isAuthenticated(user, passwd) == 0) {
-				    outStream.writeObject(0);
-                    System.out.println("SignIn do utilizador ocorreu. Id/Password certos");
-				} else {
-				    outStream.writeObject(1);
-                    System.out.println("SignUp do utilizador ocorreu pela primeira vez.");
-				}
+				
+				// executar a operacao pedida pelo cliente
 
+				
+				
+				
 				/// Receber ficheiro do cliente
 				// int fileSize = 0;
 				// try {
-				// 	fileSize = (Integer)inStream.readObject();
+				// fileSize = (Integer)inStream.readObject();
 				// } catch (Exception e) {
-				// 	e.printStackTrace();
+				// e.printStackTrace();
 				// }
 
 				// System.out.println(Integer.toString(fileSize));
@@ -181,21 +206,20 @@ public class SeiTchizServer{
 				// int bytesTotal = 0;
 				// int bytesRead = 0;
 				// try {
-				// 	while(bytesTotal != fileSize) {
-				// 		bytesRead = inStream.read(buffer, bytesTotal, buffer.length);
-				// 		bytesTotal += bytesRead;
-				// 	}
+				// while(bytesTotal != fileSize) {
+				// bytesRead = inStream.read(buffer, bytesTotal, buffer.length);
+				// bytesTotal += bytesRead;
+				// }
 				// } catch (Exception e) {
-				// 	e.printStackTrace();
+				// e.printStackTrace();
 				// }
 
 				// if(bytesTotal != 0) {
-				// 	System.out.println("servidor:... ficheiro recebido com sucesso");
+				// System.out.println("servidor:... ficheiro recebido com sucesso");
 				// }
 
 				outStream.close();
 				inStream.close();
- 			
 				socket.close();
 
 			} catch (IOException e) {
@@ -204,7 +228,6 @@ public class SeiTchizServer{
 		}
 	}
 }
-
 
 // import java.io.IOException;
 // import java.io.ObjectInputStream;
@@ -223,7 +246,7 @@ public class SeiTchizServer{
 //  // public static int port;
 // 	public int port;
 // 	public static File folderFile;
-// 	public static File userpassFile;
+// 	public static File users;
 
 // 	public static void main(String[] args) {
 // 		System.out.println("---servidor iniciado---");
@@ -234,7 +257,30 @@ public class SeiTchizServer{
 //             System.exit(-1);
 //         }
 
-	
+// 		int port = 45678;
+
+// 		if(args.length == 2) {
+// 			try {
+// 				port = Integer.parseInt(args[1]);
+// 			} catch(NumberFormatException e) {  
+// 				System.out.println("Formato dos argumentos passados errado. O porto deve ser um inteiro");
+// 				System.exit(-1);
+// 			}
+// 		}
+
+// 		//criacao do folder de files e os files vazios por default
+// 		// try {
+
+// 		// 	folderFile = new File("files");
+// 		// 	folderFile.mkdir();
+// 		// 	users = new File("files/users.txt");
+// 		// 	users.createNewFile();
+
+// 		// 	System.out.println("ficheiros de esqueleto do servidor criados no novo diretorio \"files\"");
+// 		// } catch(IOException e) {
+// 		// 	System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
+//         //     System.exit(-1);
+// 		// }
 
 // 		int port = 45678;
 
@@ -246,54 +292,28 @@ public class SeiTchizServer{
 // 				System.exit(-1);
 // 			}
 // 		}
-        
-// 		//criacao do folder de files e os files vazios por default
-// 		// try {
-		    
-// 		// 	folderFile = new File("files");
-// 		// 	folderFile.mkdir();
-// 		// 	userpassFile = new File("files/userpassFile.txt");
-// 		// 	userpassFile.createNewFile();
-			
-// 		// 	System.out.println("ficheiros de esqueleto do servidor criados no novo diretorio \"files\"");
-// 		// } catch(IOException e) {
-// 		// 	System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
-//         //     System.exit(-1);
-// 		// }
-		
-		
-// 		int port = 45678;
 
-// 		if(args.length == 2) {
-// 			try {
-// 				port = Integer.parseInt(args[1]);
-// 			} catch(NumberFormatException e) {  
-// 				System.out.println("Formato dos argumentos passados errado. O porto deve ser um inteiro");
-// 				System.exit(-1);
-// 			}
-// 		}
-        
 // 		//criacao do folder de files e os files vazios por default
 // 		// try {
-		    
+
 // 		// 	folderFile = new File("files");
 // 		// 	folderFile.mkdir();
-// 		// 	userpassFile = new File("files/userpassFile.txt");
-// 		// 	userpassFile.createNewFile();
-			
+// 		// 	users = new File("files/users.txt");
+// 		// 	users.createNewFile();
+
 // 		// 	System.out.println("ficheiros de esqueleto do servidor criados no novo diretorio \"files\"");
 // 		// } catch(IOException e) {
 // 		// 	System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
 //         //     System.exit(-1);
 // 		// }
-		
+
 // 		SeiTchizServer server = new SeiTchizServer();
 // 		server.startServer(port);
 // 	}
 
 // 	public void startServer(int port) {
 // 		ServerSocket sSoc = null;
-        
+
 // 		try {
 // 			sSoc = new ServerSocket(port);
 // 		} catch (IOException e) {
@@ -302,7 +322,7 @@ public class SeiTchizServer{
 // 		}
 
 // 		System.out.println("Socket criada e a espera de pedidos de conexão");
-        
+
 // 		//pode ser usada uma flag para se poder fechar o servidor
 // 		while(true) {
 // 			try {
@@ -320,7 +340,6 @@ public class SeiTchizServer{
 // 		//sSoc.close();
 // 	}
 
-
 // 	//Threads utilizadas para comunicacao com os clientes
 // 	class ServerThread extends Thread {
 
@@ -330,7 +349,7 @@ public class SeiTchizServer{
 // 			socket = inSoc;
 // 			System.out.println("Thread servidor conectada com novo cliente");
 // 		}
- 
+
 // 		public void run(){
 // 			try {
 // 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -338,7 +357,7 @@ public class SeiTchizServer{
 
 // 				String user = null;
 // 				String passwd = null;
-			
+
 // 				try {
 // 					user = (String) inStream.readObject();
 // 					passwd = (String) inStream.readObject();
@@ -346,7 +365,7 @@ public class SeiTchizServer{
 // 				} catch (ClassNotFoundException e1) {
 // 					e1.printStackTrace();
 // 				}
- 			
+
 // 				//autenticacao
 // 				// if(isAuthenticated(user, passwd) == -1) {
 // 				//     outStream.writeObject("password errada");
@@ -358,11 +377,11 @@ public class SeiTchizServer{
 // 				//     outStream.writeObject("nova conta autenticada");
 //                 //     System.out.println("SignUp do utilizador ocorreu pela primeira vez.");
 // 				// }
-				
+
 // 				//---------------------------------------------------------------------------------------------------------
-				
+
 // 				//alterar codigo a partir daqui
-				
+
 // 		// 		if(user.length() != 0){
 // 		// 			outStream.writeObject(Boolean.valueOf(true));
 // 		// 		}
@@ -399,7 +418,7 @@ public class SeiTchizServer{
 // 				outStream.close();
 // 				inStream.close();
 // 				socket.close();
-		
+
 // 			} catch (IOException e) {
 // 				e.printStackTrace();
 // 			}
@@ -417,7 +436,7 @@ public class SeiTchizServer{
 // 		// public int isAuthenticated(String user, String passwd) {
 // 		//     String line;
 //         //     String[] currentUserPasswd;
-// 		//     try(Scanner scanner = new Scanner(userpassFile)) {
+// 		//     try(Scanner scanner = new Scanner(users)) {
 //         //         while(scanner.hasNextLine()) {
 //         //             line = scanner.nextLine();
 //         //             currentUserPasswd = line.split(" ");
@@ -452,7 +471,7 @@ public class SeiTchizServer{
 // 		//  * @return 0 se coloca com sucesso -1 caso contrario
 // 		//  */
 // 		// public int addUserPasswd(String user, String passwd) {
-// 		//     try (Writer output = new BufferedWriter(new FileWriter("../files/userpassFile.txt", true))){               
+// 		//     try (Writer output = new BufferedWriter(new FileWriter("../files/users.txt", true))){               
 //         //         output.append(user + " " + passwd);
 //         //         return 0;
 //         //     } catch (IOException e) {
@@ -461,6 +480,6 @@ public class SeiTchizServer{
 //         //     }
 // 		//     return -1;
 // 		// }
-		
+
 // 	}
 // }
