@@ -54,21 +54,29 @@ public class SeiTchiz {
 
             BufferedReader reader;
             String input;
-            String[] option = new String[3];//tamanho maximo possivel
+            String[] option;//pode dar erro porque isto nao foi inicializado mas se for depois como se verifica se o user meteu os argumentos bem ou nao
+            int resultado;
             
             try {
                 reader = new BufferedReader(new InputStreamReader(System.in)); 
                 input = reader.readLine();
+                
                 option = input.split(" ");
             } catch(IOException e) {
                 System.err.println(e.getMessage());
                 System.exit(-1);
             }
             
-            
             switch(option[0]) {
                 case "f": case "follow":
-                    //cs.follow
+                    if(option.length != 2) {
+                        System.out.println("Opcao \"follow\" recebe argumento userID que nao pode ter espacos. Tente novamente");       
+                        break;
+                    }
+                    
+                    resultado = cs.follow(option[1]);
+                    //tratar resto do resultado
+                    
                     
                     break;
                 case "u": case "unfollow":
@@ -108,7 +116,8 @@ public class SeiTchiz {
 
                     break;
                 case "s": case "stop":
-                    
+                     
+
                     System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");
                     stop = true;
                     break;

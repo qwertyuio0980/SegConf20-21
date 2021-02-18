@@ -172,6 +172,40 @@ public class ClientStub {
         }
 
 	}
+
+	/**
+	 * Verifica se o clientID existe no users.txt
+     * adiciona o clientID à lista de following do userCorrente
+     * adiciona o userCorrente à lista de followers do clientID
+     * 
+	 * @param userID
+	 * @return devolve 1 se seguiu corretamente (foram adicionados os dois às duas listas)
+     * devolve 0 caso o userCorrente já o siga
+     * devolve -1 caso o clientID não exista
+	 */
+	public int follow(String userID) {
+	    //follow antoniojoao
+	    
+        
+	    try {
+            //primeiro enviar tipo de operacao
+            out.writeObject("f");
+
+            //depois envia-se o userID que o cliente quer seguir
+            out.writeObject(userID);
+            
+        } catch(IOException e) {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+        }
+        
+
+
+
+	    
+	    return 1;
+	    
+	}
 	
 }
 

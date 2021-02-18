@@ -187,47 +187,109 @@ public class SeiTchizServer {
 					e1.printStackTrace();
 				}
 				
+				String op = null;
+				//receber operacao pedida
+				try {
+					op = (String) inStream.readObject();
+				} catch (ClassNotFoundException e1) {
+					e1.printStackTrace();
+				}
+
 				// executar a operacao pedida pelo cliente
+				while(true) {
+					switch(op) {
+						case "f": 
+						
+							break;
+						case "u":
 
-				
-				
-				
-				/// Receber ficheiro do cliente
-				// int fileSize = 0;
-				// try {
-				// fileSize = (Integer)inStream.readObject();
-				// } catch (Exception e) {
-				// e.printStackTrace();
-				// }
+							break;
+						case "v":
 
-				// System.out.println(Integer.toString(fileSize));
+							break;
+						case "p":
 
-				// byte[] buffer = new byte[fileSize];
-				// int bytesTotal = 0;
-				// int bytesRead = 0;
-				// try {
-				// while(bytesTotal != fileSize) {
-				// bytesRead = inStream.read(buffer, bytesTotal, buffer.length);
-				// bytesTotal += bytesRead;
-				// }
-				// } catch (Exception e) {
-				// e.printStackTrace();
-				// }
+							break;
+						case "w":
 
-				// if(bytesTotal != 0) {
-				// System.out.println("servidor:... ficheiro recebido com sucesso");
-				// }
+							break;
+						case "l":
 
-				outStream.close();
-				inStream.close();
-				socket.close();
+							break;
+						case "n":
 
+							break;
+						case "a":
+
+							break;
+						case "r":
+
+							break;
+						case "g":
+
+							break;
+						case "m":
+
+							break;
+						case "c":
+
+							break;
+						case "h":
+
+							break;
+						default:
+							break;
+					}
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 }
+
+		
+
+
+				
+				
+				
+// 				/// Receber ficheiro do cliente
+// 				// int fileSize = 0;
+// 				// try {
+// 				// fileSize = (Integer)inStream.readObject();
+// 				// } catch (Exception e) {
+// 				// e.printStackTrace();
+// 				// }
+
+// 				// System.out.println(Integer.toString(fileSize));
+
+// 				// byte[] buffer = new byte[fileSize];
+// 				// int bytesTotal = 0;
+// 				// int bytesRead = 0;
+// 				// try {
+// 				// while(bytesTotal != fileSize) {
+// 				// bytesRead = inStream.read(buffer, bytesTotal, buffer.length);
+// 				// bytesTotal += bytesRead;
+// 				// }
+// 				// } catch (Exception e) {
+// 				// e.printStackTrace();
+// 				// }
+
+// 				// if(bytesTotal != 0) {
+// 				// System.out.println("servidor:... ficheiro recebido com sucesso");
+// 				// }
+
+// 				outStream.close();
+// 				inStream.close();
+// 				socket.close();
+
+// 			} catch (IOException e) {
+// 				e.printStackTrace();
+// 			}
+// 		}
+// 	}
+// }
 
 // import java.io.IOException;
 // import java.io.ObjectInputStream;
