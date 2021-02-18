@@ -124,14 +124,14 @@ public class SeiTchizServer {
 	public int addUserPasswd(String clientID, String userName, String passwd) {
 
 		try  {
-			Writer output = new BufferedWriter(new FileWriter("../files/serverStuff/users.txt", true));
+			Writer output = new BufferedWriter(new FileWriter("../files/serverStuff/users.txt", true));		
 			output.append(clientID + ":" + userName + ":" + passwd + "\n");
-			
+			output.close();
 			File userPage = new File("../files/userStuff/" + clientID);
             userPage.mkdir();
 			Writer userFollowers = new BufferedWriter(new FileWriter("../files/userStuff/"+clientID+ "/followers.txt", true));
 			Writer userFollowing = new BufferedWriter(new FileWriter("../files/userStuff/"+clientID+ "/following.txt", true));						
-
+			
 
 			System.out.println("Dados do utilizador adicionados a base de dados");
 			return 0;
