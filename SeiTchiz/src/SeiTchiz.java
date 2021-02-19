@@ -83,13 +83,29 @@ public class SeiTchiz {
                     } else {
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
                                 "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
-                                "-O userID ja esta a ser seguido; \n " +
+                                "-O user com o userID escolhido ja esta a ser seguido; \n " +
                                 "-O userID que procurou nao deve ter \":\" no nome.");
                     }
                 
                     break;
                 case "u": case "unfollow":
 
+                    if(option.length != 2) {
+                        System.out.println("Opcao \"unfollow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");       
+                        break;
+                    }
+                    
+                    resultado = cs.unfollow(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
+                    
+                    if(resultado == 0) {
+                        System.out.println("Deixou de seguir o user com userID: " + option[1]);
+                    } else {
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
+                                "-O user com o userID escolhido nao esta a ser seguido; \n " +
+                                "-O userID que procurou nao deve ter \":\" no nome.");
+                    }
+                    
                     break;
                 case "v": case "viewfollowers":
 

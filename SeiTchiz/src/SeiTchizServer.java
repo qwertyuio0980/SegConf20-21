@@ -214,6 +214,18 @@ public class SeiTchizServer {
 							break;
 						case "u":
 
+						    try {
+                                // receber <userID que o cliente quer deixar de seguir>:<userID do proprio cliente>
+                                aux = (String) inStream.readObject();
+                                conteudo = aux.split(":");
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(unfollow(conteudo[0], conteudo[1]));
+                                
+                            } catch (ClassNotFoundException e1) {
+                                e1.printStackTrace();
+                            }
+						    
 							break;
 						case "v":
 
@@ -259,7 +271,7 @@ public class SeiTchizServer {
 			}
 		}
 
-		public int follow(String userID, String senderID) {
+        public int follow(String userID, String senderID) {
 			int resultado = -1;
 			boolean encontrado = false;
 
@@ -285,14 +297,14 @@ public class SeiTchizServer {
 
 			//caso userID existe em users.txt
 			if(encontrado) {
-			    File sendersfollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
+			    File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
 			    Scanner sc;
 				try {
-                    sc = new Scanner(sendersfollowingFile);
+                    sc = new Scanner(sendersFollowingFile);
                     while(sc.hasNextLine()) {
                         String line = sc.nextLine();
                         
-                        // caso userID ja se encontre no ficheiro de followers de senderID devolver -1
+                        // caso userID ja se encontre no ficheiro de following de senderID devolver -1
                         if(line.contentEquals(userID)) {
                             sc.close();
                             return resultado;
@@ -305,7 +317,7 @@ public class SeiTchizServer {
 				
 				//adicionar userID a following.txt de senderID
                 try {
-                    FileWriter fw = new FileWriter(sendersfollowingFile, true);
+                    FileWriter fw = new FileWriter(sendersFollowingFile, true);
                     BufferedWriter bw = new BufferedWriter(fw);
                     
                     //escrita de userID
@@ -320,9 +332,9 @@ public class SeiTchizServer {
                 
                 
 				//adicionar senderID a followers.txt de userID
-                File userIDsfollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");
+                File userIDsFollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");
                 try {
-                    FileWriter fw = new FileWriter(userIDsfollowersFile, true);
+                    FileWriter fw = new FileWriter(userIDsFollowersFile, true);
                     BufferedWriter bw = new BufferedWriter(fw);
                     
                     //escrita de senderID
@@ -342,9 +354,173 @@ public class SeiTchizServer {
 		}
 		
 		
+        public int unfollow(String userID, String senderID) {
+            int resultado = -1;
+            boolean encontrado = false;
+            
+            //userID nao pode ter ":"
+            if(userID.contains(":")) {
+                return resultado;
+            }
+            
+            //procurar da lista de users.txt se o userID pretendido existe
+            try {
+                Scanner scanner = new Scanner(usersFile);
+                while(scanner.hasNextLine() && !encontrado) {
+                    String line = scanner.nextLine();
+                    String[] lineSplit = line.split(":");
+                    if(lineSplit[0].contentEquals(userID)) {
+                        encontrado = true;
+                    }
+                }
+                scanner.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            //caso userID existe em users.txt
+            if(encontrado) {
+                File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
+                Scanner sc;
+                try {
+                    sc = new Scanner(sendersFollowingFile);
+                    while(sc.hasNextLine()) {
+                        String line = sc.nextLine();
+                        
+                        // caso userID se encontre no ficheiro de followers de senderID devolver 0
+                        if(line.contentEquals(userID)) {
+                            
+                            //----retirar userID de following de senderID----
+                            //primeiro passar todo o conteudo de following menos o userID pretendido para um ficheiro auxiliar
+                            File sendersFollowingTEMPFile = new File("../files/userStuff/" + senderID + "/followingTemp.txt");
+                            Scanner sc2 = new Scanner(sendersFollowingFile);
+                            FileWriter fw = null;
+                            try {
+                                fw = new FileWriter(sendersFollowingTEMPFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            BufferedWriter bw = new BufferedWriter(fw);
+                            while(sc2.hasNextLine()) {
+                                String line2 = sc2.nextLine();
+                                if(!userID.contentEquals(line2)) {
+                                    try {
+                                        bw.write(line2);
+                                        bw.newLine();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            
+                            
+                            //apagar o ficheiro following original
+                            if(sendersFollowingFile.delete()) {
+                                //nada acontece aqui
+                            }
+                            
+                            //recriar following a partir do ficheiro auxiliar
+                            sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");          
+                            Scanner sc3 = new Scanner(sendersFollowingTEMPFile);
+                            FileWriter fw2 = null;
+                            try {
+                                fw2 = new FileWriter(sendersFollowingFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            BufferedWriter bw2 = new BufferedWriter(fw2);
+                            while(sc3.hasNextLine()) {
+                                String line3 = sc3.nextLine();
+                                try {
+                                    bw2.write(line3);
+                                    bw2.newLine();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            
+                            //apagar o ficheiro following temporario
+                            if(sendersFollowingTEMPFile.delete()) {
+                                //nada acontece aqui
+                            }
+                            
+                            
+                            //----retirar senderID de followers de userID----
+                            //primeiro passar todo o conteudo de followers menos o senderID pretendido para um ficheiro auxiliar
+                            File usersFollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");
+                            File usersFollowersTEMPFile = new File("../files/userStuff/" + userID + "/followersTemp.txt");
+                            Scanner sc4 = new Scanner(usersFollowersFile);
+                            FileWriter fw3 = null;
+                            try {
+                                fw3 = new FileWriter(sendersFollowingTEMPFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            BufferedWriter bw3 = new BufferedWriter(fw3);
+                            while(sc4.hasNextLine()) {
+                                String line4 = sc4.nextLine();
+                                if(!senderID.contentEquals(line4)) {
+                                    try {
+                                        bw3.write(line4);
+                                        bw3.newLine();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            
+                            
+                            //apagar o ficheiro followers original
+                            if(usersFollowersFile.delete()) {
+                                //nada acontece aqui
+                            }
+                            
+                            //recriar followers a partir do ficheiro auxiliar
+                            usersFollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");          
+                            Scanner sc5 = new Scanner(sendersFollowingTEMPFile);
+                            FileWriter fw4 = null;
+                            try {
+                                fw4 = new FileWriter(sendersFollowingFile);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            BufferedWriter bw4 = new BufferedWriter(fw4);
+                            while(sc3.hasNextLine()) {
+                                String line5 = sc5.nextLine();
+                                try {
+                                    bw4.write(line5);
+                                    bw4.newLine();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            
+                            //apagar o ficheiro following temporario
+                            if(usersFollowersTEMPFile.delete()) {
+                                //nada acontece aqui
+                            }
+                            
+                            resultado = 0;
+                        }
+                    }
+                    sc.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            //caso se percorram todos os userIDs e nao se encontre userID entao o cliente
+            //nao o estava a seguir e devolve-se -1
+            return resultado;
+        }
 		
-
-
+        
+        /*
+        public int viewfollowers(String senderID) {
+            
+        }
+        */
+        
 	}
 }
 

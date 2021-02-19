@@ -200,16 +200,34 @@ public class ClientStub {
 	    return resultado; 
 	}
 
-    /*
-    public int unfollow(String userID) {
-        //follow antoniojoao
+    
+    public int unfollow(String userID, String senderID) {
+        //unfollow antoniojoao
 
-        int resultado;
+        int resultado = -1;
+        try {
 
+            //enviar tipo de operacao
+            out.writeObject("u");
+            
+            // enviar userID que o cliente quer deixar de seguir:userID do proprio cliente
+            out.writeObject(userID + ":" + senderID);
+            
+            //receber codigo de resposta do servidor
+            resultado = (int) in.readObject();
 
-        return 1;
+        } catch(IOException e) {
+            System.err.println(e.getMessage());
+            System.exit(-1);
+        } catch(ClassNotFoundException e1) {
+            e1.printStackTrace();
+            System.exit(-1);
+        }
+        
+        return resultado; 
     }
     
+    /*
     public int viewfollowers() {
 
 
