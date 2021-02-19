@@ -54,7 +54,7 @@ public class SeiTchiz {
 
             BufferedReader reader;
             String input;
-            String[] option;//pode dar erro porque isto nao foi inicializado mas se for depois como se verifica se o user meteu os argumentos bem ou nao
+            String[] option = null;//pode dar erro porque isto nao foi inicializado mas se for depois como se verifica se o user meteu os argumentos bem ou nao
             int resultado;
             
             try {
@@ -67,17 +67,26 @@ public class SeiTchiz {
                 System.exit(-1);
             }
             
+
             switch(option[0]) {
                 case "f": case "follow":
+                
                     if(option.length != 2) {
-                        System.out.println("Opcao \"follow\" recebe argumento userID que nao pode ter espacos. Tente novamente");       
+                        System.out.println("Opcao \"follow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");       
                         break;
                     }
                     
-                    resultado = cs.follow(option[1]);
-                    //tratar resto do resultado
+                    resultado = cs.follow(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
                     
-                    
+                    if(resultado == 0) {
+                        System.out.println("Esta a seguir o user com userID: " + option[1]);
+                    } else {
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
+                                "-O userID ja esta a ser seguido; \n " +
+                                "-O userID que procurou nao deve ter \":\" no nome.");
+                    }
+                
                     break;
                 case "u": case "unfollow":
 
@@ -116,14 +125,11 @@ public class SeiTchiz {
 
                     break;
                 case "s": case "stop":
-                     
-
                     System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");
                     stop = true;
                     break;
                 default:
-                    System.out.println("Input recebido nao faz parte dos comandos aceites \n" +
-                    "Tente outra vez");
+                    System.out.println("Input recebido invalido");
                     break;
             }
         }

@@ -12,7 +12,6 @@ import java.io.Writer;
 
 public class SeiTchizServer {
 
-    //martim mudado 17.2
 	public int port;
 	
 	public File filesFolder; //
@@ -28,7 +27,6 @@ public class SeiTchizServer {
 		} else {
 			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\"");
 		}
-
 	}
 
 	public void startServer(String port) {
@@ -129,10 +127,8 @@ public class SeiTchizServer {
 			output.close();
 			File userPage = new File("../files/userStuff/" + clientID);
             userPage.mkdir();
-			Writer userFollowers = new BufferedWriter(new FileWriter("../files/userStuff/"+clientID+ "/followers.txt", true));
-			Writer userFollowing = new BufferedWriter(new FileWriter("../files/userStuff/"+clientID+ "/following.txt", true));						
-			
-
+			Writer userFollowers = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/followers.txt", true));
+			Writer userFollowing = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/following.txt", true));
 			System.out.println("Dados do utilizador adicionados a base de dados");
 			return 0;
 		} catch (IOException e) {
@@ -176,29 +172,44 @@ public class SeiTchizServer {
 						System.out.println("SignIn do utilizador ocorreu. UserID/Password certos");
 					} else {
 						outStream.writeObject(1);
-						System.out.println("SignUp do utilizador ocorreu pela primeira vez." + 
-						" A espera do nome do utilizador para finalizar o SignUp");
+						System.out.println("SignUp do utilizador ocorreu pela primeira vez. \n " + 
+						"A espera do nome do utilizador para finalizar o SignUp");
 						String userName = (String) inStream.readObject();	
 						addUserPasswd(userID, userName, passwd);	
-
 					}
 
 				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
 				}
 				
-				String op = null;
-				//receber operacao pedida
-				try {
-					op = (String) inStream.readObject();
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-
 				// executar a operacao pedida pelo cliente
 				while(true) {
+					// receber operacao pedida
+					String op = null;
+	                try {
+	                    op = (String) inStream.readObject();
+	                } catch (ClassNotFoundException e1) {
+	                    e1.printStackTrace();
+	                }
+
+					String aux = null;
+					String[] conteudo = null;
+				    
+	                // realizar a operacao pedida
 					switch(op) {
 						case "f": 
+						    
+						    try {
+								// receber <userID que o cliente quer seguir>:<userID do proprio cliente>
+								aux = (String) inStream.readObject();
+								conteudo = aux.split(":");
+								
+								// enviar estado da operacao
+								outStream.writeObject(follow(conteudo[0], conteudo[1]));
+								
+							} catch (ClassNotFoundException e1) {
+								e1.printStackTrace();
+							}
 						
 							break;
 						case "u":
@@ -238,6 +249,8 @@ public class SeiTchizServer {
 
 							break;
 						default:
+						    //caso default nunca atingido
+						    
 							break;
 					}
 				}
@@ -245,6 +258,93 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 		}
+
+		public int follow(String userID, String senderID) {
+			int resultado = -1;
+			boolean encontrado = false;
+
+			//userID nao pode ter ":"
+			if(userID.contains(":")) {
+				return resultado;
+			}
+
+			//procurar da lista de users.txt se o userID pretendido existe
+			try {
+				Scanner scanner = new Scanner(usersFile);
+				while(scanner.hasNextLine() && !encontrado) {
+					String line = scanner.nextLine();
+					String[] lineSplit = line.split(":");
+					if(lineSplit[0].contentEquals(userID)) {
+						encontrado = true;
+					}
+				}
+				scanner.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+
+			//caso userID existe em users.txt
+			if(encontrado) {
+			    File sendersfollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
+			    Scanner sc;
+				try {
+                    sc = new Scanner(sendersfollowingFile);
+                    while(sc.hasNextLine()) {
+                        String line = sc.nextLine();
+                        
+                        // caso userID ja se encontre no ficheiro de followers de senderID devolver -1
+                        if(line.contentEquals(userID)) {
+                            sc.close();
+                            return resultado;
+                        }
+                    }
+                    sc.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+				
+				//adicionar userID a following.txt de senderID
+                try {
+                    FileWriter fw = new FileWriter(sendersfollowingFile, true);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    
+                    //escrita de userID
+                    bw.write(userID);
+                    bw.newLine();
+                    
+                    bw.close();
+                    fw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                
+                
+				//adicionar senderID a followers.txt de userID
+                File userIDsfollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");
+                try {
+                    FileWriter fw = new FileWriter(userIDsfollowersFile, true);
+                    BufferedWriter bw = new BufferedWriter(fw);
+                    
+                    //escrita de senderID
+                    bw.write(senderID);
+                    bw.newLine();
+                    
+                    bw.close();
+                    fw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+				
+				resultado = 0;
+			}
+			
+			return resultado;
+		}
+		
+		
+		
+
+
 	}
 }
 
