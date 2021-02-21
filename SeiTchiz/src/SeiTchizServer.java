@@ -228,7 +228,18 @@ public class SeiTchizServer {
 						    
 							break;
 						case "v":
-
+						    
+						    try {
+                                // receber <userID que o cliente quer deixar de seguir>:<userID do proprio cliente>
+                                aux = (String) inStream.readObject();
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(viewfollowers(aux));
+                                
+                            } catch (ClassNotFoundException e1) {
+                                e1.printStackTrace();
+                            }
+						        
 							break;
 						case "p":
 
@@ -353,7 +364,7 @@ public class SeiTchizServer {
 			return resultado;
 		}
 		
-		
+		//NOTA ESTE METODO NAO ESTA A TIRAR O SENDERID DOS FOLLOWERS DE USERID E NAO APAGA O FOLLOWERSTEMP FILE DO SENDERID
         public int unfollow(String userID, String senderID) {
             int resultado = -1;
             boolean encontrado = false;
@@ -515,11 +526,33 @@ public class SeiTchizServer {
         }
 		
         
-        /*
-        public int viewfollowers(String senderID) {
+        
+        public String viewfollowers(String senderID) {
+               
+            //procurar no folder de users no do sender se o ficheiro followers.txt esta vazio
+            File sendersFollowersFile = new File("../files/userStuff/" + senderID + "/followers.txt");
+            if(sendersFollowersFile.length() == 0) {
+                //caso esteja vazio devolver esta string especifica
+                return "";
+            }
             
+            StringBuilder sb = new StringBuilder();
+            Scanner sc;
+            try {
+                sc = new Scanner(sendersFollowersFile);
+                while(sc.hasNextLine()) {
+                    String line = sc.nextLine();
+                    sb.append(line + "\n");
+                }
+                sc.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            
+            //devolver string que contem todos os followers de senderID separados por \n
+            return sb.toString();
         }
-        */
+        
         
 	}
 }

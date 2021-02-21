@@ -36,7 +36,7 @@ public class SeiTchiz {
             
             //abstrair noutra classe??
             //mostrar menu com opcoes
-            System.out.println("Que opção pretende executar? \n" +
+            System.out.println("Que operacao pretende executar? \n" +
             "f ou follow <userID> \n" +
             "u ou unfollow <userID> \n" +
             "v ou viewfollowers \n" +
@@ -56,6 +56,7 @@ public class SeiTchiz {
             String input;
             String[] option = null;//pode dar erro porque isto nao foi inicializado mas se for depois como se verifica se o user meteu os argumentos bem ou nao
             int resultado;
+            String followersList = null;
             
             try {
                 reader = new BufferedReader(new InputStreamReader(System.in)); 
@@ -74,10 +75,8 @@ public class SeiTchiz {
                     if(option.length != 2) {
                         System.out.println("Opcao \"follow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");       
                         break;
-                    }
-                    
+                    }      
                     resultado = cs.follow(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
-                    
                     if(resultado == 0) {
                         System.out.println("Esta a seguir o user com userID: " + option[1]);
                     } else {
@@ -85,18 +84,16 @@ public class SeiTchiz {
                                 "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
                                 "-O user com o userID escolhido ja esta a ser seguido; \n " +
                                 "-O userID que procurou nao deve ter \":\" no nome.");
-                    }
-                
+                    }                
                     break;
+                    
                 case "u": case "unfollow":
 
                     if(option.length != 2) {
                         System.out.println("Opcao \"unfollow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");       
                         break;
                     }
-                    
                     resultado = cs.unfollow(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
-                    
                     if(resultado == 0) {
                         System.out.println("Deixou de seguir o user com userID: " + option[1]);
                     } else {
@@ -108,8 +105,19 @@ public class SeiTchiz {
                     
                     break;
                 case "v": case "viewfollowers":
-
+                    
+                    if(option.length != 1) {
+                        System.out.println("Opcao \"viewfollowers\" nao recebe argumentos adicionais. Tente novamente");   
+                        break;
+                    }
+                    followersList = cs.viewfollowers(args[1]);
+                    if(followersList.isEmpty()) {
+                        System.out.println("O cliente nao tem followers");
+                    } else {
+                        System.out.println("Os seus followers sao: \n" + followersList);
+                    }
                     break;
+                    
                 case "p": case "post":
 
                     break;

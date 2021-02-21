@@ -227,12 +227,30 @@ public class ClientStub {
         return resultado; 
     }
     
-    /*
-    public int viewfollowers() {
-
-
+    
+    public String viewfollowers(String senderID) {
+        String followersList = null;
+            
+            try {
+                
+                //enviar tipo de operacao
+                out.writeObject("v");
+                
+                //enviar ID do cliente que quer ver os seus followers
+                out.writeObject(senderID);
+                
+                //receber a lista de followers de senderID
+                followersList = (String) in.readObject();
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } 
+              
+        return followersList;
     }
-	*/
+	
 
 }
 
