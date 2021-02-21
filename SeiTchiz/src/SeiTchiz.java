@@ -128,7 +128,13 @@ public class SeiTchiz {
 
                     break;
                 case "n": case "newgroup":
-
+                    
+                    if(option.length != 2) {
+                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode ter espacos. Tente novamente");       
+                        break;
+                    }
+                    //TODO
+                    
                     break;
                 case "a": case "addu":
 
@@ -137,7 +143,9 @@ public class SeiTchiz {
 
                     break;
                 case "g": case "ginfo":
-
+                    
+                    
+                    
                     break;
                 case "m": case "msg":
 
@@ -150,6 +158,7 @@ public class SeiTchiz {
                     break;
                 case "s": case "stop":
                     System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");
+                    cs.stop();                  
                     stop = true;
                     break;
                 default:

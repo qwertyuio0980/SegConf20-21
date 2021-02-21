@@ -14,6 +14,7 @@ public class ClientStub {
     private int defaultPort = 45678;
 
     public ClientStub(String ipPort) {
+        
         conectarServidor(ipPort);
 
         // Criar Streams de leitura e escrita
@@ -33,8 +34,8 @@ public class ClientStub {
      * @param string
      */
 	public void conectarServidor(String ipPort) {
+	    
         String[] aux = ipPort.split(":");
-
         if(aux.length == 1) {
             conectar(aux[0], defaultPort);
         } else if(aux.length == 2 && aux[1].contentEquals("45678")) {
@@ -55,6 +56,7 @@ public class ClientStub {
      * @return true se login for sucedido e false caso contrario
      */
     public void login(String clientID, String passwrd) {
+        
         if(passwrd.contains(" ") || passwrd.equals("")){
             // as passwrds poderiam ter um espaço no meio. Seria melhor restringir apenas passwrds vazias. 
             System.out.println("Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter)" +
@@ -71,8 +73,8 @@ public class ClientStub {
      * @param clientID String contendo o client id do usuário
      */
 	public void login(String clientID) {
-        String passwrd = null;
         
+	    String passwrd = null;
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("password: ");
         while(passwrd == null) {
@@ -101,6 +103,7 @@ public class ClientStub {
      * @requires ip != null
      */
 	public void conectar(String ip, int port) {
+	    
         try {
             this.clientSocket = new Socket(ip, port);
         } catch (IOException e) {
@@ -115,6 +118,7 @@ public class ClientStub {
      * @param passwrd
      */
 	public void efetuarLogin(String clientID, String passwrd) {
+	    
         // Mandar os objetos para o servidor
         try {
             this.out.writeObject(clientID);
@@ -172,11 +176,9 @@ public class ClientStub {
         }
 
 	}
-
 	
 	public int follow(String userID, String senderID) {
-	    //follow antoniojoao
-	    
+   
         int resultado = -1;
 	    try {
 
@@ -200,10 +202,8 @@ public class ClientStub {
 	    return resultado; 
 	}
 
-    
     public int unfollow(String userID, String senderID) {
-        //unfollow antoniojoao
-
+ 
         int resultado = -1;
         try {
 
@@ -229,10 +229,9 @@ public class ClientStub {
     
     
     public String viewfollowers(String senderID) {
+        
         String followersList = null;
-            
             try {
-                
                 //enviar tipo de operacao
                 out.writeObject("v");
                 
@@ -250,7 +249,16 @@ public class ClientStub {
               
         return followersList;
     }
-	
+
+    public void stop() {
+        try {
+            //enviar tipo de operacao
+            out.writeObject("s");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
 
 }
 

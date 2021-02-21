@@ -131,6 +131,13 @@ public class SeiTchizServer {
             userPage.mkdir();
 			Writer userFollowers = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/followers.txt", true));
 			Writer userFollowing = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/following.txt", true));
+			
+			File groupsOwnerFolder = new File("../files/userStuff/" + clientID + "/groups/owner");
+			groupsOwnerFolder.mkdirs();
+			
+			File groupsMemberFolder = new File("../files/userStuff/" + clientID + "/groups/member");
+			groupsMemberFolder.mkdir();
+			
 			System.out.println("Dados do utilizador adicionados a base de dados");
 			return 0;
 		} catch (IOException e) {
@@ -158,13 +165,13 @@ public class SeiTchizServer {
 				String userID = null;
 				String passwd = null;
 
+				// autenticacao
 				try {
 				    userID = (String) inStream.readObject();
 					passwd = (String) inStream.readObject();
 
 					System.out.println("UserID e password recebidos");
 
-					// autenticacao
 					int isAuth = isAuthenticated(userID, passwd);
 					if (isAuth == -1) {
 						outStream.writeObject(-1);
@@ -186,7 +193,8 @@ public class SeiTchizServer {
 				}
 				
 				// executar a operacao pedida pelo cliente
-				while(true) {
+				boolean stop = false;
+				while(!stop) {
 					// receber operacao pedida
 					String op = null;
 	                try {
@@ -274,6 +282,12 @@ public class SeiTchizServer {
 						case "h":
 
 							break;
+							
+						case "s":
+						    stop = true;
+						    System.out.println("thread do cliente fechada");
+						    System.out.println("------------------------------------------");
+						    break;
 						default:
 						    //caso default nunca atingido
 						    
