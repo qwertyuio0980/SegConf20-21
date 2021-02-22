@@ -1,46 +1,29 @@
 TODO
 
-------------------------------------------------------------------------------------------------------------------------------------------------------
-NOTA
-Sera que temos de manter +1 ficheiro de variaveis de servidor que guarda variaveis importantes?
-ex: o "usernumber" ao fechar o server e reabrir o server o ficheiro de users mantem-se como esta e o proximo user a 
-fazer signup ia acabar por ter usernumber = 1 porque o servidor nao manteu o valor da variavel da ultima vez que estava 
-ligado o que gera problemas mais tarde com as operacoes do server
-------------------------------------------------------------------------------------------------------------------------------------------------------
+follow <userID> – done
 
-Methods:
+unfollow <userID> - bugs
 
-follow <userID> –
+viewfollowers – done
 
-unfollow <userID> -
+post <photo> – todo
 
-viewfollowers – 
+wall <nPhotos> - todo
 
-post <photo> –
+like <photoID> – todo
 
-wall <nPhotos> - 
+newgroup <groupID> – done
 
-like <photoID> –
+addu <userID> <groupID> – todo
 
-newgroup <groupID> –
+removeu <userID> <groupID> – todo
 
-addu <userID> <groupID> –
+ginfo [groupID] – todo
 
-removeu <userID> <groupID> –
+msg <groupID> <msg> – todo
 
-ginfo [groupID] –
-
-msg <groupID> <msg> –
-
-collect <groupID> –
-
-history <groupID> –
-
-
-Funcionamento:
+collect <groupID> – todo
  
-Utilizamos uma sandbox tanto para o servidor como para o cliente (Para limitarmos o acesso ao sistema de ficheiros etc).
+history <groupID> – todo
 
- Vamos ter um ficheiro a funcionar como base de dados com os userid's, os seus nomes e as respetivas pw's. (<user>:<nome user>:<password>).
-
- As mensagens e as fotografias também têm de ser guardadas em disco no servidor.
+integracao da sandbox - todo

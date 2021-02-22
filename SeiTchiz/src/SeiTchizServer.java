@@ -285,9 +285,25 @@ public class SeiTchizServer {
 							
 						case "a":
 						    
-						    //TODO
+						    
+                            try {
+                                // receber <userID a adicionar>:<groupID do grupo>:<senderID do cliente que faz a operacao>
+                                aux = (String) inStream.readObject();
+                                conteudo = aux.split(":");
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(addu(conteudo[0], conteudo[1], conteudo[2]));
+                                
+                            } catch (ClassNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+    						    
+						    
+						    
 
 							break;
+							
 						case "r":
 						    
 						    //TODO
@@ -651,9 +667,18 @@ public class SeiTchizServer {
             
             //verificar se dentro do folder de owner de grupos do senderID existe um folder com o nome de groupID
             File groupOwnerFolder = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID);
+            File groupOwnerMembersFile = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID + "/members.txt");
             if(!groupOwnerFolder.exists()) {
                 //caso nao existir criar esse folder
                 groupOwnerFolder.mkdir();
+                try {
+                    groupOwnerMembersFile.createNewFile();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                
+                
                 resultado = 0;
             }
 
@@ -661,6 +686,19 @@ public class SeiTchizServer {
             return resultado;
         }
         
+        public int addu(String userID, String groupID, String senderID) {
+            
+            int resultado = -1;
+            
+            // fazer a operacao envolve adicionar o groupID ao ficheiro participant.txt do userID
+            // e adicionar o userID ao ficheiro members.txt dentro do grupo no folder do owner            
+            //TODO
+            
+            //ha casos de erro que nao escrevi aqui que estao no enunciado que devem apenas devolver -1
+            //TODO
+            
+            return resultado;
+        }
 	}
 }
 

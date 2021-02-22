@@ -230,26 +230,28 @@ public class ClientStub {
     public String viewfollowers(String senderID) {
         
         String followersList = null;
-            try {
-                //enviar tipo de operacao
-                out.writeObject("v");
-                
-                //enviar ID do cliente que quer ver os seus followers
-                out.writeObject(senderID);
-                
-                //receber a lista de followers de senderID
-                followersList = (String) in.readObject();
-                
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } 
+        try {
+            
+            //enviar tipo de operacao
+            out.writeObject("v");
+            
+            //enviar ID do cliente que quer ver os seus followers
+            out.writeObject(senderID);
+            
+            //receber codigo de resposta do servidor
+            followersList = (String) in.readObject();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } 
               
         return followersList;
     }
 
     public void stop() {
+        
         try {
             //enviar tipo de operacao
             out.writeObject("s");
@@ -265,10 +267,10 @@ public class ClientStub {
             //enviar tipo de operacao
             out.writeObject("n");
             
-            //enviar ID do cliente que quer ver os seus followers
+            //enviar ID do grupo a ser criado:ID do cliente que o pretende criar
             out.writeObject(groupID + ":" + senderID);
             
-            //receber a lista de followers de senderID
+            //receber o resultado da operacao
             resultado = (int) in.readObject();
             
         } catch (IOException e) {
@@ -277,6 +279,30 @@ public class ClientStub {
             e.printStackTrace();
         }
           
+        return resultado;
+    }
+
+    public int addu(String userID, String groupID, String senderID) {
+
+        int resultado = -1;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("a");
+            
+            //enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
+            out.writeObject(userID + ":" + groupID + ":" + senderID);
+            
+            //receber a lista de followers de senderID
+            resultado = (int) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
         return resultado;
     }
     

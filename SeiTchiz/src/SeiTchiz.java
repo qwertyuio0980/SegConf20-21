@@ -75,8 +75,11 @@ public class SeiTchiz {
                     if(option.length != 2) {
                         System.out.println("Opcao \"follow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");       
                         break;
-                    }      
-                    resultado = cs.follow(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
+                    }
+                    
+                    // envia-se o userID que se procura e o userID que fez o pedido
+                    resultado = cs.follow(option[1], args[1]);
+                    
                     if(resultado == 0) {
                         System.out.println("Esta a seguir o user com userID: " + option[1]);
                     } else {
@@ -93,7 +96,10 @@ public class SeiTchiz {
                         System.out.println("Opcao \"unfollow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");       
                         break;
                     }
-                    resultado = cs.unfollow(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
+                    
+                    // envia-se o userID que se procura e o userID que fez o pedido
+                    resultado = cs.unfollow(option[1], args[1]);
+                    
                     if(resultado == 0) {
                         System.out.println("Deixou de seguir o user com userID: " + option[1]);
                     } else {
@@ -110,7 +116,10 @@ public class SeiTchiz {
                         System.out.println("Opcao \"viewfollowers\" nao recebe argumentos adicionais. Tente novamente");   
                         break;
                     }
+                    
+                    // envia-se o senderID que quer saber quais os seus seguidores
                     followersList = cs.viewfollowers(args[1]);
+                    
                     if(followersList.isEmpty()) {
                         System.out.println("O cliente nao tem followers");
                     } else {
@@ -136,15 +145,16 @@ public class SeiTchiz {
                 case "n": case "newgroup":
                     
                     if(option.length != 2 || option[1].contains("/") || option[1].contains(":")) {
-                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode ter espacos." +
-                    " Ou forward slashes(/) ou dois pontos(:). Tente novamente");       
+                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode ter espacos" +
+                    " ou forward slashes(/) ou dois pontos(:). Tente novamente");       
                         break;
                     }
-                    resultado = cs.newgroup(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
+                    
+                    // envia-se o userID que se procura e o userID que fez o pedido
+                    resultado = cs.newgroup(option[1], args[1]); 
                     
                     if(resultado == 0) {
                         System.out.println("O cliente e agora dono do novo grupo com groupID: " + option[1]);
-                        
                     } else {
                         System.out.println("Nao foi possivel criar o grupo pois o grupo com o groupID que designou ja existe");
                     }
@@ -152,9 +162,26 @@ public class SeiTchiz {
                     
                 case "a": case "addu":
 
-                    //TODO
+                    if(option.length != 3 || option[1].contains(":") || option[2].contains("/") || option[2].contains(":")) {
+                        System.out.println("Opcao \"addu\" recebe os argumentos <userID> que nao pode ter espacos ou " +
+                                "dois pontos (:) e <groupID> que nao pode ter espacos ou forward slashes(/) ou " +
+                                "dois pontos(:). Tente novamente");
+                        break;
+                    }
+                    
+                    // envia-se o userID que se pretende adicionar ao grupo, o grupoID e o senderID que fez o pedido
+                    resultado = cs.addu(option[1], option[2], args[1]);
+                    if(resultado == 0) {
+                        System.out.println("O utilizador selecionado e agora membro do seu grupo indicado");
+                    }  else {
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O userID inserido ja pertence ao grupo; \n " +
+                                "-O grupo indicado nao existe; \n " +
+                                "-Apenas o dono do grupo indicado pode adicionar membros ao mesmo.");
+                    }
                     
                     break;
+                    
                 case "r": case "removeu":
 
                     //TODO
