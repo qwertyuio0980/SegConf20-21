@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.Writer;
@@ -21,7 +22,7 @@ public class SeiTchizServer {
 	public File usersFile; //database de usersID:name:pwd
 
 	public static void main(String[] args) {
-		System.out.println("---servidor iniciado---");
+		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
 		if (args.length == 1 && args[0].contentEquals("45678")) {
 			server.startServer(args[0]);
@@ -135,13 +136,13 @@ public class SeiTchizServer {
 			File groupsOwnerFolder = new File("../files/userStuff/" + clientID + "/groups/owner");
 			groupsOwnerFolder.mkdirs();
 			
-			File groupsMemberFolder = new File("../files/userStuff/" + clientID + "/groups/member");
-			groupsMemberFolder.mkdir();
+			File groupsParticipantFile = new File("../files/userStuff/" + clientID + "/groups/participant.txt");
+			groupsParticipantFile.createNewFile();
 			
 			System.out.println("Dados do utilizador adicionados a base de dados");
 			return 0;
 		} catch (IOException e) {
-			System.out.println("nao foi possivel autenticar este user");
+			System.out.println("Nao foi possivel autenticar este user");
 			e.printStackTrace();
 		}
 		return -1;
@@ -154,7 +155,7 @@ public class SeiTchizServer {
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
-			System.out.println("thread do server para cada cliente");
+			System.out.println("Thread a correr no server para cada um cliente");
 		}
 
 		public void run() {
@@ -181,7 +182,7 @@ public class SeiTchizServer {
 						System.out.println("SignIn do utilizador ocorreu. UserID/Password certos");
 					} else {
 						outStream.writeObject(1);
-						System.out.println("SignUp do utilizador ocorreu pela primeira vez. \n " + 
+						System.out.println("SignUp do utilizador ocorreu pela primeira vez. \n" + 
 						"A espera do nome do utilizador para finalizar o SignUp");
 						String userName = (String) inStream.readObject();	
 						addUserPasswd(userID, userName, passwd);	
@@ -221,8 +222,8 @@ public class SeiTchizServer {
 							} catch (ClassNotFoundException e1) {
 								e1.printStackTrace();
 							}
-						
 							break;
+							
 						case "u":
 
 						    try {
@@ -236,12 +237,12 @@ public class SeiTchizServer {
                             } catch (ClassNotFoundException e1) {
                                 e1.printStackTrace();
                             }
-						    
 							break;
+							
 						case "v":
-						    
-						    try {
-                                // receber <userID que o cliente quer deixar de seguir>:<userID do proprio cliente>
+							
+							try {
+                                // receber <userID do proprio cliente>
                                 aux = (String) inStream.readObject();
                                 
                                 // enviar estado da operacao
@@ -250,37 +251,67 @@ public class SeiTchizServer {
                             } catch (ClassNotFoundException e1) {
                                 e1.printStackTrace();
                             }
-						        
-							break;
+                            break;
+							
 						case "p":
+						    
+						    //TODO
 
 							break;
 						case "w":
 
+						    //TODO
+						    
 							break;
 						case "l":
+						    
+						    //TODO
 
 							break;
 						case "n":
-
-							break;
+						    
+                            try {
+                                // receber <groupID do grupo a criar>:<userID do proprio cliente>
+                                aux = (String) inStream.readObject();
+                                conteudo = aux.split(":");
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(newgroup(conteudo[0], conteudo[1]));
+                                
+                            } catch (ClassNotFoundException e1) {
+                                e1.printStackTrace();
+                            }
+                            break;
+							
 						case "a":
+						    
+						    //TODO
 
 							break;
 						case "r":
+						    
+						    //TODO
 
 							break;
 						case "g":
+						    
+						    //TODO
 
 							break;
 						case "m":
+						    
+						    //TODO
 
 							break;
 						case "c":
 
+						    //TODO
+						    
 							break;
 						case "h":
 
+						    //TODO
+						    
 							break;
 							
 						case "s":
@@ -288,9 +319,9 @@ public class SeiTchizServer {
 						    System.out.println("thread do cliente fechada");
 						    System.out.println("------------------------------------------");
 						    break;
+						    
 						default:
 						    //caso default nunca atingido
-						    
 							break;
 					}
 				}
@@ -615,6 +646,20 @@ public class SeiTchizServer {
             return sb.toString();
         }
         
+        public int newgroup(String groupID, String senderID) {
+            int resultado = -1;
+            
+            //verificar se dentro do folder de owner de grupos do senderID existe um folder com o nome de groupID
+            File groupOwnerFolder = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID);
+            if(!groupOwnerFolder.exists()) {
+                //caso nao existir criar esse folder
+                groupOwnerFolder.mkdir();
+                resultado = 0;
+            }
+
+            //caso sim devolver -1
+            return resultado;
+        }
         
 	}
 }

@@ -120,41 +120,65 @@ public class SeiTchiz {
                     
                 case "p": case "post":
 
-                    break;
-                case "w": case "wall":
-
-                    break;
-                case "l": case "like":
-
-                    break;
-                case "n": case "newgroup":
-                    
-                    if(option.length != 2) {
-                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode ter espacos. Tente novamente");       
-                        break;
-                    }
                     //TODO
                     
                     break;
+                case "w": case "wall":
+
+                    //TODO
+                    
+                    break;
+                case "l": case "like":
+
+                    //TODO
+                    
+                    break;
+                case "n": case "newgroup":
+                    
+                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":")) {
+                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode ter espacos." +
+                    " Ou forward slashes(/) ou dois pontos(:). Tente novamente");       
+                        break;
+                    }
+                    resultado = cs.newgroup(option[1], args[1]);// envia-se o userID que se procura e o userID que fez o pedido
+                    
+                    if(resultado == 0) {
+                        System.out.println("O cliente e agora dono do novo grupo com groupID: " + option[1]);
+                        
+                    } else {
+                        System.out.println("Nao foi possivel criar o grupo pois o grupo com o groupID que designou ja existe");
+                    }
+                    break;
+                    
                 case "a": case "addu":
 
+                    //TODO
+                    
                     break;
                 case "r": case "removeu":
 
+                    //TODO
+                    
                     break;
                 case "g": case "ginfo":
                     
-                    
+                    //TODO
                     
                     break;
                 case "m": case "msg":
 
+                    //TODO
+                    
                     break;
                 case "c": case "collect":
 
+                    //TODO
+                    
                     break;
                 case "h": case "history":
 
+                    //TODO
+                    
                     break;
                 case "s": case "stop":
                     System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");

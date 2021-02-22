@@ -226,8 +226,7 @@ public class ClientStub {
         
         return resultado; 
     }
-    
-    
+        
     public String viewfollowers(String senderID) {
         
         String followersList = null;
@@ -257,6 +256,28 @@ public class ClientStub {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public int newgroup(String groupID, String senderID) {
+        
+        int resultado = -1;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("n");
+            
+            //enviar ID do cliente que quer ver os seus followers
+            out.writeObject(groupID + ":" + senderID);
+            
+            //receber a lista de followers de senderID
+            resultado = (int) in.readObject();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+          
+        return resultado;
     }
     
 
