@@ -453,52 +453,8 @@ public class SeiTchizServer {
             // caso userID existe em users.txt 
             // Criar um novo ficheiro temp e copiar toda a informacao do ficheiro following
             if(encontrado) {
-                File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
-                File sendersFollowingTEMPFile = new File("../files/userStuff/" + senderID + "/followingTemp.txt");
-                try {
-                    if(!sendersFollowingTEMPFile.createNewFile()) {
-                        System.out.println("Erro ao criar ficheiro aux");
-                        System.exit(-1);
-                    }
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-
-                Scanner scSendersFollowing = null;
-                FileWriter fwSendersFollowing = null;
-                BufferedWriter bwSendersFollowing = null;
-                
-                Scanner scSendersFollowingTEMP = null;
-                FileWriter fwSendersFollowingTEMP = null;
-                BufferedWriter bwSendersFollowingTEMP = null;
-    
-                try {
-                    //ler do sendersFollowing
-                    scSendersFollowing = new Scanner(sendersFollowingFile);
-                    
-                    //escrever no sendersFollowingTEMP
-                    fwSendersFollowingTEMP = new FileWriter(sendersFollowingTEMPFile);
-                    bwSendersFollowingTEMP = new BufferedWriter(fwSendersFollowingTEMP);
-
-                    while(scSendersFollowing.hasNextLine()) {
-                        String lineSendersFollowing = scSendersFollowing.nextLine();
-                        if(!lineSendersFollowing.contentEquals(userID)) {
-                            bwSendersFollowingTEMP.write(lineSendersFollowing);
-                            bwSendersFollowingTEMP.newLine();
-                        }
-                    }
-                    scSendersFollowing.close();
-                    fwSendersFollowingTEMP.close();
-                    bwSendersFollowingTEMP.close();
-                    sendersFollowingFile.delete();
-                    // Renomear ficheiro temp para ser o ficheiro principal
-                    if(!sendersFollowingTEMPFile.renameTo(sendersFollowingFile)) {
-                        System.out.println("Erro ao renomear o ficheiro temp como principal");
-                        return -1;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                unfollowAux(userID, senderID);
+                return 0;
             }
             
             //caso se percorram todos os userIDs e nao se encontre userID entao o cliente
