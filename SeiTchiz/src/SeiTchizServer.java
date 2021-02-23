@@ -7,7 +7,6 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.Writer;
@@ -16,7 +15,7 @@ public class SeiTchizServer {
 
 	public int port;
 	
-	public File filesFolder; //
+	public File filesFolder;
 	public File serverStuffFolder;
 	public File userStuffFolder;	
 	public File usersFile; //database de usersID:name:pwd
@@ -688,14 +687,82 @@ public class SeiTchizServer {
         public int addu(String userID, String groupID, String senderID) {
             
             int resultado = -1;
+            boolean inParticipant = false;
+            boolean inMember = false;
             
-            // fazer a operacao envolve adicionar o groupID ao ficheiro participant.txt do userID
-            // e adicionar o userID ao ficheiro members.txt dentro do grupo no folder do owner            
-            //TODO
+            File groupFolder = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID);
+            File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID + "/members.txt");
+            File participantFile = new File("../files/userStuff/" + userID + "/groups/participant.txt");
+                      
+            if(!groupFolder.exists() || !participantFile.exists()) {
+                //se senderID nao tiver o folder com nome groupID
+                //ou se o ficheiro participant.txt nao existe no folder do userID 
+                //tambem devolver -1(porque isto significa que o userID inserido nao corresponde a nenhum user existente)
+                
+                return resultado;
+            }
             
-            //ha casos de erro que nao escrevi aqui que estao no enunciado que devem apenas devolver -1
-            //TODO
+            try {
+                Scanner scGroupMembers = new Scanner(groupMembersFile);
+                while(scGroupMembers.hasNextLine()) {
+                    String lineMember = scGroupMembers.nextLine();
+                    if(lineMember.contentEquals(userID)) {
+                        scGroupMembers.close();
+                        
+                        // se userID ja estiver em members.txt do grupo de senderID devolver -1
+                        return resultado;
+                    }
+                }
+                
+                scGroupMembers.close();
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
             
+            try {
+                Scanner scParticipant = new Scanner(participantFile);
+                while(scParticipant.hasNextLine()) {
+                    String lineParticipant = scParticipant.nextLine();
+                    if(lineParticipant.contentEquals(groupID)) {
+                        scParticipant.close();
+                        
+                        // se groupID ja estiver em participant.txt do userID e devolver -1
+                        return resultado;
+                    }
+                }
+                
+                scParticipant.close();
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            // proceder á adicao do userID ao grupo que implica:
+            // 1.colocar groupID no ficheiro participant.txt do userID
+            try {
+                FileWriter fwParticipant = new FileWriter(participantFile, true);
+                BufferedWriter bwParticipant = new BufferedWriter(fwParticipant);
+                bwParticipant.write(groupID);
+                bwParticipant.newLine();
+                bwParticipant.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            // 2.colocar userID no ficheiro members.txt do grupo que se encontra no folder do owner
+            try {
+                FileWriter fwMember = new FileWriter(groupMembersFile, true);
+                BufferedWriter bwMember = new BufferedWriter(fwMember);
+                bwMember.write(userID);
+                bwMember.newLine();
+                bwMember.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            resultado = 0;  
             return resultado;
         }
 	}

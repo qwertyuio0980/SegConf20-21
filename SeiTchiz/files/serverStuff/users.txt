@@ -1,3 +1,2 @@
-user1:username1:pass1
-aa:aa:aa
-ff:ff:ff
+user1:name1:pass1
+user2:name2:pass2

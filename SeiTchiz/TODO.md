@@ -14,7 +14,7 @@ like <photoID> – todo
 
 newgroup <groupID> – done
 
-addu <userID> <groupID> – todo
+addu <userID> <groupID> – done
 
 removeu <userID> <groupID> – todo
 
