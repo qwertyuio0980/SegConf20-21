@@ -346,6 +346,12 @@ public class SeiTchizServer {
 			}
 		}
 
+        /**
+         * Faz com que o senderID siga o userID, 
+         * @param userID Usuario a ser seguido
+         * @param senderID Usuario que seguira o userID
+         * @return
+         */
         public int follow(String userID, String senderID) {
 			int resultado = -1;
 			boolean encontrado = false;
@@ -356,6 +362,7 @@ public class SeiTchizServer {
 			}
 
 			//procurar da lista de users.txt se o userID pretendido existe
+            //TODO: tornar isto um metodo aux
 			try {
 				Scanner scanner = new Scanner(usersFile);
 				while(scanner.hasNextLine() && !encontrado) {
@@ -378,7 +385,6 @@ public class SeiTchizServer {
                     sc = new Scanner(sendersFollowingFile);
                     while(sc.hasNextLine()) {
                         String line = sc.nextLine();
-                        
                         // caso userID ja se encontre no ficheiro de following de senderID devolver -1
                         if(line.contentEquals(userID)) {
                             sc.close();
@@ -394,7 +400,7 @@ public class SeiTchizServer {
                 try {
                     FileWriter fw = new FileWriter(sendersFollowingFile, true);
                     BufferedWriter bw = new BufferedWriter(fw);
-                    
+
                     //escrita de userID
                     bw.write(userID);
                     bw.newLine();
@@ -428,11 +434,18 @@ public class SeiTchizServer {
 			return resultado;
 		}
 		
-		//NOTA ESTE METODO N TA A FAZER AS COISAS BEM AINDA
+        /**
+         * Faz com que o senderID deixe de seguir o userID
+         * @param userID Usuario deixado de seguir por senderID
+         * @param senderID Usuario que deixara de seguir userID
+         * @return 
+         */
         public int unfollow(String userID, String senderID) {
+            // TODO: Nao e necessario criar esta var
             int resultado = -1;
             boolean encontrado = false;
             
+            // TODO: Tornar a verificacao da existencia do user uma funcao aux
             //userID nao pode ter ":"
             if(userID.contains(":")) {
                 return resultado;
@@ -453,25 +466,11 @@ public class SeiTchizServer {
                 e.printStackTrace();
             }
 
-            //caso userID existe em users.txt
+            // caso userID existe em users.txt 
+            // Criar um novo ficheiro temp e copiar toda a informacao do ficheiro following
             if(encontrado) {
-                File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
-                Scanner sc;
-                try {
-                    sc = new Scanner(sendersFollowingFile);
-                    while(sc.hasNextLine()) {
-                        String line = sc.nextLine();
-                        
-                        // caso userID se encontre no ficheiro de followers de senderID fazer a operacao e devolver 0
-                        if(line.contentEquals(userID)) {
-                            unfollowAux(userID, senderID);
-                            resultado = 0;
-                        }
-                    }
-                    sc.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
+                unfollowAux(userID, senderID);
+                return 0;
             }
             
             //caso se percorram todos os userIDs e nao se encontre userID entao o cliente
