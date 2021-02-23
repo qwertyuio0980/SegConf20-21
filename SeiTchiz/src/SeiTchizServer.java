@@ -330,6 +330,12 @@ public class SeiTchizServer {
 			}
 		}
 
+        /**
+         * Faz com que o senderID siga o userID, 
+         * @param userID Usuario a ser seguido
+         * @param senderID Usuario que seguira o userID
+         * @return
+         */
         public int follow(String userID, String senderID) {
 			int resultado = -1;
 			boolean encontrado = false;
@@ -340,6 +346,7 @@ public class SeiTchizServer {
 			}
 
 			//procurar da lista de users.txt se o userID pretendido existe
+            //TODO: tornar isto um metodo aux
 			try {
 				Scanner scanner = new Scanner(usersFile);
 				while(scanner.hasNextLine() && !encontrado) {
@@ -362,7 +369,6 @@ public class SeiTchizServer {
                     sc = new Scanner(sendersFollowingFile);
                     while(sc.hasNextLine()) {
                         String line = sc.nextLine();
-                        
                         // caso userID ja se encontre no ficheiro de following de senderID devolver -1
                         if(line.contentEquals(userID)) {
                             sc.close();
@@ -378,7 +384,7 @@ public class SeiTchizServer {
                 try {
                     FileWriter fw = new FileWriter(sendersFollowingFile, true);
                     BufferedWriter bw = new BufferedWriter(fw);
-                    
+
                     //escrita de userID
                     bw.write(userID);
                     bw.newLine();
@@ -412,11 +418,18 @@ public class SeiTchizServer {
 			return resultado;
 		}
 		
-		//NOTA ESTE METODO N TA A FAZER AS COISAS BEM AINDA
+        /**
+         * Faz com que o senderID deixe de seguir o userID
+         * @param userID Usuario deixado de seguir por senderID
+         * @param senderID Usuario que deixara de seguir userID
+         * @return 
+         */
         public int unfollow(String userID, String senderID) {
+            // TODO: Nao e necessario criar esta var
             int resultado = -1;
             boolean encontrado = false;
             
+            // TODO: Tornar a verificacao da existencia do user uma funcao aux
             //userID nao pode ter ":"
             if(userID.contains(":")) {
                 return resultado;
@@ -437,23 +450,53 @@ public class SeiTchizServer {
                 e.printStackTrace();
             }
 
-            //caso userID existe em users.txt
+            // caso userID existe em users.txt 
+            // Criar um novo ficheiro temp e copiar toda a informacao do ficheiro following
             if(encontrado) {
                 File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
-                Scanner sc;
+                File sendersFollowingTEMPFile = new File("../files/userStuff/" + senderID + "/followingTemp.txt");
                 try {
-                    sc = new Scanner(sendersFollowingFile);
-                    while(sc.hasNextLine()) {
-                        String line = sc.nextLine();
-                        
-                        // caso userID se encontre no ficheiro de followers de senderID fazer a operacao e devolver 0
-                        if(line.contentEquals(userID)) {
-                            unfollowAux(userID, senderID);
-                            resultado = 0;
+                    if(!sendersFollowingTEMPFile.createNewFile()) {
+                        System.out.println("Erro ao criar ficheiro aux");
+                        System.exit(-1);
+                    }
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                Scanner scSendersFollowing = null;
+                FileWriter fwSendersFollowing = null;
+                BufferedWriter bwSendersFollowing = null;
+                
+                Scanner scSendersFollowingTEMP = null;
+                FileWriter fwSendersFollowingTEMP = null;
+                BufferedWriter bwSendersFollowingTEMP = null;
+    
+                try {
+                    //ler do sendersFollowing
+                    scSendersFollowing = new Scanner(sendersFollowingFile);
+                    
+                    //escrever no sendersFollowingTEMP
+                    fwSendersFollowingTEMP = new FileWriter(sendersFollowingTEMPFile);
+                    bwSendersFollowingTEMP = new BufferedWriter(fwSendersFollowingTEMP);
+
+                    while(scSendersFollowing.hasNextLine()) {
+                        String lineSendersFollowing = scSendersFollowing.nextLine();
+                        if(!lineSendersFollowing.contentEquals(userID)) {
+                            bwSendersFollowingTEMP.write(lineSendersFollowing);
+                            bwSendersFollowingTEMP.newLine();
                         }
                     }
-                    sc.close();
-                } catch (FileNotFoundException e) {
+                    scSendersFollowing.close();
+                    fwSendersFollowingTEMP.close();
+                    bwSendersFollowingTEMP.close();
+                    sendersFollowingFile.delete();
+                    // Renomear ficheiro temp para ser o ficheiro principal
+                    if(!sendersFollowingTEMPFile.renameTo(sendersFollowingFile)) {
+                        System.out.println("Erro ao renomear o ficheiro temp como principal");
+                        return -1;
+                    }
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
