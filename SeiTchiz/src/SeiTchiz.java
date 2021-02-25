@@ -32,7 +32,6 @@ public class SeiTchiz {
         //ciclo principal do cliente
         while(!stop) {
             
-            //abstrair noutra classe??
             //mostrar menu com opcoes
             System.out.println("Que operacao pretende executar? \n" +
             "f ou follow <userID> \n" +
@@ -40,7 +39,7 @@ public class SeiTchiz {
             "v ou viewfollowers \n" +
             "p ou post <photo> \n" +
             "w ou wall <nPhotos> \n" +
-            "l ou like <userID> \n" +
+            "l ou like <photoID> \n" +
             "n ou newgroup <groupID> \n" +
             "a ou addu <userID> <groupID> \n" +
             "r ou removeu <userID> <groupID> \n" +
@@ -51,11 +50,8 @@ public class SeiTchiz {
             "s ou stop");
 
             BufferedReader reader;
-            String input;
-            
-            // pode dar erro porque isto nao foi inicializado mas se for depois como se verifica se o user meteu os argumentos bem ou nao
+            String input;          
             String[] option = null; 
-            
             int resultado;
             String followersList = null;
             
@@ -90,6 +86,7 @@ public class SeiTchiz {
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
                                 "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
                                 "-O user com o userID escolhido ja esta a ser seguido; \n " +
+                                "-O user com o userID escolhido nao pode ser o cliente; \n " +
                                 "-O userID que procurou nao deve ter \":\" no nome.");
                         System.out.println("------------------------------------------");
                     }                
@@ -103,7 +100,7 @@ public class SeiTchiz {
                         System.out.println("------------------------------------------");
                         break;
                     }
-                    
+                                 
                     // envia-se o userID que se procura e o userID que fez o pedido
                     resultado = cs.unfollow(option[1], args[1]);
                     
@@ -116,6 +113,7 @@ public class SeiTchiz {
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
                                 "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
                                 "-O user com o userID escolhido nao esta a ser seguido; \n " +
+                                "-O user com o userID escolhido nao pode ser o cliente; \n " +
                                 "-O userID que procurou nao deve ter \":\" no nome.");
                         System.out.println("------------------------------------------");
                     }
@@ -215,9 +213,34 @@ public class SeiTchiz {
                     
                 case "r": case "removeu":
 
-                    //TODO
+                    if(option.length != 3 || option[1].contains(":") || option[2].contains("/") || option[2].contains(":")) {
+                        System.out.println("------------------------------------------");
+                        System.out.println("Opcao \"removeu\" recebe os argumentos <userID> que nao pode ter espacos ou " +
+                                "dois pontos (:) e <groupID> que nao pode ter espacos ou forward slashes(/) ou " +
+                                "dois pontos(:). Tente novamente");
+                        System.out.println("------------------------------------------");
+                        break;
+                    }
+                    
+                    // envia-se o userID que se pretende adicionar ao grupo, o grupoID e o senderID que fez o pedido
+                    resultado = cs.removeu(option[1], option[2], args[1]);
+                    
+                    if(resultado == 0) {
+                        System.out.println("------------------------------------------");
+                        System.out.println("O utilizador selecionado deixou de fazer parte do seu grupo indicado");
+                        System.out.println("------------------------------------------");
+                    }  else {
+                        System.out.println("------------------------------------------");
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O userID inserido nao pertence ao grupo; \n " +
+                                "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n " +
+                                "-O grupo indicado nao existe; \n " +
+                                "-Apenas o dono do grupo indicado pode remover membros ao mesmo.");
+                        System.out.println("------------------------------------------");
+                    }
                     
                     break;
+                    
                 case "g": case "ginfo":
                     
                     //caso meter o groupID

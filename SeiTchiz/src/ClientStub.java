@@ -305,6 +305,29 @@ public class ClientStub {
         
         return resultado;
     }
+
+    public int removeu(String userID, String groupID, String senderID) {
+        int resultado = -1;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("r");
+            
+            //enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
+            out.writeObject(userID + ":" + groupID + ":" + senderID);
+            
+            //receber a lista de followers de senderID
+            resultado = (int) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return resultado;
+    }
     
 
 }

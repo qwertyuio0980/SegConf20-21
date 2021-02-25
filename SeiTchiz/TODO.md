@@ -17,12 +17,9 @@ history <groupID>
 
 integracao da sandbox
 
+fazer as coisas dos jars
 
----- COM BUGS ----
-unfollow <userID> 
-
-
----- DUVIDAS COM PROF ----
+---- DUVIDAS TIRADAS COM PROF ----
 
 fazer um jar para a classe do server e um jar para a classe do client
 
