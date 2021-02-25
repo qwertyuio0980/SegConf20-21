@@ -477,27 +477,30 @@ public class SeiTchizServer {
             return resultado;
         }
 		
+        @SuppressWarnings("null")
         public void unfollowAux(String userID, String senderID) {
-            File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
-            File sendersFollowingTEMPFile = new File("../files/userStuff/" + senderID + "/followingTemp.txt");
-
-            Scanner scSendersFollowing = null;
-            FileWriter fwSendersFollowing = null;
-            BufferedWriter bwSendersFollowing = null;
             
-            Scanner scSendersFollowingTEMP = null;
-            FileWriter fwSendersFollowingTEMP = null;
-            BufferedWriter bwSendersFollowingTEMP = null;
+            File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
+            File sendersFollowingTEMPFile = new File("../files/userStuff/" + senderID + "/followingTemp.txt");            
+            File usersFollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");
+            File usersFollowersTEMPFile = new File("../files/userStuff/" + userID + "/followersTemp.txt");
+            
+            try {
+                if(sendersFollowingTEMPFile.createNewFile()) {
+                    System.out.println("sendersFollowingTEMPFile criado sem conteudo");
+                }
+                if(usersFollowersTEMPFile.createNewFile()) {
+                    System.out.println("usersFollowersTEMPFile criado sem conteudo");
+                }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
             
             //----retirar userID de following de senderID----
             //1.passar todo o conteudo de following menos o userID pretendido para um ficheiro auxiliar
-            try {
-                //ler do sendersFollowing
-                scSendersFollowing = new Scanner(sendersFollowingFile);
-                
-                //escrever no sendersFollowingTEMP
-                fwSendersFollowingTEMP = new FileWriter(sendersFollowingTEMPFile);
-                bwSendersFollowingTEMP = new BufferedWriter(fwSendersFollowingTEMP);
+            try(Scanner scSendersFollowing = new Scanner(sendersFollowingFile);
+            FileWriter fwSendersFollowingTEMP = new FileWriter(sendersFollowingTEMPFile);
+            BufferedWriter bwSendersFollowingTEMP = new BufferedWriter(fwSendersFollowingTEMP);) {
                 
                 while(scSendersFollowing.hasNextLine()) {
                     String lineSendersFollowing = scSendersFollowing.nextLine();
@@ -506,67 +509,31 @@ public class SeiTchizServer {
                         bwSendersFollowingTEMP.newLine();
                     }
                 }
+                
+                System.out.println("ficheiro followingTEMP de senderID ja tem o conteudo certo");
+                
             } catch (FileNotFoundException e2) {
                 e2.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        
-            //2.limpar conteudo do ficheiro following original 
-            try {
-                PrintWriter writerSendersFollowing = new PrintWriter(sendersFollowingFile);
-                writerSendersFollowing.print("");
-                writerSendersFollowing.close();
-            } catch (FileNotFoundException e1) {
-                e1.printStackTrace();
+       
+            //2.apagar o ficheiro original
+            if(sendersFollowingFile.delete()) {
+                System.out.println("ficheiro original de following de " + senderID + " apagado");
             }
             
-            //3.recolocar conteudo em following a partir do ficheiro auxiliar
-            try {
-                //ler do sendersFollowingTEMP
-                scSendersFollowingTEMP = new Scanner(sendersFollowingTEMPFile);
-                
-                //escrever no sendersFollowing
-                fwSendersFollowing = new FileWriter(sendersFollowingFile);
-                bwSendersFollowing = new BufferedWriter(fwSendersFollowing);
-                
-                while(scSendersFollowingTEMP.hasNextLine()) {
-                    String lineSendersFollowingTEMP = scSendersFollowingTEMP.nextLine();
-                    bwSendersFollowing.write(lineSendersFollowingTEMP);
-                    bwSendersFollowing.newLine();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+            //3.renomear o ficheiro temporario como following.txt
+            if(sendersFollowingTEMPFile.renameTo(sendersFollowingFile)) {
+                System.out.println("ficheiro temporario de following de " + senderID + " passou a ser o ficheiro oficial");
             }
-            
-            //4.apagar o ficheiro following temporario
-            if(sendersFollowingTEMPFile.delete()) {
-                //nada acontece aqui
-            }
-            
-            //------------------------------------------------------------------
-            
-            File usersFollowersFile = new File("../files/userStuff/" + userID + "/followers.txt");
-            File usersFollowersTEMPFile = new File("../files/userStuff/" + userID + "/followersTemp.txt");
-    
-            Scanner scUsersFollowers = null;
-            FileWriter fwUsersFollowers = null;
-            BufferedWriter bwUsersFollowers = null;
-             
-            Scanner scUsersFollowersTEMP = null;
-            FileWriter fwUsersFollowersTEMP = null;
-            BufferedWriter bwUsersFollowersTEMP = null;
-             
+
             //----retirar senderID de followers de userID----
             //1.passar todo o conteudo de followers menos o senderID pretendido para um ficheiro auxiliar
-            try {
-                //ler do sendersFollowing
-                scUsersFollowers = new Scanner(usersFollowersFile);
-                 
-                //escrever no sendersFollowingTEMP
-                fwUsersFollowersTEMP = new FileWriter(usersFollowersTEMPFile);
-                bwUsersFollowersTEMP = new BufferedWriter(fwUsersFollowersTEMP);
-                 
+            try(Scanner scUsersFollowers = new Scanner(usersFollowersFile);
+            FileWriter fwUsersFollowersTEMP = new FileWriter(usersFollowersTEMPFile);
+            BufferedWriter bwUsersFollowersTEMP = new BufferedWriter(fwUsersFollowersTEMP);) {
+
                 while(scUsersFollowers.hasNextLine()) {
                     String lineUsersFollowers = scUsersFollowers.nextLine();
                     if(!lineUsersFollowers.contentEquals(senderID)) {
@@ -574,64 +541,25 @@ public class SeiTchizServer {
                         bwUsersFollowersTEMP.newLine();
                     }
                 }
+                
+                System.out.println("ficheiro followersTEMP de userID ja tem o conteudo certo");
+                
             } catch (FileNotFoundException e2) {
                 e2.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
          
-            //2.limpar conteudo do ficheiro followers original 
-            try {
-                PrintWriter writerUsersFollowers = new PrintWriter(usersFollowersFile);
-                writerUsersFollowers.print("");
-                writerUsersFollowers.close();
-            } catch (FileNotFoundException e1) {
-                e1.printStackTrace();
-            }
-             
-            //3.recolocar conteudo em following a partir do ficheiro auxiliar
-            try {
-                //ler do sendersFollowingTEMP
-                scUsersFollowersTEMP = new Scanner(usersFollowersTEMPFile);
-                 
-                //escrever no sendersFollowing
-                fwUsersFollowers = new FileWriter(usersFollowersFile);
-                bwUsersFollowers = new BufferedWriter(fwUsersFollowers);
-                 
-                while(scUsersFollowersTEMP.hasNextLine()) {
-                    String lineUsersFollowersTEMP = scUsersFollowersTEMP.nextLine();
-                    bwUsersFollowers.write(lineUsersFollowersTEMP);
-                    bwUsersFollowers.newLine();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+            //2.apagar o ficheiro original
+            if(usersFollowersFile.delete()) {
+                System.out.println("ficheiro original de followers de " + userID + " apagado");
             }
             
-            //4.apagar o ficheiro followers temporario
-            if(usersFollowersTEMPFile.delete()) {
-                //nada acontece aqui
+            //3.renomear o ficheiro temporario como followers.txt
+            if(usersFollowersTEMPFile.renameTo(usersFollowersFile)) {
+                System.out.println("ficheiro temporario de followers de " + userID + " passou a ser o ficheiro oficial");
             }
-
-            //fechar todos os recursos
-            try {
-                scSendersFollowing.close();
-                fwSendersFollowing.close();
-                bwSendersFollowing.close();
-                
-                scSendersFollowingTEMP.close();
-                fwSendersFollowingTEMP.close();
-                bwSendersFollowingTEMP.close();
-                
-                scUsersFollowers.close();
-                fwUsersFollowers.close();
-                bwUsersFollowers.close();
-                 
-                scUsersFollowersTEMP.close();
-                fwUsersFollowersTEMP.close();
-                bwUsersFollowersTEMP.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            
         }
         
         public String viewfollowers(String senderID) {
@@ -687,8 +615,6 @@ public class SeiTchizServer {
         public int addu(String userID, String groupID, String senderID) {
             
             int resultado = -1;
-            boolean inParticipant = false;
-            boolean inMember = false;
             
             File groupFolder = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID);
             File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID + "/members.txt");
@@ -765,7 +691,16 @@ public class SeiTchizServer {
             resultado = 0;  
             return resultado;
         }
+               
+        public String ginfo() {
+            //TODO
+            
+            return null;
+        }
+        
+        
 	}
+	
 }
 
 		

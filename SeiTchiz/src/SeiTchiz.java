@@ -220,7 +220,20 @@ public class SeiTchiz {
                     break;
                 case "g": case "ginfo":
                     
-                    //TODO
+                    //caso meter o groupID
+                    if(option.length == 2 && !option[1].contains("/") || !option[1].contains(":")) {
+                        //TODO
+                        
+                    //caso nao meter o groupID
+                    } else if(option.length == 1) {
+                      //TODO
+                        
+                    } else {
+                        System.out.println("------------------------------------------");
+                        System.out.println("Opcao \"ginfo\" pode ou nao receber um argumento <groupID> que por sua vez " +
+                        "nao pode ter espacos ou forward slashes(/) ou dois pontos(:). Tente novamente");
+                        System.out.println("------------------------------------------");
+                    }
                     
                     break;
                 case "m": case "msg":
