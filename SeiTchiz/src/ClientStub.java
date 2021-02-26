@@ -252,7 +252,7 @@ public class ClientStub {
             //enviar ID do cliente que quer ver os seus followers
             out.writeObject(senderID);
             
-            //receber codigo de resposta do servidor
+            //receber a lista de seguidores
             followersList = (String) in.readObject();
             
         } catch (IOException e) {
@@ -306,7 +306,7 @@ public class ClientStub {
             //enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
             out.writeObject(userID + ":" + groupID + ":" + senderID);
             
-            //receber a lista de followers de senderID
+            //receber o resultado da operacao
             resultado = (int) in.readObject();
             
         } catch (IOException e) {
@@ -326,10 +326,10 @@ public class ClientStub {
             //enviar tipo de operacao
             out.writeObject("r");
             
-            //enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
+            //enviar ID do cliente que se quer adicionar ao grupo:ID do grupo:ID do sender
             out.writeObject(userID + ":" + groupID + ":" + senderID);
             
-            //receber a lista de followers de senderID
+            //receber o resultado da operacao
             resultado = (int) in.readObject();
             
         } catch (IOException e) {
@@ -343,16 +343,16 @@ public class ClientStub {
         return resultado;
     }
     
-    public int msg(String groupID, String mensagem, String senderID) {
+    public int msg(String groupID, String senderID, String mensagem) {
         int resultado = -1;
         try {
             //enviar tipo de operacao
             out.writeObject("m");
             
-            // enviar groupID:mensagem:ID do user que fez o pedido
-            out.writeObject(groupID + ":" + mensagem + ":" + senderID);
+            // enviar groupID:ID do user que fez o pedido:mensagem
+            out.writeObject(groupID + ":" + senderID + ":" + mensagem);
             
-            //receber a lista de followers de senderID
+            //receber o resultado da operacao
             resultado = (int) in.readObject();
             
         } catch (IOException e) {

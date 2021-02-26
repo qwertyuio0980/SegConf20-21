@@ -56,6 +56,8 @@ public class SeiTchiz {
             String followersList = null;
             String mensagem = null;
             StringBuilder sbMensagem = new StringBuilder();
+            String listaGinfo = null;
+
             
             try {
                 reader = new BufferedReader(new InputStreamReader(System.in)); 
@@ -253,14 +255,22 @@ public class SeiTchiz {
                     
                 case "g": case "ginfo":
                     
-                    /*
                     //caso meter o groupID
                     if(option.length == 2 && !option[1].contains("/") || !option[1].contains(":") || !option[1].contains("-")) {
-                        //TODO
+
+                        // envia-se o senderID e o groupID
+                        listaGinfo = cs.ginfo(args[1], option[1]);
+
+                        //falta o resto
                         
                     //caso nao meter o groupID
                     } else if(option.length == 1) {
-                        //TODO
+
+                        // envia-se o senderID e o groupID
+                        listaGinfo = cs.ginfo2(args[1]);
+
+
+                        //falta o resto
                         
                     } else {
                         System.out.println(separador);
@@ -268,15 +278,9 @@ public class SeiTchiz {
                         "nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
                         System.out.println(separador);
                     }
-                    */
                     break;
                     
                 case "m": case "msg":
-                    //msg grdfadga mensaaaaaagem adsaasa
-                    // m grupo1 bababa
-                    // m grupo 1 gagsagsag
-                    //msg g1 cheira me a problemas 
-
 
                     if(option.length < 3 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
                         System.out.println(separador);
@@ -293,8 +297,8 @@ public class SeiTchiz {
                     sbMensagem.deleteCharAt(sbMensagem.length()-1);
                     mensagem = sbMensagem.toString();
 
-                    // envia-se o groupID, a mensagem e o utilizador que fez o pedido
-                    resultado = cs.msg(option[1], mensagem, args[1]);
+                    // envia-se o groupID, o utilizador que fez o pedido e a mensagem
+                    resultado = cs.msg(option[1], args[1], mensagem);
 
                     if(resultado == 0) {
                         System.out.println(separador);
@@ -303,12 +307,9 @@ public class SeiTchiz {
                     } else {
                         System.out.println(separador);
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
-                                "Razoes possiveis: -O userID inserido nao pertence ao grupo; \n " +
-                                "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n " +
+                                "Razoes possiveis: -O cliente nao pertence ao grupo; \n " +
                                 "-O grupo indicado nao existe; \n " +
-                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
-                                "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
-                                "-Apenas o dono do grupo indicado pode remover membros ao mesmo.");
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
                         System.out.println(separador);
                     }
                     break;
