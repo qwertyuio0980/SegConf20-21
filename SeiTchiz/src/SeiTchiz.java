@@ -15,6 +15,7 @@ public class SeiTchiz {
             System.exit(-1);
         }
 
+        // cria ligacao com socket
         ClientStub cs = new ClientStub(args[0]);
 
         // efetuar login
@@ -23,9 +24,6 @@ public class SeiTchiz {
         } else if(arglen == 2) {
             cs.login(args[1]);
         }
-        
-        System.out.println("---Sessao cliente iniciada---");
-        
         
         boolean stop = false;
 
@@ -49,11 +47,15 @@ public class SeiTchiz {
             "h ou history <groupID> \n" +
             "s ou stop");
 
+
+            String separador = "------------------------------------------";
             BufferedReader reader;
             String input;          
             String[] option = null; 
             int resultado;
             String followersList = null;
+            String mensagem = null;
+            StringBuilder sbMensagem = new StringBuilder();
             
             try {
                 reader = new BufferedReader(new InputStreamReader(System.in)); 
@@ -67,10 +69,11 @@ public class SeiTchiz {
             switch(option[0]) {
                 case "f": case "follow":
                 
-                    if(option.length != 2) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Opcao \"follow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");
-                        System.out.println("------------------------------------------");
+                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"follow\" recebe argumento <userID> que nao pode conter: " +
+                        "espacos, dois pontos, hifens ou forward slashes.");
+                        System.out.println(separador);
                         break;
                     }
                     
@@ -78,26 +81,27 @@ public class SeiTchiz {
                     resultado = cs.follow(option[1], args[1]);
                     
                     if(resultado == 0) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Esta a seguir o user com userID: " + option[1]);
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("Esta a seguir o user " + option[1]);
+                        System.out.println(separador);
                     } else {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
-                                "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
-                                "-O user com o userID escolhido ja esta a ser seguido; \n " +
-                                "-O user com o userID escolhido nao pode ser o cliente; \n " +
-                                "-O userID que procurou nao deve ter \":\" no nome.");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n" +
+                                "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n" +
+                                "-O user com o userID escolhido ja esta a ser seguido; \n" +
+                                "-O user com o userID escolhido nao pode ser o cliente; \n" +
+                                "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
                     }                
                     break;
                     
                 case "u": case "unfollow":
 
-                    if(option.length != 2) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Opcao \"unfollow\" recebe argumento <userID> que nao pode ter espacos. Tente novamente");
-                        System.out.println("------------------------------------------");
+                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"unfollow\" recebe o argumento <userID> que nao pode conter: " +
+                        "espacos, dois pontos, hifens ou forward slashes.");
+                        System.out.println(separador);
                         break;
                     }
                                  
@@ -105,26 +109,26 @@ public class SeiTchiz {
                     resultado = cs.unfollow(option[1], args[1]);
                     
                     if(resultado == 0) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Deixou de seguir o user com userID: " + option[1]);
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("Deixou de seguir o user " + option[1]);
+                        System.out.println(separador);
                     } else {
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
                                 "Razoes possiveis: -O userID inserido nao pertence nenhum user existente no sistema; \n " +
                                 "-O user com o userID escolhido nao esta a ser seguido; \n " +
                                 "-O user com o userID escolhido nao pode ser o cliente; \n " +
-                                "-O userID que procurou nao deve ter \":\" no nome.");
-                        System.out.println("------------------------------------------");
+                                "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
                     }
-                    
                     break;
+
                 case "v": case "viewfollowers":
                     
                     if(option.length != 1) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Opcao \"viewfollowers\" nao recebe argumentos adicionais. Tente novamente");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("Opcao \"viewfollowers\" nao recebe argumentos adicionais.");
+                        System.out.println(separador);
                         break;
                     }
                     
@@ -132,13 +136,13 @@ public class SeiTchiz {
                     followersList = cs.viewfollowers(args[1]);
                     
                     if(followersList.isEmpty()) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("O cliente nao tem followers");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("O cliente nao tem followers.");
+                        System.out.println(separador);
                     } else {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Os seus followers sao: \n" + followersList);
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("Os seus followers sao:\n" + followersList);
+                        System.out.println(separador);
                     }
                     break;
                     
@@ -159,11 +163,11 @@ public class SeiTchiz {
                     break;
                 case "n": case "newgroup":
                     
-                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":")) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode ter espacos" +
-                    " ou forward slashes(/) ou dois pontos(:). Tente novamente");
-                        System.out.println("------------------------------------------");
+                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode conter espacos, " +
+                        "dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
                         break;
                     }
                     
@@ -171,24 +175,27 @@ public class SeiTchiz {
                     resultado = cs.newgroup(option[1], args[1]); 
                     
                     if(resultado == 0) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("O cliente e agora dono do novo grupo com groupID: " + option[1]);
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("O cliente e agora dono do novo grupo " + option[1]);
+                        System.out.println(separador);
                     } else {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Nao foi possivel criar o grupo pois o grupo com o groupID que designou ja existe");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O grupo com o groupID que designou ja existe; \n " +
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
                     }
                     break;
                     
                 case "a": case "addu":
 
-                    if(option.length != 3 || option[1].contains(":") || option[2].contains("/") || option[2].contains(":")) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Opcao \"addu\" recebe os argumentos <userID> que nao pode ter espacos ou " +
-                                "dois pontos (:) e <groupID> que nao pode ter espacos ou forward slashes(/) ou " +
-                                "dois pontos(:). Tente novamente");
-                        System.out.println("------------------------------------------");
+                    if(option.length != 3 || option[1].contains(":") || option[1].contains("/") ||
+                    option[1].contains("-") || option[2].contains("-") || option[2].contains("/") || 
+                    option[2].contains(":")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"addu\" recebe os argumentos <userID> e <groupID> que nao " + 
+                                "podem conter espacos, dois pontos, hifens ou forward slashes nos nomes.");
+                        System.out.println(separador);
                         break;
                     }
                     
@@ -196,29 +203,31 @@ public class SeiTchiz {
                     resultado = cs.addu(option[1], option[2], args[1]);
                     
                     if(resultado == 0) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("O utilizador selecionado e agora membro do seu grupo indicado");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("O utilizador selecionado e agora membro do grupo " + option[2]);
+                        System.out.println(separador);
                     }  else {
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
                                 "Razoes possiveis: -O userID inserido ja pertence ao grupo; \n " +
                                 "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n " +
                                 "-O grupo indicado nao existe; \n " +
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
+                                "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
                                 "-Apenas o dono do grupo indicado pode adicionar membros ao mesmo.");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
                     }
-                    
                     break;
                     
                 case "r": case "removeu":
 
-                    if(option.length != 3 || option[1].contains(":") || option[2].contains("/") || option[2].contains(":")) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("Opcao \"removeu\" recebe os argumentos <userID> que nao pode ter espacos ou " +
-                                "dois pontos (:) e <groupID> que nao pode ter espacos ou forward slashes(/) ou " +
-                                "dois pontos(:). Tente novamente");
-                        System.out.println("------------------------------------------");
+                    if(option.length != 3 || option[1].contains(":") || option[1].contains("/") ||
+                    option[1].contains("-") || option[2].contains("-") || option[2].contains("/") || 
+                    option[2].contains(":")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"removeu\" recebe os argumentos <userID> e <groupID> que nao " + 
+                                "podem conter espacos, dois pontos, hifens ou forward slashes nos nomes.");
+                        System.out.println(separador);
                         break;
                     }
                     
@@ -226,44 +235,84 @@ public class SeiTchiz {
                     resultado = cs.removeu(option[1], option[2], args[1]);
                     
                     if(resultado == 0) {
-                        System.out.println("------------------------------------------");
-                        System.out.println("O utilizador selecionado deixou de fazer parte do seu grupo indicado");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
+                        System.out.println("O utilizador selecionado deixou de fazer parte do grupo " + option[2]);
+                        System.out.println(separador);
                     }  else {
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
                         System.out.println("Ocorreu um erro a fazer a operacao... \n " +
                                 "Razoes possiveis: -O userID inserido nao pertence ao grupo; \n " +
                                 "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n " +
                                 "-O grupo indicado nao existe; \n " +
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
+                                "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
                                 "-Apenas o dono do grupo indicado pode remover membros ao mesmo.");
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
                     }
-                    
                     break;
                     
                 case "g": case "ginfo":
                     
+                    /*
                     //caso meter o groupID
-                    if(option.length == 2 && !option[1].contains("/") || !option[1].contains(":")) {
+                    if(option.length == 2 && !option[1].contains("/") || !option[1].contains(":") || !option[1].contains("-")) {
                         //TODO
                         
                     //caso nao meter o groupID
                     } else if(option.length == 1) {
-                      //TODO
+                        //TODO
                         
                     } else {
-                        System.out.println("------------------------------------------");
+                        System.out.println(separador);
                         System.out.println("Opcao \"ginfo\" pode ou nao receber um argumento <groupID> que por sua vez " +
-                        "nao pode ter espacos ou forward slashes(/) ou dois pontos(:). Tente novamente");
-                        System.out.println("------------------------------------------");
+                        "nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
+                    }
+                    */
+                    break;
+                    
+                case "m": case "msg":
+                    //msg grdfadga mensaaaaaagem adsaasa
+                    // m grupo1 bababa
+                    // m grupo 1 gagsagsag
+                    //msg g1 cheira me a problemas 
+
+
+                    if(option.length < 3 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"msg\" recebe dois argumentos <groupID> " + 
+                        "que nao pode conter espacos, dois pontos, hifens ou forward slashes no nome " + 
+                        "e <msg> que ----------------POR DECIDIR----------- ");
+                        System.out.println(separador);
                     }
                     
-                    break;
-                case "m": case "msg":
+                    // colocar input correspondente a msg numa var "mensagem"
+                    for(int i = 2; i < option.length; i++) {
+                        sbMensagem.append(option[i] + " ");
+                    }
+                    sbMensagem.deleteCharAt(sbMensagem.length()-1);
+                    mensagem = sbMensagem.toString();
 
-                    //TODO
-                    
+                    // envia-se o groupID, a mensagem e o utilizador que fez o pedido
+                    resultado = cs.msg(option[1], mensagem, args[1]);
+
+                    if(resultado == 0) {
+                        System.out.println(separador);
+                        System.out.println("A sua mensagem foi enviada para o grupo " + option[1]);
+                        System.out.println(separador);
+                    } else {
+                        System.out.println(separador);
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O userID inserido nao pertence ao grupo; \n " +
+                                "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n " +
+                                "-O grupo indicado nao existe; \n " +
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
+                                "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;" +
+                                "-Apenas o dono do grupo indicado pode remover membros ao mesmo.");
+                        System.out.println(separador);
+                    }
                     break;
+
                 case "c": case "collect":
 
                     //TODO

@@ -19,6 +19,7 @@ public class SeiTchizServer {
 	public File serverStuffFolder;
 	public File userStuffFolder;	
 	public File usersFile; //database de usersID:name:pwd
+    public File groupsFolder; // Guarda informacoes sobre os grupos
 
 	public static void main(String[] args) {
 		System.out.println("--------------servidor iniciado-----------");
@@ -55,6 +56,10 @@ public class SeiTchizServer {
 
             usersFile = new File("../files/serverStuff/users.txt");
             usersFile.createNewFile();
+
+            // Criar diretorio para guardar informacoes sobre os grupos
+            groupsFolder = new File("../files/groups");
+			groupsFolder.mkdirs();
 
 			System.out.println("ficheiros de esqueleto do servidor criados");
 			System.out.println("------------------------------------------");
@@ -127,17 +132,22 @@ public class SeiTchizServer {
 			Writer output = new BufferedWriter(new FileWriter("../files/serverStuff/users.txt", true));		
 			output.append(clientID + ":" + userName + ":" + passwd + "\n");
 			output.close();
+
 			File userPage = new File("../files/userStuff/" + clientID);
             userPage.mkdir();
+
 			Writer userFollowers = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/followers.txt", true));
+            userFollowers.close();
+
 			Writer userFollowing = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/following.txt", true));
-			
-			File groupsOwnerFolder = new File("../files/userStuff/" + clientID + "/groups/owner");
-			groupsOwnerFolder.mkdirs();
-			
-			File groupsParticipantFile = new File("../files/userStuff/" + clientID + "/groups/participant.txt");
-			groupsParticipantFile.createNewFile();
-			
+            userFollowing.close();
+
+            Writer userParticipant = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/participant.txt", true));
+            userParticipant.close();
+            
+			Writer userOwner = new BufferedWriter(new FileWriter("../files/userStuff/" + clientID + "/owner.txt", true));
+            userOwner.close();
+            
 			File photosFolder = new File("../files/userStuff/" + clientID + "/photos");
 			photosFolder.mkdir();
 			
@@ -365,7 +375,7 @@ public class SeiTchizServer {
 			boolean encontrado = false;
 
 			//userID nao pode ter ":" nem pode ser igual ao senderID
-			if(userID.contains(":") || userID.contentEquals(senderID)) {
+			if(userID.contains(":") || userID.contains("-") || userID.contentEquals(senderID)) {
 				return resultado;
 			}
 
@@ -455,7 +465,7 @@ public class SeiTchizServer {
             
             // TODO: Tornar a verificacao da existencia do user uma funcao aux
             //userID nao pode ter ":" nem pode ser igual ao senderID
-            if(userID.contains(":") || userID.contentEquals(senderID)) {
+            if(userID.contains(":") || userID.contains("-") || userID.contentEquals(senderID)) {
                 return resultado;
             }
             
@@ -619,76 +629,135 @@ public class SeiTchizServer {
             return sb.toString();
         }
         
+        /**
+         * Criar um diretorio com o nome senderID:groupID caso nao exita, dentro estao contidos as informacoes
+         * do grupo
+         * Cada diretorio de grupo contera dois diretorios, um que guardara as mensagens e outro que guardara os
+         * participantes
+         * @param groupID no do grupo a ser criado
+         * @param senderID usuario dono do grupo
+         * return 0 caso o grupo tenha sido criado com sucesso, -1 caso ja exista um grupo com o groupID passado
+         * ou 1 caso haja algum erro no processo
+         */
         public int newgroup(String groupID, String senderID) {
-            int resultado = -1;
-            
-            //verificar se dentro do folder de owner de grupos do senderID existe um folder com o nome de groupID
-            File groupOwnerFolder = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID);
-            File groupOwnerMembersFile = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID + "/members.txt");
-            if(!groupOwnerFolder.exists()) {
-                //caso nao existir criar esse folder
-                groupOwnerFolder.mkdir();
-                try {
-                    groupOwnerMembersFile.createNewFile();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                
-                
-                resultado = 0;
+            if(groupID.contains("-")){
+                System.out.println("Nome do group nao pode conter '-'");
+                return -1;
             }
+            String senderIDgroupID = senderID + "-" + groupID;
+            //verificar se dentro do folder dos grupos existe um folder com o nome de "senderID:groupID"
+            File ownerGroupFolder = new File("../files/groups/" + senderIDgroupID);
+            if(!ownerGroupFolder.exists()) {
+                //caso nao existir criar esse folder
+                if(ownerGroupFolder.mkdir()) {
+                    // Criar ficheiros counter.txt e participants.txt
+                    File counter = new File("../files/groups/" + senderIDgroupID + "/counter.txt");
+                    File participants = new File("../files/groups/" + senderIDgroupID + "/participants.txt");
+                    try {
+                        counter.createNewFile();
+                        participants.createNewFile();
 
-            //caso sim devolver -1
-            return resultado;
+                        // Inicializar o ficheiro counter.txt com um inteiro 0, indicando que ainda nao ha mensagens no grupo
+                        FileWriter fwCounter = new FileWriter(counter, true);
+                        BufferedWriter bwCounter = new BufferedWriter(fwCounter);
+                        bwCounter.write("0");
+                        bwCounter.newLine();
+                        bwCounter.close();
+
+                        // Inicializar o ficheiro participants.txt no folder groups com o primeiro participante: senderID
+                        FileWriter fwParticipants = new FileWriter(participants, true);
+                        BufferedWriter bwParticipants = new BufferedWriter(fwParticipants);
+                        bwParticipants.write(senderID);
+                        bwParticipants.newLine();
+                        bwParticipants.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    // Adicionar o nome do grupo ao ficheiro owner.txt do senderID
+                    try {
+                        File fUserOwner = new File("../files/userStuff/" + senderID + "/owner.txt");
+                        FileWriter fwUserOwner = new FileWriter(fUserOwner, true);
+                        BufferedWriter bwUserOwner = new BufferedWriter(fwUserOwner);
+                        bwUserOwner.write(groupID);
+                        bwUserOwner.newLine();
+                        bwUserOwner.close();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                    // Adicionar o nome do grupo ao ficheiro participant.txt do senderID
+                    try {
+                        File fUserParticipant = new File("../files/userStuff/" + senderID + "/participant.txt");
+                        FileWriter fwUserParticipant = new FileWriter(fUserParticipant, true);
+                        BufferedWriter bwUserParticipant = new BufferedWriter(fwUserParticipant);
+                        bwUserParticipant.write(groupID);
+                        bwUserParticipant.newLine();
+                        bwUserParticipant.close();
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                    return 0;
+                } else {
+                    return 1;
+                }
+            } else {
+                // Ja existe um grupo com senderID e groupID passados
+                return -1;
+            }
         }
         
+        /**
+         * Adiciona o utilizador userID como membro do grupo groupID.
+         * Apenas os donos dos grupos podem adicionar utilizadores aos seus grupos
+         * @param userID usuario a ser adicionado ao grupo
+         * @param groupID grupo ao qual o usuario sera adicionado
+         * @param senderID usuario atual
+         * @return 0 caso sucesso ao adicionar o usuario ao grupo, -1 caso contrario
+         */
         public int addu(String userID, String groupID, String senderID) {
             
-            int resultado = -1;
-            
-            File groupFolder = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID);
-            File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID + "/members.txt");
-            File participantFile = new File("../files/userStuff/" + userID + "/groups/participant.txt");
+            File groupFolder = new File("../files/groups/" + senderID + "-" + groupID); 
+            File counterFile = new File("../files/groups/"  + senderID + "-" + groupID + "/counter.txt");
+            File groupMembersFile = new File("../files/groups/"  + senderID + "-" + groupID + "/participants.txt");
+            File participantFile = new File("../files/userStuff/" + userID + "/participant.txt");
                       
             if(!groupFolder.exists() || !participantFile.exists()) {
                 //se senderID nao tiver o folder com nome groupID
                 //ou se o ficheiro participant.txt nao existe no folder do userID 
                 //tambem devolver -1(porque isto significa que o userID inserido nao corresponde a nenhum user existente)
-                
-                return resultado;
+                return -1;
             }
             
+            // Verifica se o userID ja participa do grupo
             try {
                 Scanner scGroupMembers = new Scanner(groupMembersFile);
                 while(scGroupMembers.hasNextLine()) {
                     String lineMember = scGroupMembers.nextLine();
                     if(lineMember.contentEquals(userID)) {
                         scGroupMembers.close();
-                        
-                        // se userID ja estiver em members.txt do grupo de senderID devolver -1
-                        return resultado;
+                        return -1;
                     }
                 }
-                
                 scGroupMembers.close();
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             
+            // Verifica se o grupo ja esta nos registros de grupos ao qual o userID pertence
             try {
                 Scanner scParticipant = new Scanner(participantFile);
                 while(scParticipant.hasNextLine()) {
                     String lineParticipant = scParticipant.nextLine();
                     if(lineParticipant.contentEquals(groupID)) {
                         scParticipant.close();
-                        
-                        // se groupID ja estiver em participant.txt do userID e devolver -1
-                        return resultado;
+                        return -1;
                     }
                 }
-                
                 scParticipant.close();
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
@@ -696,11 +765,11 @@ public class SeiTchizServer {
             }
             
             // proceder á adicao do userID ao grupo que implica:
-            // 1.colocar groupID:senderID no ficheiro participant.txt do userID
+            // 1.colocar senderID-groupID no ficheiro participant.txt do userID
             try {
                 FileWriter fwParticipant = new FileWriter(participantFile, true);
                 BufferedWriter bwParticipant = new BufferedWriter(fwParticipant);
-                bwParticipant.write(groupID + ":" + senderID);
+                bwParticipant.write(senderID + "-" + groupID);
                 bwParticipant.newLine();
                 bwParticipant.close();
             } catch (IOException e) {
@@ -708,7 +777,7 @@ public class SeiTchizServer {
                 e.printStackTrace();
             }
             
-            // 2.colocar userID no ficheiro members.txt do grupo que se encontra no folder do owner
+            // 2.colocar userID no ficheiro members.txt do grupo
             try {
                 FileWriter fwMember = new FileWriter(groupMembersFile, true);
                 BufferedWriter bwMember = new BufferedWriter(fwMember);
@@ -720,145 +789,206 @@ public class SeiTchizServer {
                 e.printStackTrace();
             }
             
-            resultado = 0;  
-            return resultado;
+            return 0;
         }
         
-        //AINDA TA COM PROBLEMAS
-        public int removeu(String userID, String groupID, String senderID) {
-            
-            int resultado = -1;
-            boolean inMember = false;
-            boolean inParticipant = false;
+    //     /**
+    //      * Remove o utilizador userID do grupo indicado (groupID) caso o senderID seja o dono do grupo
+    //      * @param userID usuario a ser removido do grupo
+    //      * @param groupID grupo do qual o usuario sera removido
+    //      * @param senderID usuario atual
+    //      * @return 0 caso o usuario tenha sido removido do grupo com sucesso, -1 caso contrario
+    //      */
+    //     public int removeu(String userID, String groupID, String senderID) {
+    //         // Remove o userID do ficheiro participants.txt no diretorio do grupo
+    //         // Remove o senderID-groupID do ficheiro participant.txt no diretorio userID
+
+    //         boolean inMember = false;
+    //         boolean inParticipant = false;
                  
-            File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/owner/" + groupID + "/members.txt");
-            File participantFile = new File("../files/userStuff/" + userID + "/groups/participant.txt");
-                      
-            if(!groupMembersFile.exists() || !participantFile.exists()) {
-                //se senderID nao tiver o folder com nome groupID
-                //ou se o ficheiro participant.txt nao existe no folder do userID 
-                //tambem devolver -1(porque isto significa que o userID inserido nao corresponde a nenhum user existente)
-
-                return resultado;
-            }
+    //         File groupMembersFile = new File("../files/groups/" + senderID + "-" + groupID + "/participants.txt");
+    //         File participantFile = new File("../files/userStuff/" + userID + "/participant.txt");
             
-            try(Scanner scMembers = new Scanner(groupMembersFile);
-            Scanner scParticipant = new Scanner(participantFile);) {
+    //         // Verifica se ha um grupo com nome senderID-groupID e se o userID existe
+    //         if(!groupMembersFile.exists() || !participantFile.exists()) {
+    //             return -1;
+    //         }
+
+    //         try {
+    //             // Percorre o ficheiro participants.txt e ir colocando o conteudo do mesmo
+    //             // num ficheiro temporario
+    // // --------
+    //             File groupMembersTEMPFile = new File("../files/groups/" + senderID + "-" + groupID + "/participantsTemp.txt");            
                 
-                //ver se userID esta no ficheiro members.txt do senderID se nao devolver -1
-                while(scMembers.hasNextLine()) {
-                    String lineMembers = scMembers.nextLine();
-                    if(lineMembers.contentEquals(userID)) {
-                        inMember = true;
-                    }
+    //             try {
+    //                 if(groupMembersTEMPFile.createNewFile()) {
+    //                     System.out.println("groupMembersTEMPFile criado sem conteudo");
+    //                 }
+    //             } catch (IOException e1) {
+    //                 e1.printStackTrace();
+    //             }
+                
+    //             //----retirar userID de participants do grupo----
+    //             //1.passar todo o conteudo de participants menos o userID para um ficheiro auxiliar
+    //             try(Scanner scgroupMembers = new Scanner(groupMembersFile);
+    //             FileWriter fwgroupMembersTEMP = new FileWriter(groupMembersTEMPFile);
+    //             BufferedWriter bwgroupMembersTEMP = new BufferedWriter(fwgroupMembersTEMP);) {
                     
-                }
+    //                 while(scgroupMembers.hasNextLine()) {
+    //                     String line = scgroupMembers.nextLine();
+    //                     if(!line.contentEquals(userID)) {
+    //                         bwgroupMembersTEMP.write(line);
+    //                         bwgroupMembersTEMP.newLine();
+    //                     }
+    //                 }
+                    
+    //                 System.out.println("ficheiro followingTEMP de senderID ja tem o conteudo certo");
+                    
+    //             } catch (FileNotFoundException e2) {
+    //                 e2.printStackTrace();
+    //             } catch (IOException e) {
+    //                 e.printStackTrace();
+    //             }
+           
+    //             //2.apagar o ficheiro original
+    //             if(groupMembersFile.delete()) {
+    //                 System.out.println("ficheiro original de following de " + senderID + " apagado");
+    //             }
                 
-                //ver se groupID:senderID esta no ficheiro participant.txt do userID se nao devolver -1
-                while(scParticipant.hasNextLine()) {
-                    String lineParticipant = scParticipant.nextLine();
-                    if(lineParticipant.contentEquals(groupID + ":" + senderID)) {
-                        inParticipant = true;
-                    }
-                }
+    //             //3.renomear o ficheiro temporario como following.txt
+    //             if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
+    //                 System.out.println("ficheiro temporario de following de " + senderID + " passou a ser o ficheiro oficial");
+    //             }
+    
+    //             //----retirar senderID de followers de userID----
+    //             //1.passar todo o conteudo de followers menos o senderID pretendido para um ficheiro auxiliar
+    //             try(Scanner scUsersFollowers = new Scanner(usersFollowersFile);
+    //             FileWriter fwUsersFollowersTEMP = new FileWriter(usersFollowersTEMPFile);
+    //             BufferedWriter bwUsersFollowersTEMP = new BufferedWriter(fwUsersFollowersTEMP);) {
+    
+    //                 while(scUsersFollowers.hasNextLine()) {
+    //                     String lineUsersFollowers = scUsersFollowers.nextLine();
+    //                     if(!lineUsersFollowers.contentEquals(senderID)) {
+    //                         bwUsersFollowersTEMP.write(lineUsersFollowers);
+    //                         bwUsersFollowersTEMP.newLine();
+    //                     }
+    //                 }
+                    
+    //                 System.out.println("ficheiro followersTEMP de userID ja tem o conteudo certo");
+                    
+    //             } catch (FileNotFoundException e2) {
+    //                 e2.printStackTrace();
+    //             } catch (IOException e) {
+    //                 e.printStackTrace();
+    //             }
+             
+    //             //2.apagar o ficheiro original
+    //             if(usersFollowersFile.delete()) {
+    //                 System.out.println("ficheiro original de followers de " + userID + " apagado");
+    //             }
                 
-            } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+    //             //3.renomear o ficheiro temporario como followers.txt
+    //             if(usersFollowersTEMPFile.renameTo(usersFollowersFile)) {
+    //                 System.out.println("ficheiro temporario de followers de " + userID + " passou a ser o ficheiro oficial");
+    //             }
+                
+    // // -------- 
+    //         } catch (FileNotFoundException e) {
+    //             // TODO Auto-generated catch block
+    //             e.printStackTrace();
+    //         }
             
-            //proceder com a operacao de remocao do userID do grupo
-            if(inMember && inParticipant) {
-                resultado = 0;
-                removeuAux(userID, groupID, senderID); 
-            }
+    //         //proceder com a operacao de remocao do userID do grupo
+    //         if(inMember && inParticipant) {
+    //             removeuAux(userID, groupID, senderID); 
+    //         }
             
-            return resultado; 
-        }
+    //         return 0; 
+    //     }
         
-        public void removeuAux(String userID, String groupID, String senderID) {
+    //     public void removeuAux(String userID, String groupID, String senderID) {
             
-            File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/" + groupID + "/members.txt");
-            File groupMembersTEMPFile = new File("../files/userStuff/" + senderID + "/groups/" + groupID + "/membersTemp.txt");            
-            File userParticipantFile = new File("../files/userStuff/" + userID + "/groups/participant.txt");
-            File userParticipantTEMPFile = new File("../files/userStuff/" + userID + "/groups/participantTemp.txt");
+    //         File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/" + groupID + "/members.txt");
+    //         File groupMembersTEMPFile = new File("../files/userStuff/" + senderID + "/groups/" + groupID + "/membersTemp.txt");            
+    //         File userParticipantFile = new File("../files/userStuff/" + userID + "/groups/participant.txt");
+    //         File userParticipantTEMPFile = new File("../files/userStuff/" + userID + "/groups/participantTemp.txt");
             
-            try {
-                if(groupMembersTEMPFile.createNewFile()) {
-                    System.out.println("sendersFollowingTEMPFile criado sem conteudo");
-                }
-                if(userParticipantTEMPFile.createNewFile()) {
-                    System.out.println("usersFollowersTEMPFile criado sem conteudo");
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
+    //         try {
+    //             if(groupMembersTEMPFile.createNewFile()) {
+    //                 System.out.println("sendersFollowingTEMPFile criado sem conteudo");
+    //             }
+    //             if(userParticipantTEMPFile.createNewFile()) {
+    //                 System.out.println("usersFollowersTEMPFile criado sem conteudo");
+    //             }
+    //         } catch (IOException e1) {
+    //             e1.printStackTrace();
+    //         }
             
-            //----retirar userID de members do grupo do sender----
-            //1.passar todo o conteudo de members menos o userID pretendido para um ficheiro auxiliar
-            try(Scanner scMembers = new Scanner(groupMembersFile);
-            FileWriter fwMembersTEMP = new FileWriter(groupMembersTEMPFile);
-            BufferedWriter bwMembersTEMP = new BufferedWriter(fwMembersTEMP);) {
+    //         //----retirar userID de members do grupo do sender----
+    //         //1.passar todo o conteudo de members menos o userID pretendido para um ficheiro auxiliar
+    //         try(Scanner scMembers = new Scanner(groupMembersFile);
+    //         FileWriter fwMembersTEMP = new FileWriter(groupMembersTEMPFile);
+    //         BufferedWriter bwMembersTEMP = new BufferedWriter(fwMembersTEMP);) {
                 
-                while(scMembers.hasNextLine()) {
-                    String lineMembers = scMembers.nextLine();
-                    if(!lineMembers.contentEquals(userID)) {
-                        bwMembersTEMP.write(lineMembers);
-                        bwMembersTEMP.newLine();
-                    }
-                }
+    //             while(scMembers.hasNextLine()) {
+    //                 String lineMembers = scMembers.nextLine();
+    //                 if(!lineMembers.contentEquals(userID)) {
+    //                     bwMembersTEMP.write(lineMembers);
+    //                     bwMembersTEMP.newLine();
+    //                 }
+    //             }
                 
-                System.out.println("ficheiro membersTEMP do grupo de " + senderID + " ja tem o conteudo certo");
+    //             System.out.println("ficheiro membersTEMP do grupo de " + senderID + " ja tem o conteudo certo");
                 
-            } catch (FileNotFoundException e2) {
-                e2.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    //         } catch (FileNotFoundException e2) {
+    //             e2.printStackTrace();
+    //         } catch (IOException e) {
+    //             e.printStackTrace();
+    //         }
        
-            //2.apagar o ficheiro original
-            if(groupMembersFile.delete()) {
-                System.out.println("ficheiro original de members do grupo de " + senderID + " apagado");
-            }
+    //         //2.apagar o ficheiro original
+    //         if(groupMembersFile.delete()) {
+    //             System.out.println("ficheiro original de members do grupo de " + senderID + " apagado");
+    //         }
             
-            //3.renomear o ficheiro temporario como members.txt
-            if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
-                System.out.println("ficheiro temporario de members do grupo de " + senderID + " passou a ser o ficheiro oficial");
-            }
+    //         //3.renomear o ficheiro temporario como members.txt
+    //         if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
+    //             System.out.println("ficheiro temporario de members do grupo de " + senderID + " passou a ser o ficheiro oficial");
+    //         }
 
-            //----retirar groupID de participant de userID----
-            //1.passar todo o conteudo de participant menos o groupID pretendido para um ficheiro auxiliar
-            try(Scanner scParticipant = new Scanner(userParticipantFile);
-            FileWriter fwParticipantTEMP = new FileWriter(userParticipantTEMPFile);
-            BufferedWriter bwParticipantTEMP = new BufferedWriter(fwParticipantTEMP);) {
+    //         //----retirar groupID de participant de userID----
+    //         //1.passar todo o conteudo de participant menos o groupID pretendido para um ficheiro auxiliar
+    //         try(Scanner scParticipant = new Scanner(userParticipantFile);
+    //         FileWriter fwParticipantTEMP = new FileWriter(userParticipantTEMPFile);
+    //         BufferedWriter bwParticipantTEMP = new BufferedWriter(fwParticipantTEMP);) {
 
-                while(scParticipant.hasNextLine()) {
-                    String lineParticipant = scParticipant.nextLine();
-                    if(!lineParticipant.contentEquals(groupID)) {
-                        bwParticipantTEMP.write(lineParticipant);
-                        bwParticipantTEMP.newLine();
-                    }
-                }
+    //             while(scParticipant.hasNextLine()) {
+    //                 String lineParticipant = scParticipant.nextLine();
+    //                 if(!lineParticipant.contentEquals(groupID)) {
+    //                     bwParticipantTEMP.write(lineParticipant);
+    //                     bwParticipantTEMP.newLine();
+    //                 }
+    //             }
                 
-                System.out.println("ficheiro participantTEMP do user" + userID + "ja tem o conteudo certo");
+    //             System.out.println("ficheiro participantTEMP do user" + userID + "ja tem o conteudo certo");
                 
-            } catch (FileNotFoundException e2) {
-                e2.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    //         } catch (FileNotFoundException e2) {
+    //             e2.printStackTrace();
+    //         } catch (IOException e) {
+    //             e.printStackTrace();
+    //         }
          
-            //2.apagar o ficheiro original
-            if(userParticipantFile.delete()) {
-                System.out.println("ficheiro original de participant de " + userID + " apagado");
-            }
+    //         //2.apagar o ficheiro original
+    //         if(userParticipantFile.delete()) {
+    //             System.out.println("ficheiro original de participant de " + userID + " apagado");
+    //         }
             
-            //3.renomear o ficheiro temporario como participant.txt
-            if(userParticipantTEMPFile.renameTo(userParticipantFile)) {
-                System.out.println("ficheiro temporario de participant de " + userID + " passou a ser o ficheiro oficial");
-            }
+    //         //3.renomear o ficheiro temporario como participant.txt
+    //         if(userParticipantTEMPFile.renameTo(userParticipantFile)) {
+    //             System.out.println("ficheiro temporario de participant de " + userID + " passou a ser o ficheiro oficial");
+    //         }
             
-        }
+    //     }
         
         public String ginfo() {
             //TODO

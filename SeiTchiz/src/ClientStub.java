@@ -53,10 +53,16 @@ public class ClientStub {
      * 
      * @param clientID
      * @param passwd
-     * @return true se login for sucedido e false caso contrario
      */
     public void login(String clientID, String passwrd) {
         
+        // nomes criados nao podem ter ":" ou "/" ou "-" ou " "
+        if(clientID.contains(":") || clientID.contains("/") || clientID.contains("-") || clientID.contains(" ")) {
+            System.out.println("Formato do userID incorreto(userID nao deve conter " +
+            "dois pontos \":\" ou espaco \" \" ou hifen \"-\" ou forward slash \"/\"");
+            System.exit(-1);
+        }
+
         if(passwrd.contains(" ") || passwrd.equals("")){
             // as passwrds poderiam ter um espaço no meio. Seria melhor restringir apenas passwrds vazias. 
             System.out.println("Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter)" +
@@ -74,6 +80,13 @@ public class ClientStub {
      */
 	public void login(String clientID) {
         
+        // nomes criados nao podem ter ":" ou "/" ou "-" ou " "
+        if(clientID.contains(":") || clientID.contains("/") || clientID.contains("-") || clientID.contains(" ")) {
+            System.out.println("Formato do userID incorreto(userID nao deve conter " +
+            "dois pontos \":\" ou espaco \" \" ou hifen \"-\" ou forward slash \"/\"");
+            System.exit(-1);
+        }
+
 	    String passwrd = null;
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("password: ");
@@ -84,6 +97,7 @@ public class ClientStub {
                 System.err.println(e.getMessage());
                 System.exit(-1);
             }
+
             if(passwrd.contains(" ") || passwrd.equals("")){
                 // as passwrds poderiam ter um espaço no meio. Seria melhor restringir apenas passwrds vazias. 
                 passwrd = null;
@@ -329,6 +343,28 @@ public class ClientStub {
         return resultado;
     }
     
+    public int msg(String groupID, String mensagem, String senderID) {
+        int resultado = -1;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("m");
+            
+            // enviar groupID:mensagem:ID do user que fez o pedido
+            out.writeObject(groupID + ":" + mensagem + ":" + senderID);
+            
+            //receber a lista de followers de senderID
+            resultado = (int) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return resultado;
+    }
 
 }
 
