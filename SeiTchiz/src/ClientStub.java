@@ -141,7 +141,7 @@ public class ClientStub {
             System.err.println(e.getMessage());
             System.exit(-1);
         }
-      
+        
         System.out.println("cliente enviou username e passwd para o servidor");
 
         // Receber resposta do servidor
@@ -366,6 +366,55 @@ public class ClientStub {
         return resultado;
     }
 
+    /*
+    public String ginfo(String senderID) {
+
+        String []resultado = null;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("g");
+            //enviar argumento
+            out.writeObject(senderID);
+            //enviar infomacao que foi apenas um argumento
+            out.writeObject(":");
+            //receber o resultado da operacao
+            resultado = (list) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return resultado;
+    }
+
+    public String ginfo(String groupID, senderID) {
+
+        String []resultado = null;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("g");
+            //enviar argumento
+            out.writeObject(senderID);
+            out.writeObject(groupID);
+            //receber o resultado da operacao
+            resultado = (list) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return resultado;
+
+    }
+    */
 }
 
         // // Enviar ficheiro para o servidor

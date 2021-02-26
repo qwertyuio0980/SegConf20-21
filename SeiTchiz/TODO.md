@@ -5,11 +5,9 @@ wall <nPhotos>
 
 like <photoID>
 
-removeu <userID> <groupID>
-
 ginfo [groupID]
 
-msg <groupID> <msg>
+msg <groupID> <msg>  <---BUGS
 
 collect <groupID>
  

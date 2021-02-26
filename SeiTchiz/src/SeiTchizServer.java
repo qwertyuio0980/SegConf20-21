@@ -331,12 +331,28 @@ public class SeiTchizServer {
 
 						case "g":
 						    
-						    //TODO
+                            try {
+                                // receber senderID do user que fez o pedido
+                                aux = (String) inStream.readObject();
 
-							break;
+                                // colocar input correspondente a msg numa var "mensagem"
+                                for(int i = 2; i < conteudo.length; i++) {
+                                    sbMensagem.append(conteudo[i] + ":");
+                                }
+                                sbMensagem.deleteCharAt(sbMensagem.length()-1);
+                                mensagem = sbMensagem.toString();
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(msg(conteudo[0], conteudo[1], mensagem));
+                                
+                            } catch (ClassNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                            break;
+
 						case "m":
 						    
-                            out.writeObject(groupID + ":" + mensagem + ":" + senderID);
                             try {
                                 // receber <groupID>:<ID do user que fez o pedido>:<mensagem>
                                 aux = (String) inStream.readObject();
@@ -824,502 +840,246 @@ public class SeiTchizServer {
             // Remove o userID do ficheiro participants.txt no diretorio do grupo
             // Remove o senderID-groupID do ficheiro participant.txt no diretorio userID
 
-            boolean inMember = false;
-            boolean inParticipant = false;
-                 
             File groupMembersFile = new File("../files/groups/" + senderID + "-" + groupID + "/participants.txt");
             File participantFile = new File("../files/userStuff/" + userID + "/participant.txt");
             
             // Verifica se ha um grupo com nome senderID-groupID e se o userID existe
-            if(!groupMembersFile.exists() || !participantFile.exists()) {
+            if(!groupMembersFile.exists() || !participantFile.exists() || userID == senderID) {
                 return -1;
             }
 
-            try {
-                // Percorre o ficheiro participants.txt e ir colocando o conteudo do mesmo
-                // num ficheiro temporario
-    // --------
-                File groupMembersTEMPFile = new File("../files/groups/" + senderID + "-" + groupID + "/participantsTemp.txt");            
-                
-                try {
-                    if(groupMembersTEMPFile.createNewFile()) {
-                        System.out.println("groupMembersTEMPFile criado sem conteudo");
-                    }
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                
-                //----retirar userID de participants do grupo----
-                //1.passar todo o conteudo de participants menos o userID para um ficheiro auxiliar
-                try(Scanner scgroupMembers = new Scanner(groupMembersFile);
-                FileWriter fwgroupMembersTEMP = new FileWriter(groupMembersTEMPFile);
-                BufferedWriter bwgroupMembersTEMP = new BufferedWriter(fwgroupMembersTEMP);) {
-                    
-                    while(scgroupMembers.hasNextLine()) {
-                        String line = scgroupMembers.nextLine();
-                        if(!line.contentEquals(userID)) {
-                            bwgroupMembersTEMP.write(line);
-                            bwgroupMembersTEMP.newLine();
-                        }
-                    }
-                    
-                    System.out.println("ficheiro followingTEMP de senderID ja tem o conteudo certo");
-                    
-                } catch (FileNotFoundException e2) {
-                    e2.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            // Percorre o ficheiro participants.txt e ir colocando o conteudo do mesmo
+            // num ficheiro temporario
            
-                //2.apagar o ficheiro original
-                if(groupMembersFile.delete()) {
-                    System.out.println("ficheiro original de following de " + senderID + " apagado");
+            File groupMembersTEMPFile = new File("../files/groups/" + senderID + "-" + groupID + "/participantsTemp.txt");            
+            
+            try {
+                if(groupMembersTEMPFile.createNewFile()) {
+                    System.out.println("groupMembersTEMPFile criado sem conteudo");
+                }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                System.exit(-1);
+            }
+            
+            //----retirar userID de participants do grupo----
+            //1.passar todo o conteudo de participants menos o userID para um ficheiro auxiliar
+            try(Scanner scgroupMembers = new Scanner(groupMembersFile);
+            FileWriter fwgroupMembersTEMP = new FileWriter(groupMembersTEMPFile);
+            BufferedWriter bwgroupMembersTEMP = new BufferedWriter(fwgroupMembersTEMP);) {
+                
+                while(scgroupMembers.hasNextLine()) {
+                    String line = scgroupMembers.nextLine();
+                    if(!line.contentEquals(userID)) {
+                        bwgroupMembersTEMP.write(line);
+                        bwgroupMembersTEMP.newLine();
+                    }
                 }
                 
-                //3.renomear o ficheiro temporario como following.txt
-                if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
-                    System.out.println("ficheiro temporario de following de " + senderID + " passou a ser o ficheiro oficial");
+                System.out.println("ficheiro followingTEMP de senderID ja tem o conteudo certo");
+                
+            } catch (FileNotFoundException e2) {
+                e2.printStackTrace();
+                System.exit(-1);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        
+            //2.apagar o ficheiro original
+            if(groupMembersFile.delete()) {
+                System.out.println("ficheiro original de following de " + senderID + " apagado");
+            }
+            
+            //3.renomear o ficheiro temporario como following.txt
+            if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
+                System.out.println("ficheiro temporario de following de " + senderID + " passou a ser o ficheiro oficial");
+            }
+
+            //----retirar o senderID-groupID do participant.txt do usuario userID----
+            //1.passar todo o conteudo de participant.txt menos o senderID-groupID pretendido para um ficheiro auxiliar
+            
+            File participantTEMPFile = new File("../files/groups/" + senderID + "-" + groupID + "/participantTemp.txt");            
+            
+            try {
+                if(participantTEMPFile.createNewFile()) {
+                    System.out.println("participantTEMPFile criado sem conteudo");
                 }
-    
-                //----retirar senderID de followers de userID----
-                //1.passar todo o conteudo de followers menos o senderID pretendido para um ficheiro auxiliar
-                try(Scanner scUsersFollowers = new Scanner(usersFollowersFile);
-                FileWriter fwUsersFollowersTEMP = new FileWriter(usersFollowersTEMPFile);
-                BufferedWriter bwUsersFollowersTEMP = new BufferedWriter(fwUsersFollowersTEMP);) {
-    
-                    while(scUsersFollowers.hasNextLine()) {
-                        String lineUsersFollowers = scUsersFollowers.nextLine();
-                        if(!lineUsersFollowers.contentEquals(senderID)) {
-                            bwUsersFollowersTEMP.write(lineUsersFollowers);
-                            bwUsersFollowersTEMP.newLine();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                System.exit(-1);
+            }
+            
+            try(Scanner scParticipant = new Scanner(participantFile);
+            FileWriter fwParticipantTEMP = new FileWriter(participantTEMPFile);
+            BufferedWriter bwParticipantTEMP = new BufferedWriter(fwParticipantTEMP);) {
+
+                while(scParticipant.hasNextLine()) {
+                    String line = scParticipant.nextLine();
+                    if(!line.contentEquals(senderID)) {
+                        bwParticipantTEMP.write(line);
+                        bwParticipantTEMP.newLine();
+                    }
+                }
+                
+                System.out.println("ficheiro followersTEMP de userID ja tem o conteudo certo");
+                
+            } catch (FileNotFoundException e2) {
+                e2.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+            //2.apagar o ficheiro original
+            if(participantFile.delete()) {
+                System.out.println("ficheiro original de followers de " + userID + " apagado");
+            } else {
+                System.out.println("Nao foi possivel deletar o ficheiro participantFile");
+                return -1;
+            }
+            
+            //3.renomear o ficheiro temporario como followers.txt
+            if(participantTEMPFile.renameTo(participantFile)) {
+                System.out.println("ficheiro temporario de followers de " + userID + " passou a ser o ficheiro oficial");
+            } else {
+                System.out.println("Nao foi possivel renomear o ficheiro participantTEMPFile");
+                return -1;
+            }
+            
+            return 0; 
+        }
+                
+        public String ginfo() {
+            
+            
+            return null;
+        }
+        
+        //ALGO ESTA A CORRER MAL AQUI
+        public int msg(String groupID, String senderID, String mensagem) {
+            
+            //condicoes para poder enviar mensagem
+            //senderID tem de pertencer ao grupo
+            //(ou seja em participant.txt esta o groupID recebido como argumento
+            //e no folder associado a essa linha ("userID-groupID"), no ficheiro participants.txt
+            //esta o senderID)
+            File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
+            boolean canSendMessage = false;
+            try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
+                
+                while(scSenderParticipant.hasNextLine()) {
+                    String lineSenderParticipant = scSenderParticipant.nextLine();
+                    if(lineSenderParticipant.contains(groupID)) {
+                        //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
+                        if(isCorrectGroup(lineSenderParticipant, senderID)) {
+                            msgAux(lineSenderParticipant, senderID, mensagem);
+                            return 0;
                         }
                     }
-                    
-                    System.out.println("ficheiro followersTEMP de userID ja tem o conteudo certo");
-                    
-                } catch (FileNotFoundException e2) {
-                    e2.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-             
-                //2.apagar o ficheiro original
-                if(usersFollowersFile.delete()) {
-                    System.out.println("ficheiro original de followers de " + userID + " apagado");
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            return -1;
+        }
+
+        //ALGO ESTA A CORRER MAL AQUI
+        public void msgAux(String groupFolder, String senderID, String mensagem) {
+            //metodo onde se envia mesmo a mensagem
+
+            //1.incrementar valor do counter em counter.txt
+            File fileCounter = new File("../files/groups/" + groupFolder + "/counter.txt");
+            int counter = 0; //valor 0 por default so para nao chatear o sonarlint
+            try(Scanner scCounter = new Scanner(fileCounter);
+            FileWriter fwCounter = new FileWriter(fileCounter, false);) {
+                counter = Integer.parseInt(scCounter.nextLine());
+                counter += 1;
+                fwCounter.write(counter);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            //2.criar o msg<current counter value> folder
+            File fMsg = new File("../files/groups/" + groupFolder + "/msg" + counter);
+            fMsg.mkdir();
+
+            //3.criar o content.txt com senderID como 1a linha
+            //seguido pela mensagem na linha seguinte
+            File fContent = new File("../files/groups/" + groupFolder + "/msg" + counter + "/content.txt");
+            try(FileWriter fwContent = new FileWriter(fContent);
+            BufferedWriter bwContent = new BufferedWriter(fwContent);) {
+                bwContent.write(senderID);
+                bwContent.newLine();
+                bwContent.write(mensagem);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            //4.criar o seenby.txt e colocar la o senderID
+            File fSeenBy = new File("../files/groups/" + groupFolder + "/msg" + counter + "/seenBy.txt");
+            try(FileWriter fwSeenBy = new FileWriter(fSeenBy);
+            BufferedWriter bwSeenBy = new BufferedWriter(fwSeenBy);) {
+                bwSeenBy.write(senderID);
+                bwSeenBy.newLine();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            //5.criar o notseenby.txt e colocar todos os participants no ficheiro menos o senderID
+            StringBuilder sbParticipants = new StringBuilder();
+            File fParticipants = new File("../files/groups/" + groupFolder + "/participants.txt");
+            try(Scanner scParticipants = new Scanner(fParticipants)) {
+                while(scParticipants.hasNextLine()) {
+                    String lineParticipants = scParticipants.nextLine();
+                    if(!lineParticipants.contentEquals(senderID)) {
+                        sbParticipants.append(lineParticipants + "\n");
+                    }
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
+            File fNotSeenBy = new File("../files/groups/" + groupFolder + "/msg" + counter + "/notSeenBy.txt");
+            try(FileWriter fwNotSeenBy = new FileWriter(fNotSeenBy);
+            BufferedWriter bwNotSeenBy = new BufferedWriter(fwNotSeenBy);) {
+                bwNotSeenBy.write(sbParticipants.toString());
+                bwNotSeenBy.newLine();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        public boolean isCorrectGroup(String ownerGroupPair, String senderID) {
+            File groupParticipantsFile = new File("../files/groups/" + ownerGroupPair + "/participants.txt");
+
+            //grupo tem de existir
+            if(!groupParticipantsFile.exists()) {
+                return false;
+            }
+            
+            //percorre os participants.txt do folder userID-groupID a procura do senderID
+            try(Scanner scGroupParticipants= new Scanner(groupParticipantsFile)) {
+                while(scGroupParticipants.hasNextLine()) {
+                    String lineGroupParticipants = scGroupParticipants.nextLine();
+                    if(lineGroupParticipants.contentEquals(senderID)) {
+                        return true;
+                    }
                 }
                 
-                //3.renomear o ficheiro temporario como followers.txt
-                if(usersFollowersTEMPFile.renameTo(usersFollowersFile)) {
-                    System.out.println("ficheiro temporario de followers de " + userID + " passou a ser o ficheiro oficial");
-                }
-                
-    // -------- 
             } catch (FileNotFoundException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             
-            //proceder com a operacao de remocao do userID do grupo
-            if(inMember && inParticipant) {
-                removeuAux(userID, groupID, senderID); 
-            }
-            
-            return 0; 
-        }
-        
-        public void removeuAux(String userID, String groupID, String senderID) {
-            
-            File groupMembersFile = new File("../files/userStuff/" + senderID + "/groups/" + groupID + "/members.txt");
-            File groupMembersTEMPFile = new File("../files/userStuff/" + senderID + "/groups/" + groupID + "/membersTemp.txt");            
-            File userParticipantFile = new File("../files/userStuff/" + userID + "/groups/participant.txt");
-            File userParticipantTEMPFile = new File("../files/userStuff/" + userID + "/groups/participantTemp.txt");
-            
-            try {
-                if(groupMembersTEMPFile.createNewFile()) {
-                    System.out.println("sendersFollowingTEMPFile criado sem conteudo");
-                }
-                if(userParticipantTEMPFile.createNewFile()) {
-                    System.out.println("usersFollowersTEMPFile criado sem conteudo");
-                }
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-            
-            //----retirar userID de members do grupo do sender----
-            //1.passar todo o conteudo de members menos o userID pretendido para um ficheiro auxiliar
-            try(Scanner scMembers = new Scanner(groupMembersFile);
-            FileWriter fwMembersTEMP = new FileWriter(groupMembersTEMPFile);
-            BufferedWriter bwMembersTEMP = new BufferedWriter(fwMembersTEMP);) {
-                
-                while(scMembers.hasNextLine()) {
-                    String lineMembers = scMembers.nextLine();
-                    if(!lineMembers.contentEquals(userID)) {
-                        bwMembersTEMP.write(lineMembers);
-                        bwMembersTEMP.newLine();
-                    }
-                }
-                
-                System.out.println("ficheiro membersTEMP do grupo de " + senderID + " ja tem o conteudo certo");
-                
-            } catch (FileNotFoundException e2) {
-                e2.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-       
-            //2.apagar o ficheiro original
-            if(groupMembersFile.delete()) {
-                System.out.println("ficheiro original de members do grupo de " + senderID + " apagado");
-            }
-            
-            //3.renomear o ficheiro temporario como members.txt
-            if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
-                System.out.println("ficheiro temporario de members do grupo de " + senderID + " passou a ser o ficheiro oficial");
-            }
-
-            //----retirar groupID de participant de userID----
-            //1.passar todo o conteudo de participant menos o groupID pretendido para um ficheiro auxiliar
-            try(Scanner scParticipant = new Scanner(userParticipantFile);
-            FileWriter fwParticipantTEMP = new FileWriter(userParticipantTEMPFile);
-            BufferedWriter bwParticipantTEMP = new BufferedWriter(fwParticipantTEMP);) {
-
-                while(scParticipant.hasNextLine()) {
-                    String lineParticipant = scParticipant.nextLine();
-                    if(!lineParticipant.contentEquals(groupID)) {
-                        bwParticipantTEMP.write(lineParticipant);
-                        bwParticipantTEMP.newLine();
-                    }
-                }
-                
-                System.out.println("ficheiro participantTEMP do user" + userID + "ja tem o conteudo certo");
-                
-            } catch (FileNotFoundException e2) {
-                e2.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-         
-            //2.apagar o ficheiro original
-            if(userParticipantFile.delete()) {
-                System.out.println("ficheiro original de participant de " + userID + " apagado");
-            }
-            
-            //3.renomear o ficheiro temporario como participant.txt
-            if(userParticipantTEMPFile.renameTo(userParticipantFile)) {
-                System.out.println("ficheiro temporario de participant de " + userID + " passou a ser o ficheiro oficial");
-            }
-            
-        }
-        
-        public String ginfo() {
-            //TODO
-            
-            return null;
-        }
-        
-        public int msg(String groupID, String senderID, String mensagem) {
-            //COMO ENCONTRAR O FOLDER USERID-GROUPID ESPECIFICO???
-
-            return -1;
+            return false;
         }
         
 	}
 }
-
-		
-
-
-				
-				
-				
-// 				/// Receber ficheiro do cliente
-// 				// int fileSize = 0;
-// 				// try {
-// 				// fileSize = (Integer)inStream.readObject();
-// 				// } catch (Exception e) {
-// 				// e.printStackTrace();
-// 				// }
-
-// 				// System.out.println(Integer.toString(fileSize));
-
-// 				// byte[] buffer = new byte[fileSize];
-// 				// int bytesTotal = 0;
-// 				// int bytesRead = 0;
-// 				// try {
-// 				// while(bytesTotal != fileSize) {
-// 				// bytesRead = inStream.read(buffer, bytesTotal, buffer.length);
-// 				// bytesTotal += bytesRead;
-// 				// }
-// 				// } catch (Exception e) {
-// 				// e.printStackTrace();
-// 				// }
-
-// 				// if(bytesTotal != 0) {
-// 				// System.out.println("servidor:... ficheiro recebido com sucesso");
-// 				// }
-
-// 				outStream.close();
-// 				inStream.close();
-// 				socket.close();
-
-// 			} catch (IOException e) {
-// 				e.printStackTrace();
-// 			}
-// 		}
-// 	}
-// }
-
-// import java.io.IOException;
-// import java.io.ObjectInputStream;
-// import java.io.ObjectOutputStream;
-// import java.io.Writer;
-// import java.net.ServerSocket;
-// import java.net.Socket;
-// import java.io.BufferedWriter;
-// import java.io.File;
-// import java.io.FileNotFoundException;
-// import java.io.FileWriter;
-// import java.util.Scanner;
-
-// public class SeiTchizServer {
-
-//  // public static int port;
-// 	public int port;
-// 	public static File folderFile;
-// 	public static File users;
-
-// 	public static void main(String[] args) {
-// 		System.out.println("---servidor iniciado---");
-
-// 		//numero/formato de argumentos errado
-//         if(args.length > 2) {
-//             System.out.println("Numero dos argumentos passados errado. Usar SeiTchizServer <port> ou apenas SeiTchizServer e port por default sera 45678");
-//             System.exit(-1);
-//         }
-
-// 		int port = 45678;
-
-// 		if(args.length == 2) {
-// 			try {
-// 				port = Integer.parseInt(args[1]);
-// 			} catch(NumberFormatException e) {  
-// 				System.out.println("Formato dos argumentos passados errado. O porto deve ser um inteiro");
-// 				System.exit(-1);
-// 			}
-// 		}
-
-// 		//criacao do folder de files e os files vazios por default
-// 		// try {
-
-// 		// 	folderFile = new File("files");
-// 		// 	folderFile.mkdir();
-// 		// 	users = new File("files/users.txt");
-// 		// 	users.createNewFile();
-
-// 		// 	System.out.println("ficheiros de esqueleto do servidor criados no novo diretorio \"files\"");
-// 		// } catch(IOException e) {
-// 		// 	System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
-//         //     System.exit(-1);
-// 		// }
-
-// 		int port = 45678;
-
-// 		if(args.length == 2) {
-// 			try {
-// 				port = Integer.parseInt(args[1]);
-// 			} catch(NumberFormatException e) {  
-// 				System.out.println("Formato dos argumentos passados errado. O porto deve ser um inteiro");
-// 				System.exit(-1);
-// 			}
-// 		}
-
-// 		//criacao do folder de files e os files vazios por default
-// 		// try {
-
-// 		// 	folderFile = new File("files");
-// 		// 	folderFile.mkdir();
-// 		// 	users = new File("files/users.txt");
-// 		// 	users.createNewFile();
-
-// 		// 	System.out.println("ficheiros de esqueleto do servidor criados no novo diretorio \"files\"");
-// 		// } catch(IOException e) {
-// 		// 	System.out.println("Houve um erro na criacao do folder \"files\" e dos seus ficheiros respetivos");
-//         //     System.exit(-1);
-// 		// }
-
-// 		SeiTchizServer server = new SeiTchizServer();
-// 		server.startServer(port);
-// 	}
-
-// 	public void startServer(int port) {
-// 		ServerSocket sSoc = null;
-
-// 		try {
-// 			sSoc = new ServerSocket(port);
-// 		} catch (IOException e) {
-// 			System.err.println(e.getMessage());
-// 			System.exit(-1);
-// 		}
-
-// 		System.out.println("Socket criada e a espera de pedidos de conexão");
-
-// 		//pode ser usada uma flag para se poder fechar o servidor
-// 		while(true) {
-// 			try {
-// 				Socket inSoc = sSoc.accept();
-// 				ServerThread newServerThread = new ServerThread(inSoc);
-// 				System.out.println("Pedido de conexão aceite");
-// 				newServerThread.start();
-// 		    }
-// 		    catch (IOException e) {
-// 		        e.printStackTrace();
-// 		    }
-// 		}
-
-//         //por enquanto isto e dead code
-// 		//sSoc.close();
-// 	}
-
-// 	//Threads utilizadas para comunicacao com os clientes
-// 	class ServerThread extends Thread {
-
-// 		private Socket socket = null;
-
-// 		ServerThread(Socket inSoc) {
-// 			socket = inSoc;
-// 			System.out.println("Thread servidor conectada com novo cliente");
-// 		}
-
-// 		public void run(){
-// 			try {
-// 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-// 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-
-// 				String user = null;
-// 				String passwd = null;
-
-// 				try {
-// 					user = (String) inStream.readObject();
-// 					passwd = (String) inStream.readObject();
-// 					System.out.println("user e password recebidos");
-// 				} catch (ClassNotFoundException e1) {
-// 					e1.printStackTrace();
-// 				}
-
-// 				//autenticacao
-// 				// if(isAuthenticated(user, passwd) == -1) {
-// 				//     outStream.writeObject("password errada");
-// 				//     System.out.println("SignIn do utilizador nao ocorreu. Id/Password errados");
-// 				// } else if(isAuthenticated(user, passwd) == 0) {
-// 				//     outStream.writeObject("password certa");
-//                 //     System.out.println("SignIn do utilizador ocorreu. Id/Password certos");
-// 				// } else {
-// 				//     outStream.writeObject("nova conta autenticada");
-//                 //     System.out.println("SignUp do utilizador ocorreu pela primeira vez.");
-// 				// }
-
-// 				//---------------------------------------------------------------------------------------------------------
-
-// 				//alterar codigo a partir daqui
-
-// 		// 		if(user.length() != 0){
-// 		// 			outStream.writeObject(Boolean.valueOf(true));
-// 		// 		}
-// 		// 		else {
-// 		// 			outStream.writeObject(Boolean.valueOf(false));
-// 		// 		}
-
-// 		// 		/// Receber ficheiro do cliente
-// 		// 		int fileSize = 0;
-// 		// 		try {
-// 		// 			fileSize = (Integer) inStream.readObject();
-// 		// 		} catch (Exception e) {
-// 		// 			e.printStackTrace();
-// 		// 		}
-
-// 		// 		System.out.println(Integer.toString(fileSize));
-
-// 		// 		byte[] buffer = new byte[fileSize];
-// 		// 		int bytesTotal = 0;
-// 		// 		int bytesRead = 0;
-// 		// 		try {
-// 		// 			while(bytesTotal != fileSize) {
-// 		// 				bytesRead = inStream.read(buffer, bytesTotal, buffer.length);
-// 		// 				bytesTotal += bytesRead;
-// 		// 			}
-// 		// 		} catch (Exception e) {
-// 		// 			e.printStackTrace();
-// 		// 		}
-
-// 		// 		if(bytesTotal != 0) {
-// 		// 			System.out.println("servidor:... ficheiro recebido com sucesso");
-// 		// 		}
-
-// 				outStream.close();
-// 				inStream.close();
-// 				socket.close();
-
-// 			} catch (IOException e) {
-// 				e.printStackTrace();
-// 			}
-// 		}
-
-// 		// /**
-// 		//  * Metodo que verifica se um par user/passwd ja estao na lista de ficheiros
-// 		//  * do servidor
-// 		//  * 
-// 		//  * @return -1 se o par nao corresponde ao que esta no ficheiro do servidor ou
-// 		//  * houve algum erro que impossibilitou a autenticacao
-// 		//  * 0 se autenticacao foi bem sucedida e 1 se "conta" nao existia antes e foi
-// 		//  * agora criada e autenticada
-// 		//  */
-// 		// public int isAuthenticated(String user, String passwd) {
-// 		//     String line;
-//         //     String[] currentUserPasswd;
-// 		//     try(Scanner scanner = new Scanner(users)) {
-//         //         while(scanner.hasNextLine()) {
-//         //             line = scanner.nextLine();
-//         //             currentUserPasswd = line.split(" ");
-//         //             if(user.equals(currentUserPasswd[0])) {
-//         //                 //o usuario ja existe na lista de users
-//         //                 if(passwd.equals(currentUserPasswd[1])) {
-//         //                     //o par user/passwd checks out
-//         //                     return 0;
-//         //                 }
-//         //                 return -1;
-//         //             }
-//         //         }
-//         //         //toda a lista foi percorrida e o user nao foi encontrado
-//         //         //entao na linha seguinte adiciona-se este user/pass e
-//         //         //autentica-se o user
-//         //         if(addUserPasswd(user,passwd) == 0) {
-//         //             return 1;
-//         //         }
-//         //     } catch (FileNotFoundException e) {
-//         //         System.out.println("lista de users/passwords nao existe");
-//         //         e.printStackTrace();
-//         //     }
-
-// 		// 	return -1;
-// 		// }
-
-// 		// /**
-// 		//  * Metodo que adiciona um par user password á lista do servidor
-// 		//  * 
-// 		//  * @param user
-// 		//  * @param passwd
-// 		//  * @return 0 se coloca com sucesso -1 caso contrario
-// 		//  */
-// 		// public int addUserPasswd(String user, String passwd) {
-// 		//     try (Writer output = new BufferedWriter(new FileWriter("../files/users.txt", true))){               
-//         //         output.append(user + " " + passwd);
-//         //         return 0;
-//         //     } catch (IOException e) {
-//         //         System.out.println("nao foi possivel autenticar este user");
-//         //         e.printStackTrace();
-//         //     }
-// 		//     return -1;
-// 		// }
-
-// 	}
-// }

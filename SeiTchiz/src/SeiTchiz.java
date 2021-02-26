@@ -7,6 +7,7 @@ public class SeiTchiz {
     public static void main(String[] args) {
        
     	int arglen = args.length;
+        String separador = "------------------------------------------";
 
         // numero de argumentos errado
         if (arglen > 3 || arglen < 2) {
@@ -19,14 +20,15 @@ public class SeiTchiz {
         ClientStub cs = new ClientStub(args[0]);
 
         // efetuar login
+        System.out.println(separador);
         if(arglen == 3) {
             cs.login(args[1], args[2]);
         } else if(arglen == 2) {
             cs.login(args[1]);
         }
-        
-        boolean stop = false;
+        System.out.println(separador);
 
+        boolean stop = false;
         //ciclo principal do cliente
         while(!stop) {
             
@@ -48,7 +50,7 @@ public class SeiTchiz {
             "s ou stop");
 
 
-            String separador = "------------------------------------------";
+            
             BufferedReader reader;
             String input;          
             String[] option = null; 
@@ -56,10 +58,11 @@ public class SeiTchiz {
             String followersList = null;
             String mensagem = null;
             StringBuilder sbMensagem = new StringBuilder();
-            String listaGinfo = null;
+            String[] listaGinfo = null;
 
             
             try {
+                System.out.print(">>>");
                 reader = new BufferedReader(new InputStreamReader(System.in)); 
                 input = reader.readLine();
                 option = input.split(" ");
@@ -255,22 +258,27 @@ public class SeiTchiz {
                     
                 case "g": case "ginfo":
                     
+                    /*
                     //caso meter o groupID
                     if(option.length == 2 && !option[1].contains("/") || !option[1].contains(":") || !option[1].contains("-")) {
 
                         // envia-se o senderID e o groupID
                         listaGinfo = cs.ginfo(args[1], option[1]);
 
-                        //falta o resto
+                        for(int i = 0; i < listaGinfo.length(); i++){
+                            System.out.println(listaGinfo[i]);
+                        }
                         
                     //caso nao meter o groupID
                     } else if(option.length == 1) {
 
-                        // envia-se o senderID e o groupID
-                        listaGinfo = cs.ginfo2(args[1]);
+                        // envia-se o senderID
+                        listaGinfo = cs.ginfo(args[1]);
 
 
-                        //falta o resto
+                        for(int i = 0; i < listaGinfo.length(); i++){
+                            System.out.println(listaGinfo[i]);
+                        }
                         
                     } else {
                         System.out.println(separador);
@@ -278,15 +286,15 @@ public class SeiTchiz {
                         "nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
                         System.out.println(separador);
                     }
+                    */
                     break;
                     
                 case "m": case "msg":
 
                     if(option.length < 3 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
                         System.out.println(separador);
-                        System.out.println("Opcao \"msg\" recebe dois argumentos <groupID> " + 
-                        "que nao pode conter espacos, dois pontos, hifens ou forward slashes no nome " + 
-                        "e <msg> que ----------------POR DECIDIR----------- ");
+                        System.out.println("Opcao \"msg\" recebe dois argumentos <groupID> e <msg>" + 
+                        "e <groupID> nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
                         System.out.println(separador);
                     }
                     
