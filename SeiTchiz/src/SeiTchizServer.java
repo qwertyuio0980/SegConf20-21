@@ -473,6 +473,28 @@ public class SeiTchizServer {
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
+            
+            File followingUserFile = new File("../files/userStuff/" + senderID + "/following.txt");
+            try(Scanner scfollowingUsers = new Scanner(followingUserFile)) {
+                
+                boolean found = false;
+                while(scfollowingUsers.hasNextLine()) {
+                    String lineFollowingUsers = scfollowingUsers.nextLine();
+                    if(lineFollowingUsers.contentEquals(userID)) {
+                        found = true;
+                    }
+                }
+                
+                if(!found) {
+                    return resultado;
+                }
+                
+            } catch (FileNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            
+            
 
             // caso userID existe em users.txt 
             // Criar um novo ficheiro temp e copiar toda a informacao do ficheiro following
