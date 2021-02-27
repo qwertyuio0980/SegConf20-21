@@ -366,6 +366,52 @@ public class ClientStub {
         return resultado;
     }
 
+    public int canCollect(String groupID, String senderID) {
+        int resultado = -1;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("c1");
+            
+            // enviar groupID:ID do user que fez o pedido
+            out.writeObject(groupID + ":" + senderID);
+            
+            //receber o resultado da operacao
+            resultado = (int) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return resultado;
+    }
+
+    public String[] collect(String groupID, String senderID) {
+        String[] listaMensagens = null;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("c2");
+            
+            // enviar groupID:ID do user que fez o pedido
+            out.writeObject(groupID + ":" + senderID);
+            
+            //receber o resultado da operacao
+            listaMensagens = (String[]) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return listaMensagens;
+    }
+
     /*
     public String ginfo(String senderID) {
 

@@ -57,7 +57,8 @@ public class SeiTchiz {
             String followersList = null;
             String mensagem = null;
             StringBuilder sbMensagem = new StringBuilder();
-
+            String[] listaMensagens = null;
+            boolean canMsg = false;
             
             try {
                 System.out.print(">>>");
@@ -288,14 +289,32 @@ public class SeiTchiz {
                     break;
                     
                 case "m": case "msg":
-
+                    boolean leaveMsg = false;
+                    
                     if(option.length < 3 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
                         System.out.println(separador);
                         System.out.println("Opcao \"msg\" recebe dois argumentos <groupID> e <msg>" + 
-                        "e <groupID> nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        "sendo que <groupID> nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
                         System.out.println(separador);
+                        break;
+                    }
+
+                    //msg nao pode conter : ou -
+                    for(int i = 2; i < option.length; i++) {
+                        if(option[i].contains(":") || option[i].contains("-")) {
+                            System.out.println(separador);
+                            System.out.println("Opcao \"msg\" recebe dois argumentos <groupID> e <msg>" + 
+                            "sendo que <msg> nao pode conter dois pontos ou hifens.");
+                            System.out.println(separador);
+                            leaveMsg = true;
+                            break;
+                        }                    
                     }
                     
+                    if(leaveMsg) {
+                        break;
+                    }
+
                     // colocar input correspondente a msg numa var "mensagem"
                     for(int i = 2; i < option.length; i++) {
                         sbMensagem.append(option[i] + " ");
@@ -320,12 +339,49 @@ public class SeiTchiz {
                     }
                     break;
 
-                case "c": case "collect":
+                case "c": case "collect":  
 
-                    //TODO
-                    //ter um ficheiro com os participantes presentes na altura em que uma mensagem e criada no folder da mensagem
-                    
+                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"collect\" recebe argumento <groupID> que nao pode conter espacos, " +
+                        "dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
+                        break;
+                    }
+
+                    // envia-se o groupID e o senderID
+                    resultado = cs.canCollect(option[1], args[1]);
+                    //resultado aqui apenas diz se collect pode ser feito ou se por alguma razao nao ira devolver mensagem nenhuma
+
+                    if(resultado == 0) {
+                        // envia-se o groupID e o senderID
+                        listaMensagens = cs.collect(option[1], args[1]);
+
+                        if(listaMensagens.length == 1 && listaMensagens[0].contentEquals("-empty")) {
+                            System.out.println(separador);
+                            System.out.println("Nao existem novas mensagens por receber");
+                            System.out.println(separador);
+                        } else {
+                            System.out.println(separador);
+                            System.out.println(String.valueOf(listaMensagens.length) + " mensagens novas:\n");
+                            for(int i = 0; i < listaMensagens.length; i++) {
+                                String[] parEscritorConteudo = listaMensagens[i].split(":");
+                                System.out.println("Do user " + parEscritorConteudo[0] + ":");
+                                System.out.println(parEscritorConteudo[1]);
+                            }
+                            System.out.println(separador);
+                        }
+                        
+                    } else {
+                        System.out.println(separador);
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O cliente nao pertence ao grupo; \n " +
+                                "-O grupo indicado nao existe; \n " +
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
+                    }
                     break;
+                    
                 case "h": case "history":
 
                     /*

@@ -374,11 +374,40 @@ public class SeiTchizServer {
                             }
 							break;
 
-						case "c":
-
-						    //TODO
+						case "c1":
+                            //este caso verifica se se pode fazer collect
 						    
+                            try {
+                                // receber <groupID>:<ID do user que fez o pedido>
+                                aux = (String) inStream.readObject();
+                                conteudo = aux.split(":");
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(canCollect(conteudo[0], conteudo[1]));
+                                
+                            } catch (ClassNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
 							break;
+						    
+                        case "c2":
+                            //este caso faz collect
+						    
+                            try {
+                                // receber <groupID>:<ID do user que fez o pedido>
+                                aux = (String) inStream.readObject();
+                                conteudo = aux.split(":");
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(collect(conteudo[0], conteudo[1]));
+                                
+                            } catch (ClassNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+							break;
+							
 						case "h":
 
 						    //TODO
@@ -387,8 +416,6 @@ public class SeiTchizServer {
 							
 						case "s":
 						    stop = true;
-						    System.out.println("thread do cliente fechada");
-						    System.out.println("------------------------------------------");
 						    break;
 						    
 						default:
@@ -399,6 +426,9 @@ public class SeiTchizServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
+            System.out.println("thread do cliente fechada");
+            System.out.println("------------------------------------------");
 		}
 
         /**
@@ -733,6 +763,10 @@ public class SeiTchizServer {
                         e.printStackTrace();
                     }
 
+                    // Adicionar folder vazio correspondente as mensagens do historico
+                    File folderHistory = new File("../files/groups/" + senderIDgroupID + "/history");
+                    folderHistory.mkdir();
+
                     return 0;
                 } else {
                     return 1;
@@ -955,8 +989,8 @@ public class SeiTchizServer {
                 
                 while(scSenderParticipant.hasNextLine()) {
                     String lineSenderParticipant = scSenderParticipant.nextLine();
-                    if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
-                        //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
+                    //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
+                    if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {                       
                         msgAux(lineSenderParticipant, senderID, mensagem);
                         return 0;
                     }
@@ -1000,9 +1034,8 @@ public class SeiTchizServer {
             File fContent = new File("../files/groups/" + groupFolder + "/msg" + counter + "/content.txt");
             try(FileWriter fwContent = new FileWriter(fContent);
             BufferedWriter bwContent = new BufferedWriter(fwContent);) {
-                bwContent.write(senderID);
-                bwContent.newLine();
-                bwContent.write(mensagem);
+                bwContent.write("-" + senderID + ":" + mensagem);
+
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -1065,6 +1098,65 @@ public class SeiTchizServer {
             
             return false;
         }
-        
+               
+        public int canCollect(String groupID, String senderID) {
+
+            File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
+            try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
+                
+                while(scSenderParticipant.hasNextLine()) {
+                    String lineSenderParticipant = scSenderParticipant.nextLine();
+                    //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
+                    if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
+                        return 0;
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            return -1;
+        }
+
+        public String[] collect(String groupID, String senderID) {
+
+            String[] listaMensagensDefault = {"-empty"};
+
+            //TODO
+
+            //Flow do collect
+            //1.aceder ao folder do grupo
+
+            //2.percorrer cada folder de mensagens e em cada um deles 
+            //   se encontrar o senderID no respetivo notseenby.txt faz:
+                
+                    //2.1.tira o seu ID de notseenby.txt, coloca o seu ID no seenby.txt
+                    //    e faz append do content.txt a stringbuilder da maneira seguinte
+                    //    .append(TUDO DO CONTENT)
+
+                    //2.2.verificar se o notseenby.txt apos lhe ter sido removido o senderID
+                    //    ficou vazio caso sim mandar o folder da mensagem para dentro do folder history
+
+                    //2.final. a partir do stringbuild fazer split com : e - para recontruir o String[] a enviar
+
+                    
+
+
+            //3. se nao encontrou senderID em nenhum notseenby.txt devolve
+            // o array de Strings contendo apenas -empty
+            return listaMensagensDefault;
+        }
+
 	}
 }
+
+
+//listamensagens[1] = user1:mensagem1
+//listamensagens[2] = user2:mensagem2
+
+
+//userabdfbfadhsga
+//gfsdjsgfbpjksagbakofgjsadgkbnfadjio
+//gfnkagbagbjkgbad
+//gsadkns
