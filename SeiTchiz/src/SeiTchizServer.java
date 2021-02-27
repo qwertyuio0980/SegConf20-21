@@ -565,10 +565,10 @@ public class SeiTchizServer {
             
             try {
                 if(sendersFollowingTEMPFile.createNewFile()) {
-                    System.out.println("sendersFollowingTEMPFile criado sem conteudo");
+                    //nada acontece aqui
                 }
                 if(usersFollowersTEMPFile.createNewFile()) {
-                    System.out.println("usersFollowersTEMPFile criado sem conteudo");
+                    //nada acontece aqui
                 }
             } catch (IOException e1) {
                 e1.printStackTrace();
@@ -588,8 +588,6 @@ public class SeiTchizServer {
                     }
                 }
                 
-                System.out.println("ficheiro followingTEMP de senderID ja tem o conteudo certo");
-                
             } catch (FileNotFoundException e2) {
                 e2.printStackTrace();
             } catch (IOException e) {
@@ -598,12 +596,12 @@ public class SeiTchizServer {
        
             //2.apagar o ficheiro original
             if(sendersFollowingFile.delete()) {
-                System.out.println("ficheiro original de following de " + senderID + " apagado");
+                //nada acontece aqui
             }
             
             //3.renomear o ficheiro temporario como following.txt
             if(sendersFollowingTEMPFile.renameTo(sendersFollowingFile)) {
-                System.out.println("ficheiro temporario de following de " + senderID + " passou a ser o ficheiro oficial");
+                //nada acontece aqui
             }
 
             //----retirar senderID de followers de userID----
@@ -620,8 +618,6 @@ public class SeiTchizServer {
                     }
                 }
                 
-                System.out.println("ficheiro followersTEMP de userID ja tem o conteudo certo");
-                
             } catch (FileNotFoundException e2) {
                 e2.printStackTrace();
             } catch (IOException e) {
@@ -630,12 +626,12 @@ public class SeiTchizServer {
          
             //2.apagar o ficheiro original
             if(usersFollowersFile.delete()) {
-                System.out.println("ficheiro original de followers de " + userID + " apagado");
+                //nada acontece aqui
             }
             
             //3.renomear o ficheiro temporario como followers.txt
             if(usersFollowersTEMPFile.renameTo(usersFollowersFile)) {
-                System.out.println("ficheiro temporario de followers de " + userID + " passou a ser o ficheiro oficial");
+                //nada acontece aqui
             }
             
         }
@@ -724,12 +720,12 @@ public class SeiTchizServer {
                         e.printStackTrace();
                     }
 
-                    // Adicionar o nome do grupo ao ficheiro participant.txt do senderID
+                    // Adicionar o dono do grupo-nome do grupo ao ficheiro participant.txt do senderID
                     try {
                         File fUserParticipant = new File("../files/userStuff/" + senderID + "/participant.txt");
                         FileWriter fwUserParticipant = new FileWriter(fUserParticipant, true);
                         BufferedWriter bwUserParticipant = new BufferedWriter(fwUserParticipant);
-                        bwUserParticipant.write(groupID);
+                        bwUserParticipant.write(senderID + "-" + groupID);
                         bwUserParticipant.newLine();
                         bwUserParticipant.close();
                     } catch (IOException e) {
@@ -855,7 +851,7 @@ public class SeiTchizServer {
             
             try {
                 if(groupMembersTEMPFile.createNewFile()) {
-                    System.out.println("groupMembersTEMPFile criado sem conteudo");
+                    //nada acontece aqui
                 }
             } catch (IOException e1) {
                 e1.printStackTrace();
@@ -876,8 +872,6 @@ public class SeiTchizServer {
                     }
                 }
                 
-                System.out.println("ficheiro followingTEMP de senderID ja tem o conteudo certo");
-                
             } catch (FileNotFoundException e2) {
                 e2.printStackTrace();
                 System.exit(-1);
@@ -888,12 +882,12 @@ public class SeiTchizServer {
         
             //2.apagar o ficheiro original
             if(groupMembersFile.delete()) {
-                System.out.println("ficheiro original de following de " + senderID + " apagado");
+                //nada acontece aqui
             }
             
             //3.renomear o ficheiro temporario como following.txt
             if(groupMembersTEMPFile.renameTo(groupMembersFile)) {
-                System.out.println("ficheiro temporario de following de " + senderID + " passou a ser o ficheiro oficial");
+                //nada acontece aqui
             }
 
             //----retirar o senderID-groupID do participant.txt do usuario userID----
@@ -903,7 +897,7 @@ public class SeiTchizServer {
             
             try {
                 if(participantTEMPFile.createNewFile()) {
-                    System.out.println("participantTEMPFile criado sem conteudo");
+                    //nada acontece aqui
                 }
             } catch (IOException e1) {
                 e1.printStackTrace();
@@ -922,8 +916,6 @@ public class SeiTchizServer {
                     }
                 }
                 
-                System.out.println("ficheiro followersTEMP de userID ja tem o conteudo certo");
-                
             } catch (FileNotFoundException e2) {
                 e2.printStackTrace();
             } catch (IOException e) {
@@ -932,17 +924,17 @@ public class SeiTchizServer {
             
             //2.apagar o ficheiro original
             if(participantFile.delete()) {
-                System.out.println("ficheiro original de followers de " + userID + " apagado");
+                //nada acontece aqui
             } else {
-                System.out.println("Nao foi possivel deletar o ficheiro participantFile");
+                //nada acontece aqui
                 return -1;
             }
             
             //3.renomear o ficheiro temporario como followers.txt
             if(participantTEMPFile.renameTo(participantFile)) {
-                System.out.println("ficheiro temporario de followers de " + userID + " passou a ser o ficheiro oficial");
+                //nada acontece aqui
             } else {
-                System.out.println("Nao foi possivel renomear o ficheiro participantTEMPFile");
+                //nada acontece aqui
                 return -1;
             }
             
@@ -950,10 +942,8 @@ public class SeiTchizServer {
         }
                 
         public String ginfo() {
-            
-            
+                       
             //TODO
-
 
             return null;
         }
@@ -962,11 +952,12 @@ public class SeiTchizServer {
             
             File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
             try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
-                
+                System.out.println("chegou ao ciclo no msg");
                 while(scSenderParticipant.hasNextLine()) {
                     String lineSenderParticipant = scSenderParticipant.nextLine();
                     if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
                         //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
+                        System.out.println("dentro do msg ta ok");
                         msgAux(lineSenderParticipant, senderID, mensagem);
                         return 0;
                     }
@@ -1068,6 +1059,7 @@ public class SeiTchizServer {
                 while(scGroupParticipants.hasNextLine()) {
                     String lineGroupParticipants = scGroupParticipants.nextLine();
                     if(lineGroupParticipants.contentEquals(senderID)) {
+                        System.out.println("dentro do isCorrectGroup ta ok");
                         return true;
                     }
                 }

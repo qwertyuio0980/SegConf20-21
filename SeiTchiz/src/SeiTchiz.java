@@ -338,7 +338,9 @@ public class SeiTchiz {
                     stop = true;
                     break;
                 default:
+                    System.out.println(separador);
                     System.out.println("Input recebido invalido");
+                    System.out.println(separador);
                     break;
             }
         }
