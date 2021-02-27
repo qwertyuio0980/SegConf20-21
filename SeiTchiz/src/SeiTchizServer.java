@@ -952,29 +952,23 @@ public class SeiTchizServer {
         public String ginfo() {
             
             
+            //TODO
+
+
             return null;
         }
         
-        //ALGO ESTA A CORRER MAL AQUI
         public int msg(String groupID, String senderID, String mensagem) {
             
-            //condicoes para poder enviar mensagem
-            //senderID tem de pertencer ao grupo
-            //(ou seja em participant.txt esta o groupID recebido como argumento
-            //e no folder associado a essa linha ("userID-groupID"), no ficheiro participants.txt
-            //esta o senderID)
             File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
-            boolean canSendMessage = false;
             try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
                 
                 while(scSenderParticipant.hasNextLine()) {
                     String lineSenderParticipant = scSenderParticipant.nextLine();
-                    if(lineSenderParticipant.contains(groupID)) {
+                    if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
                         //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
-                        if(isCorrectGroup(lineSenderParticipant, senderID)) {
-                            msgAux(lineSenderParticipant, senderID, mensagem);
-                            return 0;
-                        }
+                        msgAux(lineSenderParticipant, senderID, mensagem);
+                        return 0;
                     }
                 }
             } catch (FileNotFoundException e) {
@@ -985,18 +979,23 @@ public class SeiTchizServer {
             return -1;
         }
 
-        //ALGO ESTA A CORRER MAL AQUI
         public void msgAux(String groupFolder, String senderID, String mensagem) {
             //metodo onde se envia mesmo a mensagem
 
             //1.incrementar valor do counter em counter.txt
             File fileCounter = new File("../files/groups/" + groupFolder + "/counter.txt");
             int counter = 0; //valor 0 por default so para nao chatear o sonarlint
-            try(Scanner scCounter = new Scanner(fileCounter);
-            FileWriter fwCounter = new FileWriter(fileCounter, false);) {
+            Scanner scCounter;
+            FileWriter fwCounter;
+            try {
+                scCounter = new Scanner(fileCounter);
                 counter = Integer.parseInt(scCounter.nextLine());
                 counter += 1;
-                fwCounter.write(counter);
+                scCounter.close();
+
+                fwCounter = new FileWriter(fileCounter, false);
+                fwCounter.write(String.valueOf(counter));
+                fwCounter.close();
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

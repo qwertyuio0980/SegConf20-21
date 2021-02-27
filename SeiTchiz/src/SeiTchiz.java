@@ -209,7 +209,7 @@ public class SeiTchiz {
                     
                     if(resultado == 0) {
                         System.out.println(separador);
-                        System.out.println("O utilizador selecionado e agora membro do grupo " + option[2]);
+                        System.out.println("O utilizador " + option[1] + " e agora membro do grupo " + option[2]);
                         System.out.println(separador);
                     }  else {
                         System.out.println(separador);
@@ -236,12 +236,12 @@ public class SeiTchiz {
                         break;
                     }
                     
-                    // envia-se o userID que se pretende adicionar ao grupo, o grupoID e o senderID que fez o pedido
+                    // envia-se o userID que se pretende remover do grupo, o grupoID e o senderID que fez o pedido
                     resultado = cs.removeu(option[1], option[2], args[1]);
                     
                     if(resultado == 0) {
                         System.out.println(separador);
-                        System.out.println("O utilizador selecionado deixou de fazer parte do grupo " + option[2]);
+                        System.out.println("O utilizador " + option[1] + " deixou de fazer parte do grupo " + option[2]);
                         System.out.println(separador);
                     }  else {
                         System.out.println(separador);

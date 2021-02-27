@@ -7,8 +7,6 @@ like <photoID>
 
 ginfo [groupID]
 
-msg <groupID> <msg>  <---BUGS
-
 collect <groupID>
  
 history <groupID>
