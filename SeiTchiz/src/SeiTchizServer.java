@@ -952,12 +952,11 @@ public class SeiTchizServer {
             
             File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
             try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
-                System.out.println("chegou ao ciclo no msg");
+                
                 while(scSenderParticipant.hasNextLine()) {
                     String lineSenderParticipant = scSenderParticipant.nextLine();
                     if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
                         //pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
-                        System.out.println("dentro do msg ta ok");
                         msgAux(lineSenderParticipant, senderID, mensagem);
                         return 0;
                     }
@@ -1009,26 +1008,22 @@ public class SeiTchizServer {
                 e.printStackTrace();
             }
 
-            //4.criar o seenby.txt e colocar la o senderID
+            //4.criar o seenby.txt e nao colocar la nada
             File fSeenBy = new File("../files/groups/" + groupFolder + "/msg" + counter + "/seenBy.txt");
-            try(FileWriter fwSeenBy = new FileWriter(fSeenBy);
-            BufferedWriter bwSeenBy = new BufferedWriter(fwSeenBy);) {
-                bwSeenBy.write(senderID);
-                bwSeenBy.newLine();
-            } catch (IOException e) {
+            try {
+                fSeenBy.createNewFile();
+            } catch (IOException e1) {
                 // TODO Auto-generated catch block
-                e.printStackTrace();
+                e1.printStackTrace();
             }
 
-            //5.criar o notseenby.txt e colocar todos os participants no ficheiro menos o senderID
+            //5.criar o notseenby.txt e colocar todos os participants no ficheiro incluindo o senderID
             StringBuilder sbParticipants = new StringBuilder();
             File fParticipants = new File("../files/groups/" + groupFolder + "/participants.txt");
             try(Scanner scParticipants = new Scanner(fParticipants)) {
                 while(scParticipants.hasNextLine()) {
                     String lineParticipants = scParticipants.nextLine();
-                    if(!lineParticipants.contentEquals(senderID)) {
-                        sbParticipants.append(lineParticipants + "\n");
-                    }
+                    sbParticipants.append(lineParticipants + "\n");
                 }
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -1059,7 +1054,6 @@ public class SeiTchizServer {
                 while(scGroupParticipants.hasNextLine()) {
                     String lineGroupParticipants = scGroupParticipants.nextLine();
                     if(lineGroupParticipants.contentEquals(senderID)) {
-                        System.out.println("dentro do isCorrectGroup ta ok");
                         return true;
                     }
                 }

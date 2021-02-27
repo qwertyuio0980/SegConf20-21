@@ -49,7 +49,6 @@ public class SeiTchiz {
             "h ou history <groupID> \n" +
             "s ou stop");
 
-
             
             BufferedReader reader;
             String input;          
@@ -58,7 +57,6 @@ public class SeiTchiz {
             String followersList = null;
             String mensagem = null;
             StringBuilder sbMensagem = new StringBuilder();
-            String[] listaGinfo = null;
 
             
             try {
@@ -325,16 +323,31 @@ public class SeiTchiz {
                 case "c": case "collect":
 
                     //TODO
+                    //ter um ficheiro com os participantes presentes na altura em que uma mensagem e criada no folder da mensagem
                     
                     break;
                 case "h": case "history":
 
-                    //TODO
+                    /*
+                    if(option.length != 2 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
+                        System.out.println(separador);
+                        System.out.println("Opcao \"history\" recebe argumento <groupID> que nao pode conter espacos, " +
+                        "dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
+                        break;
+                    }
+
+                    // envia-se o groupID indicado e o userID que fez o pedido
+                    //= cs.history(option[1], args[1]); 
                     
+                    //falta o resto
+                    */
+
                     break;
+
                 case "s": case "stop":
                     System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");
-                    cs.stop();                  
+                    cs.stopClient();                  
                     stop = true;
                     break;
                 default:

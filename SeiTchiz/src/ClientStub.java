@@ -264,7 +264,7 @@ public class ClientStub {
         return followersList;
     }
 
-    public void stop() {
+    public void stopClient() {
         
         try {
             //enviar tipo de operacao
