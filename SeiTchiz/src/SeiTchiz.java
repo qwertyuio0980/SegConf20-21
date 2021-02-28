@@ -272,17 +272,6 @@ public class SeiTchiz {
 			case "g":
 			case "ginfo":
 
-				// caso meter o groupID
-				// if(option.length == 2 && !option[1].contains("/") || !option[1].contains(":")
-				// || !option[1].contains("-")) {
-
-				// // envia-se o senderID e o groupID
-				// // String listaGinfo = cs.ginfo(args[1], option[1]);
-
-				// for(int i = 0; i < listaGinfo.length(); i++){
-				// System.out.println(listaGinfo[i]);
-				// }
-
 				// caso nao meter o groupID
 				if (option.length == 1) {
 
@@ -292,30 +281,39 @@ public class SeiTchiz {
 					boolean participantFirst = true;
 					if (listaGinfo == null) {
 						System.out.println("Você não é dono e não participa de nenhum grupo");
-					}
-					for (int i = 0; i < listaGinfo.length; i++) {
-						String[] aux = listaGinfo[i].split("-");
-						if (aux.length == 1) {
-							if (ownerFirst) {
-								System.out.println("Grupos dos quais " + args[1] + " é dono:");
-								ownerFirst = false;
+					} else {
+						for (int i = 0; i < listaGinfo.length; i++) {
+							String[] aux = listaGinfo[i].split("-");
+							if (aux.length == 1) {
+								if (ownerFirst) {
+									System.out.println("Grupos dos quais " + args[1] + " é dono:");
+									ownerFirst = false;
+								}
+								System.out.println(" - " + aux[0]);
+							} else {
+								if (participantFirst) {
+									System.out.println(
+											"Grupos dos quais " + args[1] + " participa, antecedidos dos seus respectivos donos:");
+									participantFirst = false;
+								}
+								System.out.println(aux[0] + " - " + aux[1]);
 							}
-							System.out.println(" - " + aux[0]);
-						} else {
-							if (participantFirst) {
-								System.out.println(
-										"Grupos dos quais " + args[1] + " participa e seus respectivos donos:");
-								participantFirst = false;
-							}
-							System.out.println(aux[0] + " - " + aux[1]);
 						}
 					}
 
 				} else {
-					System.out.println(separador);
-					System.out.println("Opcao \"ginfo\" pode ou nao receber um argumento <groupID> que por sua vez "
-							+ "nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
-					System.out.println(separador);
+					// envia-se o senderID e o groupID
+					String[] listaGinfo = cs.ginfo(args[1], option[1]);
+					if(listaGinfo != null) {
+						System.out.println("Grupo: " + option[1]);
+						System.out.println("Dono: " + listaGinfo[0]);
+						if(listaGinfo.length > 1) {
+							System.out.println("Participantes:");
+							for(int i = 1; i < listaGinfo.length; i++) {
+								System.out.println(i + " - " + listaGinfo[i]);
+							}
+						}
+					}
 				}
 				break;
 

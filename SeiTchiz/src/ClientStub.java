@@ -446,6 +446,18 @@ public class ClientStub {
 		return listaMensagens;
 	}
 
+	/**
+	 * Recebe um senderID e envia o mesmo para o servidor.
+	 * É recebida uma lista de grupos dos quais o senderID é membro ou é dono.
+	 * Caso não participe em nenhum grupo ou não seja dono de nenhum
+	 * é recebida uma String vazia
+	 * @param senderID usuario corrente
+	 * @return Array de Strings contendo primeiro os grupos dos quais o senderID é dono,
+	 * caso seja dono de algum. 
+	 * Em seguida, veêm os donos e os nomes dos grupos dos quais o senderID participa
+	 * no formato <ownerID-groupID>.
+	 * Todos os grupos são separados por ','.
+	 */
 	public String[] ginfo(String senderID) {
 
 		String resultado = null;
@@ -462,6 +474,48 @@ public class ClientStub {
 				return null;
 			}
 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// Tratar resposta
+		String[] groups = new String[0];
+
+		groups = resultado.split(",");
+
+		return groups;
+	}
+
+	/**
+	 * Pede ao servidor o nome do dono e participantes do groupID,
+	 * caso o senderID seja dono ou participante do groupID.
+	 * @param senderID usuário corrente
+	 * @param groupID grupo do qual a identificação do dono e dos membros será procurada
+	 * @return 
+	 */
+	public String[] ginfo(String senderID, String groupID) {
+
+		String resultado = null;
+		try {
+			// enviar tipo de operacao
+			out.writeObject("g");
+			// enviar senderID
+			out.writeObject(senderID);
+			// enviar informação que foi apenas um argumento
+			out.writeObject(groupID);
+			// receber o resultado da operacao
+			resultado = (String) in.readObject();
+
+			// Caso em que o groupID não existe
+			// Caso em que o usuario nao eh membro nem dono do groupID
+			if(resultado.equals("")) {
+				System.out.println("O grupo não existe ou você não é dono ou participa no mesmo");
+				return null;
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -366,10 +366,15 @@ public class SeiTchizServer {
 							if (groupID.equals("/")) {
 								grupos = ginfo(aux);
 							} else {
-								// grupos = ginfo(aux,groupID);
+								grupos = ginfo(aux,groupID);
 							}
+
 							// Enviar resposta
-							outStream.writeObject(grupos);
+                            if(grupos == null) {
+                                outStream.writeObject("");
+                            } else {
+                                outStream.writeObject(grupos);
+                            }
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -466,13 +471,13 @@ public class SeiTchizServer {
 			System.out.println("------------------------------------------");
 		}
 
-		/**
-		 * Faz com que o senderID siga o userID,
-		 * 
-		 * @param userID   Usuario a ser seguido
-		 * @param senderID Usuario que seguira o userID
-		 * @return
-		 */
+        /**
+         * Faz com que o senderID siga o userID,
+         * 
+         * @param userID   Usuario a ser seguido
+         * @param senderID Usuario que seguira o userID
+         * @return
+         */
 		public int follow(String userID, String senderID) {
 			int resultado = -1;
 			boolean encontrado = false;
@@ -1042,8 +1047,12 @@ public class SeiTchizServer {
 
 			StringBuilder grupos = new StringBuilder();
 
+            File owner = new File("../files/userStuff/" + userID + "/owner.txt");
+            File participant = new File("../files/userStuff/" + userID + "/participant.txt");
+            
+
 			// 1.
-			try (Scanner scOwner = new Scanner("../files/userStuff/" + userID + "/owner.txt")) {
+			try (Scanner scOwner = new Scanner(owner)) {
 				while (scOwner.hasNextLine()) {
 					String line = scOwner.nextLine();
 					grupos.append(line + ",");
@@ -1055,7 +1064,7 @@ public class SeiTchizServer {
 			}
 
 			// 2.
-			try (Scanner scParticipant = new Scanner("../files/userStuff/" + userID + "/participant.txt")) {
+			try (Scanner scParticipant = new Scanner(participant)) {
 				while (scParticipant.hasNextLine()) {
 					String line = scParticipant.nextLine();
 					grupos.append(line + ",");
@@ -1067,10 +1076,77 @@ public class SeiTchizServer {
 			}
 
 			// 3.
-			String resultado = grupos.toString();
-
-			return resultado;
+			return grupos.toString();
 		}
+
+        /**
+         * Devolve o dono do groupID e dos membros do groupID,
+         * caso senderID seja dono ou participante do groupID.
+         * @param senderID usuário corrente 
+         * @param groupID grupo a ser investigado
+         * @return String contendo os nomes do dono do groupID
+         * e respetivos participantes. O nome do dono será seguido pelo carácter "/" e
+         * eventualmente os nomes dos participantes.
+         */
+		private String ginfo(String senderID, String groupID) {
+            StringBuilder ownerPaticipants = new StringBuilder();
+            File owner = new File("../files/userStuff/" + senderID + "/owner.txt");
+            File participant = new File("../files/userStuff/" + senderID+ "/participant.txt");
+            File groupParticipants = null;
+            String fileName = null;
+
+            // 1. Procurar no ficheiro owner.txt pelo groupID
+			try (Scanner scOwner = new Scanner(owner)) {
+				while (scOwner.hasNextLine()) {
+					String line = scOwner.nextLine();
+                    if(line.equals(groupID)) {
+                        fileName = senderID + "-" + line;
+                    }
+				}
+				scOwner.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+            if(fileName == null) {
+                // 2. Procurar no ficheiro participant.txt pelo groupID
+                try (Scanner scParticipant = new Scanner(participant)) {
+                    while (scParticipant.hasNextLine()) {
+                        String line = scParticipant.nextLine();
+                        String[] lineAux = line.split("-");
+                        if(lineAux[1].equals(groupID)) {
+                            fileName = line;
+                        }
+                    }
+                    scParticipant.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            }
+
+            // Caso não tenha sido encontrado o grupo nos ficheiros do senderID devolver um estado de erro
+            if(fileName == null) {
+                return null;
+            }
+
+            groupParticipants = new File("../files/groups/" + fileName + "/participants.txt");
+
+			// 1.
+			try (Scanner scParticipants = new Scanner(groupParticipants)) {
+				while (scParticipants.hasNextLine()) {
+					String line = scParticipants.nextLine();
+                    ownerPaticipants.append(line + ',');
+				}
+				scParticipants.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			return ownerPaticipants.toString();
+        }
 
 		public int msg(String groupID, String senderID, String mensagem) {
 
