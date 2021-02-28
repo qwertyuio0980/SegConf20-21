@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Optional;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.Writer;
@@ -220,6 +221,8 @@ public class SeiTchizServer {
 					String[] conteudo = null;
                     StringBuilder sbMensagem = new StringBuilder();
                     String mensagem = null;
+                    String groupID = null;
+                    String grupos = null;
 				    
 	                // realizar a operacao pedida
 					switch(op) {
@@ -335,16 +338,17 @@ public class SeiTchizServer {
                                 // receber senderID do user que fez o pedido
                                 aux = (String) inStream.readObject();
 
-                                // colocar input correspondente a msg numa var "mensagem"
-                                for(int i = 2; i < conteudo.length; i++) {
-                                    sbMensagem.append(conteudo[i] + ":");
+                                // receber groupID ou "/"
+                                groupID = (String) inStream.readObject();
+
+                                // Chamar funcao ginfo passando os argumentos recebidos e receber a resposta
+                                if(groupID.equals("/")) {
+                                    grupos = ginfo(aux);
+                                } else {
+                                    // grupos = ginfo(aux,groupID);
                                 }
-                                sbMensagem.deleteCharAt(sbMensagem.length()-1);
-                                mensagem = sbMensagem.toString();
-                                
-                                // enviar estado da operacao
-                                outStream.writeObject(msg(conteudo[0], conteudo[1], mensagem));
-                                
+                                // Enviar resposta
+                                outStream.writeObject(grupos);
                             } catch (ClassNotFoundException e) {
                                 // TODO Auto-generated catch block
                                 e.printStackTrace();
@@ -975,12 +979,54 @@ public class SeiTchizServer {
             return 0; 
         }
                 
-        public String ginfo() {
-                       
-            //TODO
+        /**
+         * Devolve todos os grupos que userID eh dono e dos quais participa
+         * Caso nao seja participante ou dono de nenhum grupo isto eh assinalado
+         * @param userID usuario a ser usado na busca por grupos 
+         * @return Optional<List> contendo todos os grupos achados
+         */
+        public String ginfo(String userID) {
+            // Ler os ficheiros owner.txt e participant.txt
+            // 1. Criar um StringBuilder e ir colocando as linhas do ficheiro owner.txt
+            // Os grupos dos quais eh dono serao os primeiros a serem adicionados a SB.
+            // 2. Em seguida serao acionados os grupos do qual o usuario eh participante (do ficheiro participant.txt)
+            // caso o mesmo participe em algum grupo. Caso contrario nao serao adicionados nenhum grupo a SB.
+            // 3. Por fim, sera criado uma instancia Optional<String> usando a SB dos grupos.
+            // A mesma sera retornada.
 
-            return null;
+            StringBuilder grupos = new StringBuilder();
+
+            // 1.
+            try(Scanner scOwner = new Scanner("../files/userStuff/" + userID + "/owner.txt")){
+                while(scOwner.hasNextLine()) {
+                    String line = scOwner.nextLine();
+                    grupos.append(line + ",");
+                }
+                scOwner.close();
+            } catch(Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+
+            // 2.
+            try(Scanner scParticipant = new Scanner("../files/userStuff/" + userID + "/participant.txt")){
+                while(scParticipant.hasNextLine()) {
+                    String line = scParticipant.nextLine();
+                    grupos.append(line + ",");
+                }
+                scParticipant.close();
+            } catch(Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            } 
+
+            // 3.
+            String resultado = grupos.toString();
+
+            return resultado;
         }
+
+
         
         public int msg(String groupID, String senderID, String mensagem) {
             

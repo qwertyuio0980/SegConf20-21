@@ -412,19 +412,21 @@ public class ClientStub {
         return listaMensagens;
     }
 
-    /*
-    public String ginfo(String senderID) {
+    public String[] ginfo(String senderID) {
 
-        String []resultado = null;
+        String resultado = null;
         try {
             //enviar tipo de operacao
             out.writeObject("g");
-            //enviar argumento
+            //enviar senderID
             out.writeObject(senderID);
             //enviar infomacao que foi apenas um argumento
-            out.writeObject(":");
+            out.writeObject("/");
             //receber o resultado da operacao
-            resultado = (list) in.readObject();
+            resultado = (String) in.readObject();
+            if(resultado.equals("")) {
+                return null;
+            }
             
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -433,9 +435,17 @@ public class ClientStub {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        // Tratar resposta
+        String[] groups = new String[0];
+
+        groups = resultado.split(",");
         
-        return resultado;
+        return groups;
     }
+
+    /*
+
 
     public String ginfo(String groupID, senderID) {
 
