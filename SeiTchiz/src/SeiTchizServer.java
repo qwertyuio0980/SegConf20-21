@@ -767,10 +767,6 @@ public class SeiTchizServer {
                         e.printStackTrace();
                     }
 
-                    // Adicionar folder vazio correspondente as mensagens do historico
-                    File folderHistory = new File("../files/groups/" + senderIDgroupID + "/history");
-                    folderHistory.mkdir();
-
                     return 0;
                 } else {
                     return 1;
@@ -878,7 +874,7 @@ public class SeiTchizServer {
             File participantFile = new File("../files/userStuff/" + userID + "/participant.txt");
             
             // Verifica se ha um grupo com nome senderID-groupID e se o userID existe
-            if(!groupMembersFile.exists() || !participantFile.exists() || userID == senderID) {
+            if(!groupMembersFile.exists() || !participantFile.exists() || userID.contentEquals(senderID)) {
                 return -1;
             }
 
@@ -1026,8 +1022,6 @@ public class SeiTchizServer {
             return resultado;
         }
 
-
-        
         public int msg(String groupID, String senderID, String mensagem) {
             
             File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
@@ -1168,41 +1162,152 @@ public class SeiTchizServer {
         public String[] collect(String groupID, String senderID) {
 
             String[] listaMensagensDefault = {"-empty"};
-
-            //TODO
-
-            //Flow do collect
+            String parUserGroup = "";
+            
             //1.aceder ao folder do grupo
-
-            //2.percorrer cada folder de mensagens e em cada um deles 
-            //   se encontrar o senderID no respetivo notseenby.txt faz:
+            File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
+            try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
                 
-                    //2.1.tira o seu ID de notseenby.txt, coloca o seu ID no seenby.txt
-                    //    e faz append do content.txt a stringbuilder da maneira seguinte
-                    //    .append(TUDO DO CONTENT)
+                while(scSenderParticipant.hasNextLine()) {
+                    String lineSenderParticipant = scSenderParticipant.nextLine();
 
-                    //2.2.verificar se o notseenby.txt apos lhe ter sido removido o senderID
-                    //    ficou vazio caso sim mandar o folder da mensagem para dentro do folder history
+                    if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {                       
+                        parUserGroup = lineSenderParticipant;
+                        break;
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
 
-                    //2.final. a partir do stringbuild fazer split com : e - para recontruir o String[] a enviar
+            //o canCollect ja garante que se vai entrar neste if
+            if(!parUserGroup.isEmpty()) {
+                File fileCounter = new File("../files/groups/" + parUserGroup + "/counter.txt");
+                int counter = 0;
+                Scanner scCounter;
+                try {
+                    scCounter = new Scanner(fileCounter);
+                    counter = Integer.parseInt(scCounter.nextLine());
+                    scCounter.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
 
+                //2.se o valor de counter for maior que 0 
+                //percorrer cada folder de mensagens e em cada um deles faz:
+                if(counter > 0) {
+                    StringBuilder sbAllMsgs = new StringBuilder();
+
+                    for(int i = 1; i <= counter; i++) {
+                        File currentContentFile = new File("../files/groups/" + parUserGroup +"/msg" + i + "/content.txt");
+                        File currentNotSeenByFile = new File("../files/groups/" + parUserGroup +"/msg" + i + "/notSeenBy.txt");
+                        File currentSeenByFile = new File("../files/groups/" + parUserGroup +"/msg" + i + "/seenBy.txt");
+                        boolean msgUnread = false;
+
+                        try(Scanner scNotSeenBy = new Scanner(currentNotSeenByFile)) {
+                            while(scNotSeenBy.hasNextLine()) {
+                                String lineUser = scNotSeenBy.nextLine();
+                                if(lineUser.contentEquals(senderID)) {
+                                    msgUnread = true;
+                                    break;
+                                }
+                            }
+                        } catch (FileNotFoundException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        
+                        //se encontrar o senderID no respetivo notseenby.txt
+                        if(msgUnread) {
+
+                            //1.tira o seu ID de notseenby.txt
+                            File currentNotSeenByTEMPFile = new File("../files/groups/" + parUserGroup +"/msg" + counter + "/notSeenByTemp.txt");
+                            try {
+                                if (currentNotSeenByTEMPFile.createNewFile()) {
+                                    // nada acontece aqui
+                                }
+                            } catch (IOException e1) {
+                                // TODO Auto-generated catch block
+                                e1.printStackTrace();
+                            }
+
+                            try(Scanner scNotSeenBy = new Scanner(currentNotSeenByFile);
+                            FileWriter fwNotSeenByTEMP = new FileWriter(currentNotSeenByTEMPFile);
+                            BufferedWriter bwNotSeenBy = new BufferedWriter(fwNotSeenByTEMP);) {
+                                
+                                while(scNotSeenBy.hasNextLine()) {
+                                    String lineUser = scNotSeenBy.nextLine();
+                                    if(!lineUser.contentEquals(senderID)) {
+                                        bwNotSeenBy.write(lineUser);
+                                        bwNotSeenBy.newLine();
+                                    }
+                                }
+                                
+                            } catch (FileNotFoundException e2) {
+                                e2.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                     
+                            if(currentNotSeenByFile.delete()) {
+                                //nada acontece aqui
+                            }
+                            
+                            if(currentNotSeenByTEMPFile.renameTo(currentNotSeenByFile)) {
+                                //nada acontece aqui
+                            }
 
+                            //2.coloca o seu ID no seenby.txt
+                            try(FileWriter fw = new FileWriter(currentSeenByFile, true);
+                            BufferedWriter bw = new BufferedWriter(fw);) {
+                                //escrita de senderID
+                                bw.write(senderID);
+                                bw.newLine();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-            //3. se nao encontrou senderID em nenhum notseenby.txt devolve
+                            //3.faz append do conteudo de content.txt a stringbuilder
+                            try(Scanner scContent = new Scanner(currentContentFile);) {
+                                while(scContent.hasNextLine()) {
+                                    String lineContent = scContent.nextLine();
+                                    sbAllMsgs.append(lineContent);
+                                }
+                            } catch (FileNotFoundException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+
+                        //se nao encontrar o senderID no respetivo notseenby.txt passa para prox folder msg
+                    }
+
+                    if(sbAllMsgs.length() != 0) {
+                        // primeiro apagar o "-" inicial do primeiro user
+                        sbAllMsgs.deleteCharAt(0);
+
+                        //finalmente passar do stringbuilder para string e fazer split com - para construir o String[] a enviar
+                        //System.out.println(sbAllMsgs.toString().split("-"));
+                        return sbAllMsgs.toString().split("-");
+                    }
+                }
+            }
+                
+            //3. se counter.txt tinha valor 0 ou sefoi encontrado senderID em nenhum notseenby.txt devolve
             // o array de Strings contendo apenas -empty
             return listaMensagensDefault;
         }
 
+
+        public int canHistory() {
+
+
+        }
+
+        public String[] history() {
+            
+        }
+
 	}
 }
-
-
-//listamensagens[1] = user1:mensagem1
-//listamensagens[2] = user2:mensagem2
-
-
-//userabdfbfadhsga
-//gfsdjsgfbpjksagbakofgjsadgkbnfadjio
-//gfnkagbagbjkgbad
-//gsadkns

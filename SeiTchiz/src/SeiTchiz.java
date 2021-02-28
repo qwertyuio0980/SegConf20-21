@@ -377,10 +377,14 @@ public class SeiTchiz {
                             System.out.println(separador);
                         } else {
                             System.out.println(separador);
-                            System.out.println(String.valueOf(listaMensagens.length) + " mensagens novas:\n");
+                            if(listaMensagens.length == 1) {
+                                System.out.println("1 mensagem nova:\n");
+                            } else {
+                                System.out.println(String.valueOf(listaMensagens.length) + " mensagens novas");
+                            }
                             for(int i = 0; i < listaMensagens.length; i++) {
                                 String[] parEscritorConteudo = listaMensagens[i].split(":");
-                                System.out.println("Do user " + parEscritorConteudo[0] + ":");
+                                System.out.println("-do user " + parEscritorConteudo[0] + ":");
                                 System.out.println(parEscritorConteudo[1]);
                             }
                             System.out.println(separador);
