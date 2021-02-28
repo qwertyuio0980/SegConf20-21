@@ -364,7 +364,7 @@ public class SeiTchiz {
                     }
 
                     // envia-se o groupID e o senderID
-                    resultado = cs.canCollect(option[1], args[1]);
+                    resultado = cs.canCollectOrHistory(option[1], args[1]);
                     //resultado aqui apenas diz se collect pode ser feito ou se por alguma razao nao ira devolver mensagem nenhuma
 
                     if(resultado == 0) {
@@ -378,9 +378,9 @@ public class SeiTchiz {
                         } else {
                             System.out.println(separador);
                             if(listaMensagens.length == 1) {
-                                System.out.println("1 mensagem nova:\n");
+                                System.out.println("1 mensagem nova:");
                             } else {
-                                System.out.println(String.valueOf(listaMensagens.length) + " mensagens novas");
+                                System.out.println(String.valueOf(listaMensagens.length) + " mensagens novas:");
                             }
                             for(int i = 0; i < listaMensagens.length; i++) {
                                 String[] parEscritorConteudo = listaMensagens[i].split(":");
@@ -402,7 +402,7 @@ public class SeiTchiz {
                     
                 case "h": case "history":
 
-                    /*
+                    // envia-se o groupID indicado e o userID que fez o pedido
                     if(option.length != 2 || option[1].contains("/") || option[1].contains(":") || option[1].contains("-")) {
                         System.out.println(separador);
                         System.out.println("Opcao \"history\" recebe argumento <groupID> que nao pode conter espacos, " +
@@ -411,11 +411,36 @@ public class SeiTchiz {
                         break;
                     }
 
-                    // envia-se o groupID indicado e o userID que fez o pedido
-                    //= cs.history(option[1], args[1]); 
-                    
-                    //falta o resto
-                    */
+                    // envia-se o groupID e o senderID
+                    resultado = cs.canCollectOrHistory(option[1], args[1]);
+                    //resultado aqui apenas diz se history pode ser feito ou se por alguma razao nao ira devolver mensagem nenhuma
+
+                    if(resultado == 0) {
+                        // envia-se o groupID e o senderID
+                        listaMensagens = cs.history(option[1], args[1]);
+
+                        if(listaMensagens.length == 1 && listaMensagens[0].contentEquals("-empty")) {
+                            System.out.println(separador);
+                            System.out.println("O cliente nao leu nenhumas mensagens previamente, ou seja, o seu historico esta vazio.");
+                            System.out.println(separador);
+                        } else {
+                            System.out.println(separador);
+                            System.out.println("Historico das mensagens que ja leu:");
+                            for(int i = 0; i < listaMensagens.length; i++) {
+                                String[] parEscritorConteudo = listaMensagens[i].split(":");
+                                System.out.println("-do user " + parEscritorConteudo[0] + ":");
+                                System.out.println(parEscritorConteudo[1]);
+                            }
+                            System.out.println(separador);
+                        }
+                    } else {
+                        System.out.println(separador);
+                        System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+                                "Razoes possiveis: -O cliente nao pertence ao grupo; \n " +
+                                "-O grupo indicado nao existe; \n " +
+                                "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
+                        System.out.println(separador);
+                    }
 
                     break;
 
@@ -424,11 +449,13 @@ public class SeiTchiz {
                     cs.stopClient();                  
                     stop = true;
                     break;
+
                 default:
                     System.out.println(separador);
                     System.out.println("Input recebido invalido");
                     System.out.println(separador);
                     break;
+
             }
         }
         

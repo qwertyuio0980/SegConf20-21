@@ -366,11 +366,11 @@ public class ClientStub {
         return resultado;
     }
 
-    public int canCollect(String groupID, String senderID) {
+    public int canCollectOrHistory(String groupID, String senderID) {
         int resultado = -1;
         try {
             //enviar tipo de operacao
-            out.writeObject("c1");
+            out.writeObject("ch");
             
             // enviar groupID:ID do user que fez o pedido
             out.writeObject(groupID + ":" + senderID);
@@ -393,7 +393,30 @@ public class ClientStub {
         String[] listaMensagens = null;
         try {
             //enviar tipo de operacao
-            out.writeObject("c2");
+            out.writeObject("c");
+            
+            // enviar groupID:ID do user que fez o pedido
+            out.writeObject(groupID + ":" + senderID);
+            
+            //receber o resultado da operacao
+            listaMensagens = (String[]) in.readObject();
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return listaMensagens;
+    }
+
+    public String[] history(String groupID, String senderID) {
+        String[] listaMensagens = null;
+        try {
+            //enviar tipo de operacao
+            out.writeObject("h");
             
             // enviar groupID:ID do user que fez o pedido
             out.writeObject(groupID + ":" + senderID);

@@ -171,7 +171,7 @@ public class SeiTchizServer {
 			System.out.println("Thread a correr no server para cada um cliente");
 		}
 
-		public void run() {
+		public void run() throws NullPointerException {
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
@@ -378,7 +378,7 @@ public class SeiTchizServer {
                             }
 							break;
 
-						case "c1":
+						case "ch":
                             //este caso verifica se se pode fazer collect
 						    
                             try {
@@ -387,7 +387,7 @@ public class SeiTchizServer {
                                 conteudo = aux.split(":");
                                 
                                 // enviar estado da operacao
-                                outStream.writeObject(canCollect(conteudo[0], conteudo[1]));
+                                outStream.writeObject(canCollectOrHistory(conteudo[0], conteudo[1]));
                                 
                             } catch (ClassNotFoundException e) {
                                 // TODO Auto-generated catch block
@@ -395,7 +395,7 @@ public class SeiTchizServer {
                             }
 							break;
 						    
-                        case "c2":
+                        case "c":
                             //este caso faz collect
 						    
                             try {
@@ -411,13 +411,23 @@ public class SeiTchizServer {
                                 e.printStackTrace();
                             }
 							break;
-							
-						case "h":
+						
+                        case "h":
 
-						    //TODO
-						    
-							break;
-							
+                            try {
+                                // receber <groupID>:<ID do user que fez o pedido>
+                                aux = (String) inStream.readObject();
+                                conteudo = aux.split(":");
+                                
+                                // enviar estado da operacao
+                                outStream.writeObject(history(conteudo[0], conteudo[1]));
+                                
+                            } catch (ClassNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+							break;    
+                            
 						case "s":
 						    stop = true;
 						    break;
@@ -1139,7 +1149,7 @@ public class SeiTchizServer {
             return false;
         }
                
-        public int canCollect(String groupID, String senderID) {
+        public int canCollectOrHistory(String groupID, String senderID) {
 
             File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
             try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
@@ -1181,7 +1191,7 @@ public class SeiTchizServer {
                 e.printStackTrace();
             }
 
-            //o canCollect ja garante que se vai entrar neste if
+            //o canCollectOrHistory ja garante que se vai entrar neste if
             if(!parUserGroup.isEmpty()) {
                 File fileCounter = new File("../files/groups/" + parUserGroup + "/counter.txt");
                 int counter = 0;
@@ -1299,14 +1309,96 @@ public class SeiTchizServer {
             return listaMensagensDefault;
         }
 
+        public String[] history(String groupID, String senderID) {
 
-        public int canHistory() {
-
-
-        }
-
-        public String[] history() {
+            String[] listaMensagensDefault = {"-empty"};
+            String parUserGroup = "";
             
+            //1.aceder ao folder do grupo
+            File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
+            try(Scanner scSenderParticipant= new Scanner(senderParticipantFile)) {
+                
+                while(scSenderParticipant.hasNextLine()) {
+                    String lineSenderParticipant = scSenderParticipant.nextLine();
+
+                    if(lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {                       
+                        parUserGroup = lineSenderParticipant;
+                        break;
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            //o canCollectOrHistory ja garante que se vai entrar neste if
+            if(!parUserGroup.isEmpty()) {
+                File fileCounter = new File("../files/groups/" + parUserGroup + "/counter.txt");
+                int counter = 0;
+                Scanner scCounter;
+                try {
+                    scCounter = new Scanner(fileCounter);
+                    counter = Integer.parseInt(scCounter.nextLine());
+                    scCounter.close();
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
+                //2.se o valor de counter for maior que 0 
+                //percorrer cada folder de mensagens e em cada um deles faz:
+                if(counter > 0) {
+                    StringBuilder sbAllMsgs = new StringBuilder();
+
+                    for(int i = 1; i <= counter; i++) {
+                        File currentContentFile = new File("../files/groups/" + parUserGroup +"/msg" + i + "/content.txt");
+                        File currentSeenByFile = new File("../files/groups/" + parUserGroup +"/msg" + i + "/seenBy.txt");
+                        boolean msgRead = false;
+
+                        try(Scanner scSeenBy = new Scanner(currentSeenByFile)) {
+                            while(scSeenBy.hasNextLine()) {
+                                String lineUser = scSeenBy.nextLine();
+                                if(lineUser.contentEquals(senderID)) {
+                                    msgRead = true;
+                                    break;
+                                }
+                            }
+                        } catch (FileNotFoundException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                        
+                        //se encontrar o senderID no respetivo seenby.txt
+                        if(msgRead) {
+
+                            //faz append do conteudo de content.txt a stringbuilder
+                            try(Scanner scContent = new Scanner(currentContentFile);) {
+                                while(scContent.hasNextLine()) {
+                                    String lineContent = scContent.nextLine();
+                                    sbAllMsgs.append(lineContent);
+                                }
+                            } catch (FileNotFoundException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+
+                        //se nao encontrar o senderID no respetivo seenby.txt passa para prox folder msg
+                    }
+
+                    if(sbAllMsgs.length() != 0) {
+                        // primeiro apagar o "-" inicial do primeiro user
+                        sbAllMsgs.deleteCharAt(0);
+
+                        //finalmente passar do stringbuilder para string e fazer split com - para construir o String[] a enviar
+                        //System.out.println(sbAllMsgs.toString().split("-"));
+                        return sbAllMsgs.toString().split("-");
+                    }
+                }
+            }
+                
+            //3. se counter.txt tinha valor 0 ou se foi encontrado senderID em nenhum seenby.txt devolve
+            // o array de Strings contendo apenas -empty
+            return listaMensagensDefault;
         }
 
 	}

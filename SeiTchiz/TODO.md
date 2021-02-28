@@ -1,19 +1,15 @@
 ---- TODO ----
-post <photo>
+1.post <photo>
 
-wall <nPhotos>
+2.wall <nPhotos>
 
-like <photoID>
+3.like <photoID>
 
-ginfo [groupID]
+4.ginfo [groupID]
 
-collect <groupID>
- 
-history <groupID>
+5.integracao da sandbox
 
-integracao da sandbox
-
-fazer as coisas dos jars
+6.fazer as coisas dos jars
 
 ---- DUVIDAS TIRADAS COM PROF ----
 
@@ -24,9 +20,3 @@ java -jar <nomeDoJar>
 https://www.inf.unibz.it/~calvanese/teaching/05-06-ip/lecture-notes/uni09/node12.html
 
 https://www.tutorialspoint.com/eclipse/eclipse_create_jar_files.htm
-
-https://www.baeldung.com/java-delete-file-contents
-
-https://www.baeldung.com/java-append-to-file
-
-https://www.baeldung.com/reading-file-in-java
