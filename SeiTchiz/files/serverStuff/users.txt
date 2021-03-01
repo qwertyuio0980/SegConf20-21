@@ -1,4 +1,0 @@
-user1:david:1234
-ff:ff:ff
-jj:jj:jj
-ss:ss:ss

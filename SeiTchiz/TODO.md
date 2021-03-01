@@ -1,15 +1,12 @@
 ---- TODO ----
-1.post <photo>
 
-2.wall <nPhotos>
+1.wall <nPhotos>
 
-3.like <photoID>
+2.like <photoID>
 
-4.ginfo [groupID]
+3.integracao da sandbox
 
-5.integracao da sandbox
-
-6.fazer as coisas dos jars
+4.fazer as coisas dos jars
 
 ---- DUVIDAS TIRADAS COM PROF ----
 

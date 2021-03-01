@@ -513,7 +513,7 @@ public class ClientStub {
 			// Caso em que o groupID não existe
 			// Caso em que o usuario nao eh membro nem dono do groupID
 			if(resultado.equals("")) {
-				System.out.println("O grupo não existe ou você não é dono ou participa no mesmo");
+				System.out.println("O grupo nao existe ou voce nao e dono ou participa no mesmo");
 				return null;
 			}
 		} catch (IOException e) {
@@ -556,76 +556,5 @@ public class ClientStub {
 		return bool;
 	}
 
-	/*
-	 * 
-	 * 
-	 * public String ginfo(String groupID, senderID) {
-	 * 
-	 * String []resultado = null; try { //enviar tipo de operacao
-	 * out.writeObject("g"); //enviar argumento out.writeObject(senderID);
-	 * out.writeObject(groupID); //receber o resultado da operacao resultado =
-	 * (list) in.readObject();
-	 * 
-	 * } catch (IOException e) { // TODO Auto-generated catch block
-	 * e.printStackTrace(); } catch (ClassNotFoundException e) { // TODO
-	 * Auto-generated catch block e.printStackTrace(); }
-	 * 
-	 * return resultado;
-	 * 
-	 * }
-	 */
+
 }
-
-// // Enviar ficheiro para o servidor
-// File file = null;
-// System.out.print("Insira o endereço do ficheiro: ");
-// String pathname = null;
-// try {
-// pathname = reader.readLine();
-// System.out.println("Passou");
-// } catch (Exception e) {
-// System.err.println(e.getMessage());
-// System.exit(-1);
-// }
-// file = new File(pathname);
-
-// /// Ler ficheiro
-// FileInputStream fin = null;
-// try {
-// fin = new FileInputStream(file);
-// } catch (FileNotFoundException e) {
-// System.err.println(e.getMessage());
-// System.exit(-1);
-// }
-// InputStream input = new BufferedInputStream(fin);
-// /// Verificar tamanho do ficheiro
-// byte[] buffer = new byte[1024];
-// int fileSize = 0;
-// try {
-// fileSize = input.read(buffer);
-// } catch (IOException e) {
-// System.err.println(e.getMessage());
-// System.exit(-1);
-// }
-
-// System.out.println("cliente:... ficheiro foi lido por completo");
-
-// /// Enviar tamanho do ficheiro
-// try {
-// out.writeObject(fileSize);
-// } catch (IOException e) {
-// System.err.println(e.getMessage());
-// System.exit(-1);
-// }
-
-// /// Enviar buffer com conteúdo do ficheiro
-// int bytesWriten = 0;
-// try {
-// while(bytesWriten > -1) {
-// out.write(buffer, 0, buffer.length);
-// }
-// } catch (IOException e) {
-// System.err.println(e.getMessage());
-// System.exit(-1);
-// }
-// System.out.println("cliente:... ficheiro enviado ao servidor");

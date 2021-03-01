@@ -4,13 +4,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Optional;
 import java.util.Scanner;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.io.FilenameFilter;
 
 public class SeiTchizServer {
 
@@ -746,15 +745,30 @@ public class SeiTchizServer {
 		 *                 ou 1 caso haja algum erro no processo
 		 */
 		public int newgroup(String groupID, String senderID) {
-			if (groupID.contains("-")) {
-				System.out.println("Nome do group nao pode conter '-'");
-				return -1;
-			}
 			String senderIDgroupID = senderID + "-" + groupID;
-			// verificar se dentro do folder dos grupos existe um folder com o nome de
-			// "senderID:groupID"
+
+
+			// verificar se dentro do folder dos grupos existe um folder com o nome 
+			// "*-groupID"
+
+			//1. Obter nomes dos ficheiros e diretorios no diretorio grupos, aplicando
+			// o filtro que aceita Strings que terminam com "-groupID"
+			
+			// Criar filter
+			FilenameFilter filter = new FilenameFilter(){
+				public boolean accept(File f, String name) {
+					return name.endsWith(groupID);
+				}	
+			};
+
+			// Obter nomes dos ficheiros e diretorios válidos
+			File[] files = groupsFolder.listFiles(filter);
+
 			File ownerGroupFolder = new File("../files/groups/" + senderIDgroupID);
-			if (!ownerGroupFolder.exists()) {
+			for(int i = 0; i < files.length; i++) {
+				System.out.println(files[i].getName());
+			}
+			if (files.length == 0) {
 				// caso nao existir criar esse folder
 				if (ownerGroupFolder.mkdir()) {
 					// Criar ficheiros counter.txt e participants.txt
@@ -1529,6 +1543,5 @@ public class SeiTchizServer {
 			// o array de Strings contendo apenas -empty
 			return listaMensagensDefault;
 		}
-
 	}
 }

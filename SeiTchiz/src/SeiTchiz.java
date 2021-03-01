@@ -48,7 +48,6 @@ public class SeiTchiz {
 			String mensagem = null;
 			StringBuilder sbMensagem = new StringBuilder();
 			String[] listaMensagens = null;
-			boolean canMsg = false;
 
 			try {
 				System.out.print(">>>");
@@ -229,8 +228,8 @@ public class SeiTchiz {
 							+ "Razoes possiveis: -O userID inserido ja pertence ao grupo; \n "
 							+ "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n "
 							+ "-O grupo indicado nao existe; \n "
-							+ "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;"
-							+ "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;"
+							+ "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome; \n"
+							+ "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome; \n"
 							+ "-Apenas o dono do grupo indicado pode adicionar membros ao mesmo.");
 					System.out.println(separador);
 				}
@@ -262,8 +261,9 @@ public class SeiTchiz {
 							+ "Razoes possiveis: -O userID inserido nao pertence ao grupo; \n "
 							+ "-O userID indicado nao corresponde a nenhum utilizador desta aplicacao; \n "
 							+ "-O grupo indicado nao existe; \n "
-							+ "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;"
-							+ "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome;"
+							+ "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome; \n"
+							+ "-O userID que procurou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome; \n"
+							+ "-O dono do grupo nao se pode remover a si mesmo; \n"
 							+ "-Apenas o dono do grupo indicado pode remover membros ao mesmo.");
 					System.out.println(separador);
 				}
@@ -280,20 +280,22 @@ public class SeiTchiz {
 					boolean ownerFirst = true;
 					boolean participantFirst = true;
 					if (listaGinfo == null) {
-						System.out.println("Você não é dono e não participa de nenhum grupo");
+						System.out.println(separador);
+						System.out.println("O cliente nao e dono ou membro de nenhum grupo.");
+						System.out.println(separador);
 					} else {
 						for (int i = 0; i < listaGinfo.length; i++) {
 							String[] aux = listaGinfo[i].split("-");
 							if (aux.length == 1) {
 								if (ownerFirst) {
-									System.out.println("Grupos dos quais " + args[1] + " é dono:");
+									System.out.println("Grupos dos quais o user " + args[1] + " e dono:");
 									ownerFirst = false;
 								}
 								System.out.println(" - " + aux[0]);
 							} else {
 								if (participantFirst) {
 									System.out.println(
-											"Grupos dos quais " + args[1] + " participa, antecedidos dos seus respectivos donos:");
+											"Grupos dos quais o user" + args[1] + " participa, antecedidos dos seus respectivos donos:");
 									participantFirst = false;
 								}
 								System.out.println(aux[0] + " - " + aux[1]);
@@ -303,6 +305,7 @@ public class SeiTchiz {
 
 				} else {
 					// envia-se o senderID e o groupID
+					System.out.println(separador);
 					String[] listaGinfo = cs.ginfo(args[1], option[1]);
 					if(listaGinfo != null) {
 						System.out.println("Grupo: " + option[1]);
@@ -314,6 +317,7 @@ public class SeiTchiz {
 							}
 						}
 					}
+					System.out.println(separador);
 				}
 				break;
 
