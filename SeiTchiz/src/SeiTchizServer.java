@@ -229,6 +229,7 @@ public class SeiTchizServer {
 					String mensagem = null;
 					String groupID = null;
 					String grupos = null;
+					int nPhotos = 0;
 
 					// realizar a operacao pedida
 					switch (op) {
@@ -295,7 +296,27 @@ public class SeiTchizServer {
 						break;
 					case "w":
 
-						// TODO
+						try {
+							// receber senderID do user que fez o pedido
+							aux = (String) inStream.readObject();
+
+							// receber nPhotos
+							nPhotos = (int) inStream.readObject();
+
+							// Chamar funcao wall passando os argumentos recebidos e receber a resposta
+							// TODO: tratar a resposta do método
+							wall(aux, nPhotos);
+
+							// Enviar resposta
+							if(grupos == null) {
+								outStream.writeObject("");
+							} else {
+								outStream.writeObject(grupos);
+							}
+						} catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 
 						break;
 					case "l":

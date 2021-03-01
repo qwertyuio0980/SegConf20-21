@@ -535,13 +535,13 @@ public class ClientStub {
 	public boolean post(String pathFile) {
 
 		//pathFile = 
-		File file = new File("../Fotos/"+pathFile);
+		File file = new File("../Fotos/" + pathFile);
 
 		boolean bool = false;
 
 		try {
 			com.send("p");
-			com.sendFile("../Fotos/"+pathFile);
+			com.sendFile("../Fotos/" + pathFile);
 
 			if ((boolean) com.receive()) {
 				bool = true;
@@ -549,12 +549,39 @@ public class ClientStub {
 
 		} catch (IOException e) {
 			System.out.println("------------------------------------------");
-			System.out.println("Não foi possível postar a fotografia");
+			System.out.println("Não foi possível fazer post da fotografia");
 			System.out.println("------------------------------------------");
 		}
 
 		return bool;
 	}
 
+	/**
+	 * Pede ao servidor as nPhotos mais recentes dos usuários que o segue
+	 * @param senderID usuário corrente
+	 * @param nPhotos número de fotos mais recentes a serem devolvidas
+	 * @return Lista de Strings contendo o identificador individual de cada foto,
+	 * assim como seu número de likes
+	 */
+	public String[] wall(String senderID, int nPhotos) {
+
+		String resultado = null;
+		try {
+			// enviar tipo de operação
+			out.writeObject("w");
+			// enviar senderID
+			out.writeObject(senderID);
+			// enviar número de fotografias mais recentes
+			out.writeObject(nPhotos);
+			// receber o resultado da operação
+			
+			// tratar o resultado da operação
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+	}
 
 }

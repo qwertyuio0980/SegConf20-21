@@ -1,6 +1,9 @@
 ---- TODO ----
 
 1.wall <nPhotos>
+retorno:
+    número de fotos, aka, grupos de streams
+    photoID-likes-photoFile
 
 2.like <photoID>
 

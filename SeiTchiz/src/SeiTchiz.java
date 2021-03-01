@@ -7,9 +7,8 @@ public class SeiTchiz {
 	public static void main(String[] args) {
 
 		int arglen = args.length;
-		String separador = "------------------------------------------";
-
-		// numero de argumentos errado
+		
+		// numero de argumentos passados errado
 		if (arglen > 3 || arglen < 2) {
 			System.out.println("Numero de argumentos dado errado. Usar SeiTchiz <IP:45678> <clientID> [password]"
 					+ "\n ou SeiTchiz <IP> <clientID> [password] \n ou  SeiTchiz <IP:45678> <clientID> \n ou SeiTchiz <IP> <clientID>");
@@ -18,6 +17,7 @@ public class SeiTchiz {
 
 		// cria ligacao com socket
 		ClientStub cs = new ClientStub(args[0]);
+		String separador = "------------------------------------------";
 
 		// efetuar login
 		System.out.println(separador);
@@ -156,18 +156,26 @@ public class SeiTchiz {
 					boolean answer = cs.post(option[1]);
 					if (answer) {
 						System.out.println(separador);
-						System.out.println("Fotografia postada com Sucesso!!");
+						System.out.println("A fotografia foi postada com sucesso");
 						System.out.println(separador);
 					}
 				}
 
 				break;
+				
 			case "w":
 			case "wall":
+
+				if(option.length != 2 || SeiTchiz.isPositiveInt(option[1])) {
+					System.out.println(separador);
+					System.out.println("Opcao \"wall\" recebe o argumento <nPhotos> que tem de ser um numero inteiro positivo.");
+					System.out.println(separador);
+				}
 
 				// TODO
 
 				break;
+
 			case "l":
 			case "like":
 
@@ -469,25 +477,31 @@ public class SeiTchiz {
 							+ "-O groupID que indicou nao pode conter espacos, dois pontos, hifens ou forward slashes no nome.");
 					System.out.println(separador);
 				}
-
 				break;
 
 			case "s":
 			case "stop":
-				System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao");
+				System.out.println("Selecionou a opcao \"stop\" que termina a aplicacao.");
 				cs.stopClient();
 				stop = true;
 				break;
 
 			default:
 				System.out.println(separador);
-				System.out.println("Input recebido invalido");
+				System.out.println("Input recebido invalido.");
 				System.out.println(separador);
 				break;
 
 			}
 		}
-
 		System.out.println("---Sessao cliente terminada---");
+	}
+
+	public static boolean isPositiveInt(String texto) {
+		try {
+			return Integer.parseInt(texto) > 0;
+		} catch(NumberFormatException e) {
+			return false;
+		}
 	}
 }
