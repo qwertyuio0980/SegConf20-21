@@ -22,7 +22,7 @@ UserIDs inseridos nos comandos que recebem userIDs nao devem conter espaços nem
 
 groupIDs inseridos nos comandos que recebem userIDs nao devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
-As fotos que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto 
+As fotos que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto que sao todas com a extensao .jpg.
 
 FALTA LIMITACOES DO WALL/LIKE (SE EXISTIREM)
 

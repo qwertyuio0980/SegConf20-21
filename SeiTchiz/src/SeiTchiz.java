@@ -147,10 +147,9 @@ public class SeiTchiz {
 			case "p":
 			case "post":
 
-				if (option.length != 2) {
+				if (option.length != 2 || option[1].contains("-")) {
 					System.out.println(separador);
-					System.out.println("Opcao \"post\" recebe o argumento <photo> que nao pode conter: "
-							+ "espacos, dois pontos, hifens ou forward slashes.");
+					System.out.println("Opcao \"post\" recebe o argumento <photo>.");
 					System.out.println(separador);
 				} else {
 					boolean answer = cs.post(option[1]);
@@ -160,6 +159,7 @@ public class SeiTchiz {
 						System.out.println(separador);
 					}
 				}
+				
 
 				break;
 				

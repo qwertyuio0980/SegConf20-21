@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Scanner;
 
 public class Com {
 
@@ -133,6 +134,44 @@ public class Com {
 	 * @throws ClassNotFoundException
 	 * @throws IOException
 	 */
+	public void receiveFilePost(String userName) throws ClassNotFoundException, IOException {
+
+		String nomeFicheiro = (String) in.readObject();
+		long tamanho = in.readLong();
+		int bytesRead = 0;
+		int offset = 0;
+		byte[] byteArray = new byte[1024];
+
+		Scanner scPost = new Scanner();
+
+
+						
+		File file = new File("../files/userStuff/" + userName + "/photos/" + nomeFicheiro + "-" + TODO);
+		
+		FileOutputStream fos = new FileOutputStream(file);
+		while ((offset + 1024) < (int) tamanho) {
+			bytesRead = in.read(byteArray, 0, 1024);
+			fos.write(byteArray, 0, bytesRead);
+			fos.flush();
+			offset += bytesRead;
+		}
+
+		if ((1024 + offset) != (int) tamanho) {
+			bytesRead = in.read(byteArray, 0, (int) tamanho - offset);
+			fos.write(byteArray, 0, bytesRead);
+			fos.flush();
+		}
+		System.out.println();
+		fos.close();
+	}
+
+	/**
+	 * Metodo para receber ficheiros
+	 * 
+	 * @param userName String que representa o ID do cliente para onde os ficheiros sao colocados
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
 	public void receiveFile(String userName) throws ClassNotFoundException, IOException {
 
 		String nomeFicheiro = (String) in.readObject();
@@ -140,10 +179,8 @@ public class Com {
 		int bytesRead = 0;
 		int offset = 0;
 		byte[] byteArray = new byte[1024];
-		File file;
-
-		file = new File("../files/userStuff/" + userName + "/photos/" + nomeFicheiro);
-
+		File file = new File("../files/userStuff/" + userName + "/photos/" + nomeFicheiro + "-" + TODO);
+		
 		FileOutputStream fos = new FileOutputStream(file);
 		while ((offset + 1024) < (int) tamanho) {
 			bytesRead = in.read(byteArray, 0, 1024);

@@ -212,7 +212,6 @@ public class ClientStub {
 
 	}
 
-
 	/**
 	 * Metodo que efetua a comunicacao entre um user que quer seguir outro
 	 * user e  o servidor
@@ -668,7 +667,7 @@ public class ClientStub {
 
 		} catch (IOException e) {
 			System.out.println("------------------------------------------");
-			System.out.println("Não foi possível fazer post da fotografia");
+			System.out.println("Nao foi possivel fazer post da fotografia");
 			System.out.println("------------------------------------------");
 		}
 
