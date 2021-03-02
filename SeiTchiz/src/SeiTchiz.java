@@ -497,6 +497,13 @@ public class SeiTchiz {
 		System.out.println("---Sessao cliente terminada---");
 	}
 
+	/**
+	 * Metodo auxiliar que verifica se uma string pode ser convertida num
+	 * inteiro positivo maior que 0
+	 * 
+	 * @param texto String que se quer testar
+	 * @return true se a string e convertivel e false caso contrario
+	 */
 	public static boolean isPositiveInt(String texto) {
 		try {
 			return Integer.parseInt(texto) > 0;

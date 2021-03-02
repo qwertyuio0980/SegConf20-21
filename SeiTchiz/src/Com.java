@@ -27,6 +27,9 @@ public class Com {
 		this.out = out;
 	}
 
+	/**
+	 * Metodo que inicializa os canais de comunicacao
+	 */
 	public void open() {
 
 		try {
@@ -39,6 +42,12 @@ public class Com {
 		}
 	}
 
+	/**
+	 * Metodo usado para enviar objetos
+	 * 
+	 * @param obj objeto a enviar
+	 * @throws IOException
+	 */
 	public void send(Object obj) throws IOException {
 
 		try {
@@ -57,6 +66,11 @@ public class Com {
 
 	}
 
+	/**
+	 * Metodo para receber objetos
+	 * 
+	 * @return Objecto recebido pelo canal de comunicacao
+	 */
 	public Object receive() {
 
 		Object obj = null;
@@ -78,6 +92,12 @@ public class Com {
 
 	}
 
+	/**
+	 * Metodo para enviar ficheiros
+	 * 
+	 * @param nomeFicheiro String que representa o nome do ficheiro
+	 * @throws IOException
+	 */
 	public void sendFile(String nomeFicheiro) throws IOException {
 
 		File file = new File(nomeFicheiro);
@@ -106,6 +126,13 @@ public class Com {
 		fis.close();
 	}
 
+	/**
+	 * Metodo para receber ficheiros
+	 * 
+	 * @param userName String que representa o ID do cliente para onde os ficheiros sao colocados
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
 	public void receiveFile(String userName) throws ClassNotFoundException, IOException {
 
 		String nomeFicheiro = (String) in.readObject();
@@ -134,6 +161,11 @@ public class Com {
 		fos.close();
 	}
 
+	/**
+	 * Metodo que fecha os canais de comunicacao
+	 * 
+	 * @throws IOException
+	 */
 	public void close() throws IOException {
 
 		try {

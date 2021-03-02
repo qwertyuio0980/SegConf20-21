@@ -35,8 +35,11 @@ public class ClientStub {
 	}
 
 	/**
+	 * Metodo que faz a verificacao se o login pode ser feito com os
+	 * argumentos que o cliente da ao ser iniciado e caso possa fazer
+	 * login faz o mesmo
 	 * 
-	 * @param string
+	 * @param ipPort String que representa o par IP:Porto
 	 */
 	public void conectarServidor(String ipPort) {
 
@@ -52,12 +55,12 @@ public class ClientStub {
 	}
 
 	/**
-	 * Método que efetua o login do cliente na plataforma SeiTchiz, ou seja, envia
-	 * ao servidor o seu id e password e este trata de verificar se o login foi
-	 * feito com sucesso ou se aconteceu de anormal sem sucesso
+	 * Método que verifica se a informacao pessoal do cliente e aceitavel na
+	 * aplicacao SeiTchiz caso nao for devolve uma mensagem de erro a esclarecer
+	 * o cliente caso contrario efetua o login
 	 * 
-	 * @param clientID
-	 * @param passwd
+	 * @param clientID String que representa o ID do cliente
+	 * @param passwd String que representa a password do cliente
 	 */
 	public void login(String clientID, String passwrd) {
 
@@ -81,8 +84,10 @@ public class ClientStub {
 	}
 
 	/**
-	 * Método que efetua o login do cliente na plataforma SeiTchiz Pede a password
-	 * do clientID passado e tenta efetuar o login com as credenciais
+	 * Método que verifica se a informacao pessoal do cliente e aceitavel na
+	 * aplicacao SeiTchiz tambem pede a password pois esta ainda nao foi fornecida
+	 * e caso estas informacoes nao forem aceitaveis devolve uma mensagem de erro 
+	 * a esclarecer o cliente caso contrario efetua o login
 	 * 
 	 * @param clientID String contendo o client id do usuário
 	 */
@@ -120,7 +125,8 @@ public class ClientStub {
 	}
 
 	/**
-	 * Conectar com o servidor com o ip passado e porto passados
+	 * Conectar com o servidor com o ip passado e porto passados por uma nova
+	 * socket
 	 * 
 	 * @param ip   String representando o ip do servidor
 	 * @param port int representando o porto pelo qual se dará a conexão
@@ -137,9 +143,13 @@ public class ClientStub {
 	}
 
 	/**
+	 * Metodo de comunicacao com o servidor sobre a autenticacao
+	 * do cliente e ve se o cliente pos alguma informacao errada
+	 * ou se se trata de um user novo ou um user que esta a voltar
+	 * a sua conta que ja tinha sido criada antes
 	 * 
-	 * @param clientID
-	 * @param passwrd
+	 * @param clientID String que representa o nome do cliente
+	 * @param passwrd Sring que representa a password do cliente
 	 */
 	public void efetuarLogin(String clientID, String passwrd) {
 
@@ -202,6 +212,15 @@ public class ClientStub {
 
 	}
 
+
+	/**
+	 * Metodo que efetua a comunicacao entre um user que quer seguir outro
+	 * user e  o servidor
+	 * 
+	 * @param userID String que representa o userID a seguir
+	 * @param senderID String que representa o ID do user a fazer o pedido de follow
+	 * @return 0 se o pedido teve sucesso e -1 caso contrario
+	 */
 	public int follow(String userID, String senderID) {
 
 		int resultado = -1;
@@ -227,6 +246,14 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que efetua a comunicacao entre um user que quer deixar de seguir
+	 * outro user e o servidor
+	 * 
+	 * @param userID String que representa o userID a deixar de seguir
+	 * @param senderID String que representa o ID do user a fazer o pedido de unfollow
+	 * @return 0 se o pedido teve sucesso e -1 caso contrario
+	 */
 	public int unfollow(String userID, String senderID) {
 
 		int resultado = -1;
@@ -252,6 +279,15 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que faz a ligacao com o servidor e lhe pede quais os
+	 * seguidores do cliente
+	 * 
+	 * @param senderID String que representa o ID do clinte que fez 
+	 * o pedido viewfollowers
+	 * @return String que tem todos os followers do cliente ou esta vazia
+	 * se este nao tem followers
+	 */
 	public String viewfollowers(String senderID) {
 
 		String followersList = null;
@@ -275,6 +311,10 @@ public class ClientStub {
 		return followersList;
 	}
 
+	/**
+	 * Metodo que interrompe a ligacao do cliente com o servidor 
+	 * 
+	 */
 	public void stopClient() {
 
 		try {
@@ -285,6 +325,14 @@ public class ClientStub {
 		}
 	}
 
+	/**
+	 * Metodo que pede ao servidor para criar um novo grupo 
+	 * sendo o cliente que faz o pedido o seu dono
+	 * 
+	 * @param groupID String que representa o ID unico que o grupo vai ter
+	 * @param senderID String que representa o ID do user a fazer o pedido de newgroup
+	 * @return 0 se o pedido for sucedido e o grupo criado e -1 caso contrario
+	 */
 	public int newgroup(String groupID, String senderID) {
 
 		int resultado = -1;
@@ -307,6 +355,15 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que pede ao servidor para adicionar um user a um grupo existente
+	 * do qual o dono e o cliente que faz o pedido
+	 * 
+	 * @param userID String que representa o ID do user a adicionar ao grupo
+	 * @param groupID String que representa o ID do grupo
+	 * @param senderID  String que representa o ID do user a fazer o pedido de addu
+	 * @return 0 se a operacao tiver sucesso e -1 caso contrario
+	 */
 	public int addu(String userID, String groupID, String senderID) {
 
 		int resultado = -1;
@@ -331,6 +388,15 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que pede ao servidor para remover um user que pertence a um 
+	 * grupo existente do qual o dono e o cliente que faz o pedido
+	 * 
+	 * @param userID String que representa o ID do user a remover ao grupo
+	 * @param groupID String que representa o ID do grupo
+	 * @param senderID  String que representa o ID do user a fazer o pedido de removeu
+	 * @return 0 se a operacao tiver sucesso e -1 caso contrario
+	 */
 	public int removeu(String userID, String groupID, String senderID) {
 		int resultado = -1;
 		try {
@@ -354,6 +420,15 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que pede ao servidor para enviar uma nova mensagem para o grupo
+	 * do qual o cliente que fez o pedido participa
+	 * 
+	 * @param groupID String que representa o ID do grupo
+	 * @param senderID String que representa o ID do user a fazer o pedido de msg
+	 * @param mensagem String que representa a mensagem a enviar
+	 * @return 0 se a mensagem foi enviada com sucesso para o grupo e -1 caso contrario
+	 */
 	public int msg(String groupID, String senderID, String mensagem) {
 		int resultado = -1;
 		try {
@@ -377,6 +452,15 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que pergunta ao servidor se o cliente pode fazer um pedido de
+	 * collect ou history sem que ocorram erros ou anomalias
+	 * 
+	 * @param groupID String que representa o ID do grupo
+	 * @param senderID String que representa o ID do user a fazer o 
+	 * pedido de canCollectOrHistory
+	 * @return 0 se pode fazer esses pedidos sem problemas ou -1 caso contrario
+	 */
 	public int canCollectOrHistory(String groupID, String senderID) {
 		int resultado = -1;
 		try {
@@ -400,6 +484,17 @@ public class ClientStub {
 		return resultado;
 	}
 
+	/**
+	 * Metodo que faz pedido ao servidor para receber todas as mensagens
+	 * nao lidas ainda pelo cliente que fez o pedido
+	 * 
+	 * @param groupID String que representa o ID do grupo
+	 * @param senderID String que representa o ID do user a fazer o 
+	 * pedido de collect
+	 * @return lista de Strings em que cada uma representa o dono de uma mensagem
+	 * ainda nao lida e o conteudo da mesma separada por : e se nao houverem mensagens
+	 * por ler devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
+	 */
 	public String[] collect(String groupID, String senderID) {
 		String[] listaMensagens = null;
 		try {
@@ -423,6 +518,17 @@ public class ClientStub {
 		return listaMensagens;
 	}
 
+	/**
+	 * Metodo que faz pedido ao servidor para receber todas as mensagens ja lidas
+	 * pelo cliente que fez o pedido
+	 * 
+	 * @param groupID String que representa o ID do grupo
+	 * @param senderID String que representa o ID do user a fazer o 
+	 * pedido de history
+	 * @return lista de Strings em que cada uma representa o dono de uma mensagem
+	 * ja lida e o conteudo da mesma separada por : e se nao houverem mensagens
+	 * ja lidas devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
+	 */
 	public String[] history(String groupID, String senderID) {
 		String[] listaMensagens = null;
 		try {
@@ -451,6 +557,7 @@ public class ClientStub {
 	 * É recebida uma lista de grupos dos quais o senderID é membro ou é dono.
 	 * Caso não participe em nenhum grupo ou não seja dono de nenhum
 	 * é recebida uma String vazia
+	 * 
 	 * @param senderID usuario corrente
 	 * @return Array de Strings contendo primeiro os grupos dos quais o senderID é dono,
 	 * caso seja dono de algum. 
@@ -493,9 +600,14 @@ public class ClientStub {
 	/**
 	 * Pede ao servidor o nome do dono e participantes do groupID,
 	 * caso o senderID seja dono ou participante do groupID.
+	 * 
 	 * @param senderID usuário corrente
 	 * @param groupID grupo do qual a identificação do dono e dos membros será procurada
-	 * @return 
+	 * @return Array de Strings contendo primeiro os grupos dos quais o senderID é dono,
+	 * caso seja dono de algum. 
+	 * Em seguida, veêm os donos e os nomes dos grupos dos quais o senderID participa
+	 * no formato <ownerID-groupID>.
+	 * Todos os grupos são separados por ','.
 	 */
 	public String[] ginfo(String senderID, String groupID) {
 
@@ -532,6 +644,13 @@ public class ClientStub {
 		return groups;
 	}
 
+	/**
+	 * Metodo que faz o pedido ao servidor para postar uma fotografia no mural
+	 * do cliente que fez o pedido
+	 * 
+	 * @param pathFile String que representa o pathFile da fotografia a enviar
+	 * @return true se houve sucesso a postar a fotografia e false caso contrario
+	 */
 	public boolean post(String pathFile) {
 
 		//pathFile = 
@@ -558,6 +677,7 @@ public class ClientStub {
 
 	/**
 	 * Pede ao servidor as nPhotos mais recentes dos usuários que o segue
+	 * 
 	 * @param senderID usuário corrente
 	 * @param nPhotos número de fotos mais recentes a serem devolvidas
 	 * @return Lista de Strings contendo o identificador individual de cada foto,

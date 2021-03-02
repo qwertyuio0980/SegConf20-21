@@ -32,6 +32,13 @@ public class SeiTchizServer {
 		}
 	}
 
+	/**
+	 * Metodo que cria a socket de ligacao do lado do servidor e
+	 * cria todos os ficheiros e folders de base caso ainda nao tenham sido
+	 * criados que o servidor usa para satisfazer pedidos de clientes
+	 * 
+	 * @param port String que representa o porto onde estara a socket
+	 */
 	public void startServer(String port) {
 
 		ServerSocket sSoc = null;
@@ -87,6 +94,8 @@ public class SeiTchizServer {
 	 * Metodo que verifica se um par user/passwd ja estao na lista de ficheiros do
 	 * servidor
 	 * 
+	 * @param clientID String que identifica o cliente que se pretende autenticar
+	 * @param passwd String que representa a password do cliente
 	 * @return -1 se o par nao corresponde ao que esta no ficheiro do servidor ou
 	 *         houve algum erro que impossibilitou a autenticacao 0 se autenticacao
 	 *         foi bem sucedida e 1 se "conta" nao existia antes e foi agora criada
@@ -120,11 +129,13 @@ public class SeiTchizServer {
 	}
 
 	/**
-	 * Metodo que adiciona um par user password á lista do servidor
+	 * Metodo que adiciona um par user, username e password á lista do servidor
+	 * e cria todos os ficheiros base que cada cliente tera
 	 * 
-	 * @param clientID
-	 * @param userName
-	 * @param passwd
+	 * @param clientID String que representa o ID do cliente para o qual se esta 
+	 * a adicionar os ficheiros base do mesmo
+	 * @param userName String que representa o nome pessoal do cliente
+	 * @param passwd String que representa a password do cliente
 	 * @return 0 se coloca com sucesso -1 caso contrario
 	 */
 	public int addUserPasswd(String clientID, String userName, String passwd) {
@@ -156,6 +167,14 @@ public class SeiTchizServer {
 			File photosFolder = new File("../files/userStuff/" + clientID + "/photos");
 			photosFolder.mkdir();
 
+			File counterPhotosFile = new File("../files/userStuff/" + clientID + "/photos/counter.txt");
+			counterPhotosFile.createNewFile();
+
+			FileWriter fwCounterPhotos = new FileWriter(counterPhotosFile, true);
+			BufferedWriter bwCounterPhotos = new BufferedWriter(fwCounterPhotos);
+			bwCounter.write("0");
+			bwCounter.close();
+
 			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
 			return 0;
 		} catch (IOException e) {
@@ -175,6 +194,9 @@ public class SeiTchizServer {
 			System.out.println("Thread a correr no server para cada um cliente");
 		}
 
+		/**
+		 * Metodo que contem toda a logica de cada thread criada para cada utilizador ligado ao servidor
+		 */
 		public void run() throws NullPointerException {
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -492,11 +514,11 @@ public class SeiTchizServer {
 		}
 
         /**
-         * Faz com que o senderID siga o userID,
+         * Faz com que o senderID siga o userID
          * 
          * @param userID   Usuario a ser seguido
          * @param senderID Usuario que seguira o userID
-         * @return
+         * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
          */
 		public int follow(String userID, String senderID) {
 			int resultado = -1;
@@ -584,7 +606,7 @@ public class SeiTchizServer {
 		 * 
 		 * @param userID   Usuario deixado de seguir por senderID
 		 * @param senderID Usuario que deixara de seguir userID
-		 * @return
+		 * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
 		 */
 		public int unfollow(String userID, String senderID) {
 			// TODO: Nao e necessario criar esta var
@@ -644,7 +666,16 @@ public class SeiTchizServer {
 			return resultado;
 		}
 
+		
 		@SuppressWarnings("null")
+		/**
+		 * Metodo que trata de escrever e apagar nomes de clientes dos ficheiros que
+		 * representam quem esta a seguir o cliente que fez o pedido e os do proprio cliente
+		 * que fez o pedido
+		 * 
+		 * @param userID Usuario deixado de seguir por senderID
+		 * @param senderID Usuario que deixara de seguir userID
+		 */
 		public void unfollowAux(String userID, String senderID) {
 
 			File sendersFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
@@ -727,6 +758,14 @@ public class SeiTchizServer {
 
 		}
 
+		/**
+		 * Metodo que devolve uma String contendo todos os seguidores do
+		 * cliente que fez o pedido
+		 * 
+		 * @param senderID Usuario que quer ver os seus seguidores
+		 * @return String com todos os seguidores ou string vazia se
+		 * o cliente nao tiver seguidores
+		 */
 		public String viewfollowers(String senderID) {
 
 			// procurar no folder de users no do sender se o ficheiro followers.txt esta
@@ -764,6 +803,7 @@ public class SeiTchizServer {
 		 * @param senderID usuario dono do grupo return 0 caso o grupo tenha sido criado
 		 *                 com sucesso, -1 caso ja exista um grupo com o groupID passado
 		 *                 ou 1 caso haja algum erro no processo
+		 * @return 0 se for criado o grupo com sucesso e -1 caso contrario
 		 */
 		public int newgroup(String groupID, String senderID) {
 			String senderIDgroupID = senderID + "-" + groupID;
@@ -1117,6 +1157,7 @@ public class SeiTchizServer {
         /**
          * Devolve o dono do groupID e dos membros do groupID,
          * caso senderID seja dono ou participante do groupID.
+		 * 
          * @param senderID usuário corrente 
          * @param groupID grupo a ser investigado
          * @return String contendo os nomes do dono do groupID
@@ -1183,6 +1224,15 @@ public class SeiTchizServer {
 			return ownerPaticipants.toString();
         }
 
+		/**
+		 * Metodo que trata de colocar uma mensagem nova do cliente que fez
+		 * o pedido no grupo
+		 * 
+		 * @param groupID String com o ID do grupo
+		 * @param senderID String com o ID do cliente que fez o pedido msg
+		 * @param mensagem String com a mensagem em si
+		 * @return 0 se a operacao foi realizada com sucesso, -1 caso contrario
+		 */
 		public int msg(String groupID, String senderID, String mensagem) {
 
 			File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
@@ -1204,6 +1254,15 @@ public class SeiTchizServer {
 			return -1;
 		}
 
+		/**
+		 * Metodo auxiliar onde se efetua de facto a criacao do folder da mensagem
+		 * com todos os subficheiros relacionados a mesma dentro do folder do grupo
+		 * 
+		 * @param groupFolder String com o par userID-GroupID em que userID e o 
+		 * identificador do dono do grupo e groupID e o identificador do grupo
+		 * @param senderID String com o ID do cliente que fez o pedido msg
+		 * @param mensagem String com a propria mensagem
+		 */
 		public void msgAux(String groupFolder, String senderID, String mensagem) {
 			// metodo onde se envia mesmo a mensagem
 
@@ -1276,6 +1335,16 @@ public class SeiTchizServer {
 			}
 		}
 
+		/**
+		 * Metodo que verifica se o ID do grupo em questao se encontra no ficheiro de participantes
+		 * do cliente que fez o pedido e se o ID desse cliente se encontra no ficheiro de participantes
+		 * do proprio grupo
+		 * 
+		 * @param ownerGroupPair String que contem o par userID-groupID sendo 
+		 * userID o dono do grupo com o groupID
+		 * @param senderID String que representa o cliene que fez o pedido
+		 * @return true se o grupo passado como argumento e o correto e false caso contrario
+		 */
 		public boolean isCorrectGroup(String ownerGroupPair, String senderID) {
 			File groupParticipantsFile = new File("../files/groups/" + ownerGroupPair + "/participants.txt");
 
@@ -1301,6 +1370,15 @@ public class SeiTchizServer {
 			return false;
 		}
 
+		/**
+		 * Metodo que verifica se e possivel ou nao fazer os pedidos collect ou
+		 * history por um especifico cliente sem haver problemas
+		 * 
+		 * @param groupID String com o ID do grupo a verificar se se pode fazer
+		 * collect ou history
+		 * @param senderID String com o ID do cliente que fez o pedido canCollectOrHistory
+		 * @return 0 se for possivel fazer o pedido collect ou o pedido history, -1 caso contrario
+		 */
 		public int canCollectOrHistory(String groupID, String senderID) {
 
 			File senderParticipantFile = new File("../files/userStuff/" + senderID + "/participant.txt");
@@ -1321,6 +1399,18 @@ public class SeiTchizServer {
 			return -1;
 		}
 
+		/**
+		 * Metodo que devolve uma lista de strings contendo cada uma um par
+		 * userID:mensagem em que userID e quem criou a mensagem e mensagem o
+		 * conteudo da mesma para cada mensagem que o cliente ainda nao leu
+		 * 
+		 * @param groupID String que identifica o grupo
+		 * @param senderID String que identifica o cliente que fez o pedido collect
+		 * @return lista de strings contendo cada uma um par
+		 * userID:mensagem em que userID e quem criou a mensagem e mensagem o
+		 * conteudo da mesma e se o cliente nao tem mensagens nenhumas por ler
+		 * devolve "-empty"
+		 */
 		public String[] collect(String groupID, String senderID) {
 
 			String[] listaMensagensDefault = { "-empty" };
@@ -1468,6 +1558,18 @@ public class SeiTchizServer {
 			return listaMensagensDefault;
 		}
 
+		/**
+		 * Metodo que devolve uma lista de strings contendo cada uma um par
+		 * userID:mensagem em que userID e quem criou a mensagem e mensagem o
+		 * conteudo da mesma para cada mensagem que o cliente ja leu
+		 * 
+		 * @param groupID String que identifica o grupo
+		 * @param senderID String que identifica o cliente que fez o pedido history
+		 * @return lista de strings contendo cada uma um par
+		 * userID:mensagem em que userID e quem criou a mensagem e mensagem o
+		 * conteudo da mesma e se o cliente nao tem mensagens nenhumas ja lidas
+		 * devolve "-empty"
+		 */
 		public String[] history(String groupID, String senderID) {
 
 			String[] listaMensagensDefault = { "-empty" };
@@ -1563,6 +1665,128 @@ public class SeiTchizServer {
 			// seenby.txt devolve
 			// o array de Strings contendo apenas -empty
 			return listaMensagensDefault;
+		}
+
+		/**
+		 * Retorna as nPhotos mais recentes dos usuários seguidos por senderID bem como o número
+		 * de likes em cada fotografia. 
+		 * Caso existam menos de nPhotos de um certo usuário disponíveis, são retornadas as que estão.
+		 * Caso o usuário seguido não tenha nenhuma foto, isto será assinalado
+		 * @param senderID String designando o usuário corrente
+		 * @param nPhotos int represntando o número de fotos mais recentes a serão retornadas
+		 * @return TODO
+		 */
+		private ArrayList wall(String senderID, int nPhotos) {
+			// 0.Criar um ArrayList de Strings
+			//		A estrutura do ArrayList será:
+			// 			[<userID-counter>,<likes>,<filepath to picture>,...]
+			// 			número total de fotos será obtido ao chamar size()/3 no ArrayList
+			// 1.Criar uma lista de usuários que o utilizador segue
+			// 2.Acessar os diretórios das fotos de cada usuário
+			// 	2.1.Obter o valor do counter atual
+			//  2.2.Fotos a serem devolvidas estarão no intervalo /userID-[counter,counter-1,...,counter-nPhotos+1]/
+			//  	2.2.1.Obter número de likes na foto atual
+			// 		2.2.2.Colocar <userID-counter> no ArrayList
+			// 		2.2.3.Colocar <likes> no ArrayList
+			// 		2.2.4.Colocar <filepath to picture> no ArrayList
+
+			//CODIGOS DE RESPOSTA ESPECIAL:
+			//1 = senderID não segue nenhum usuário
+			//Entrada <userID-NOPHOTO> no ArrayList retorno = userID não postou nenhuma foto
+
+
+			// 0.
+			ArrayList retorno = new ArrayList();
+			
+			// 1.
+			File currentUserFollowing = new File("../files/userStuff/" + senderID + "/following.txt");
+			ArrayList following = new ArrayList();
+
+			try (Scanner scCurrentUserFollowing = new Scanner(currentUserFollowing)) {
+				while (scCurrentUserFollowing.hasNextLine()) {
+					String line = scCurrentUserFollowing.nextLine();
+                    following.add(line);
+				}
+				scCurrentUserFollowing.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			// 2.
+			// Verificar se o senderID não segue nenhum usuário
+			if(following.size() == 0) return retorno.add(1);
+			
+			for(int i = 0; i < following.size(); i++) {
+				// 2.1.
+				// TODO: verificar se o path para o counter está corrento
+				File userFollowed = new File("../files/userStuff/" + following.get(i) + "/photos/counter.txt");
+				// número de photos do user following.get(i)
+				int photos = 0;
+				try (Scanner scFollowing = new Scanner(userFollowed)) {
+					photos = Integer.parseInt(scFollowing.nextLine());
+					scFollowing.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(-1);
+				}
+
+				// Verificar se photos == 0
+				if(photos > 0) {
+					// 2.2.
+					for(int j = photos; j > photos - nPhotos; j--) {
+						if(j < 0) break;
+						int likes = 0;
+						// Aplicar filenamefilter para obter o ficheiro da photo com nome que começa com j
+						// Obter o nome do ficheiro
+						// Fazer um split a partir do "-"
+						// Obter número de likes
+						// Fazer add ao retorno de:
+						// 	following.get(i) + "-" + j <Indentificador da photo no formato userID-counter>
+						//  likes.toString()
+						//  "../files/userStuff/" + following.get(i) + "/photos/" + <photofilename> : filepath do ficheiro da foto 
+						File userFollowed = new File("../files/userStuff/" + following.get(i) + "/photos/counter.txt");
+						// int photos = 0;
+						// try (Scanner scFollowing = new Scanner(userFollowed)) {
+						// 	photos = Integer.parseInt(scFollowing.nextLine());
+						// 	scFollowing.close();
+						// } catch (Exception e) {
+						// 	e.printStackTrace();
+						// 	System.exit(-1);
+						// }
+		
+	
+					}
+				} else {
+					retorno.add(following.get(i) + "-" + "NOPHOTO");
+				}
+				
+			}	
+
+        //     // Caso não tenha sido encontrado o grupo nos ficheiros do senderID devolver um estado de erro
+        //     if(fileName == null) {
+        //         return null;
+        //     }
+
+        //     groupParticipants = new File("../files/groups/" + fileName + "/participants.txt");
+
+		// 	// 1.
+		// 	try (Scanner scParticipants = new Scanner(groupParticipants)) {
+		// 		while (scParticipants.hasNextLine()) {
+		// 			String line = scParticipants.nextLine();
+        //             ownerPaticipants.append(line + ',');
+		// 		}
+		// 		scParticipants.close();
+		// 	} catch (Exception e) {
+		// 		e.printStackTrace();
+		// 		System.exit(-1);
+		// 	}
+
+		// 	return ownerPaticipants.toString();
+        // }
+
+
+
 		}
 	}
 }
