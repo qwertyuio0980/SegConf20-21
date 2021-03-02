@@ -159,8 +159,6 @@ public class SeiTchiz {
 						System.out.println(separador);
 					}
 				}
-				
-
 				break;
 				
 			case "w":

@@ -142,11 +142,14 @@ public class Com {
 		int offset = 0;
 		byte[] byteArray = new byte[1024];
 
-		Scanner scPost = new Scanner();
-
-
-						
-		File file = new File("../files/userStuff/" + userName + "/photos/" + nomeFicheiro + "-" + TODO);
+		File gpcFile = new File("../files/serverStuff/globalPhotoCounter.txt");
+		int globalCounter = 0;
+		Scanner scGPC = new Scanner(gpcFile);
+		if(scGPC.hasNextLine()) {
+			globalCounter = Integer.parseInt(scGPC.nextLine());
+		}
+			
+		File file = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter);
 		
 		FileOutputStream fos = new FileOutputStream(file);
 		while ((offset + 1024) < (int) tamanho) {

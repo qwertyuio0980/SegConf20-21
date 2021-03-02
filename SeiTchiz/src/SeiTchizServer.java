@@ -177,9 +177,6 @@ public class SeiTchizServer {
 			File photosFolder = new File("../files/userStuff/" + clientID + "/photos");
 			photosFolder.mkdir();
 
-			File counterPhotosFile = new File("../files/userStuff/" + clientID + "/photos/counter.txt");
-			counterPhotosFile.createNewFile();
-
 			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
 			return 0;
 		} catch (IOException e) {
@@ -1692,31 +1689,16 @@ public class SeiTchizServer {
 		 * @param nPhotos int represntando o número de fotos mais recentes a serão retornadas
 		 * @return TODO
 		 */
-		private ArrayList wall(String senderID, int nPhotos) {
-
-			// 0.Criar um ArrayList de Strings
-			// 		A estrutura do ArrayList será:
-			// 			[<userID-counter>,<likes>,<filepath to picture>,...]
-			// 			número total de fotos será obtido ao chamar size()/3 no ArrayList
-			// 1.Obter o valor do counter global
-			// 2.Criar uma lista de usuários que o utilizador segue
-			// 3.Acessar os diretórios das fotos de cada usuário
-			// 	 3.1.Obter o valor do counter atual
-			//   3.2.Fotos a serem devolvidas estarão no intervalo /userID-[counter,counter-1,...,counter-nPhotos+1]/
-			//  	3.2.1.Obter número de likes na foto atual
-			// 		3.2.2.Colocar <userID-counter> no ArrayList
-			// 		3.2.3.Colocar <likes> no ArrayList
-			// 		3.2.4.Colocar <filepath to picture> no ArrayList
-
+		public ArrayList wall(String senderID, int nPhotos) {
 			// CODIGOS DE RESPOSTA ESPECIAL:
-			// 1 = senderID não segue nenhum usuário
-			// Entrada <userID-NOPHOTO> no ArrayList retorno = userID não postou nenhuma foto
+			// "1" = senderID não segue nenhum usuário
+			// "2" = todos os usuarios que o senderID segue nao tem fotos
 
+			//inicializar o arraylist que sera devolvido e array a filtrar
+			ArrayList<String> retorno = new ArrayList();
+			ArrayList<String> arrayComTudo = new ArrayList();
 
-			// 0.
-			ArrayList retorno = new ArrayList();
-
-			//1.
+			//obter o counter global de fotos
 			int counterGlobal = 0;
 			File gpcFile = new File("../files/serverStuff/globalPhotoCounter.txt");
 			try(Scanner scGPC = new Scanner(gpcFile);) {
@@ -1727,10 +1709,9 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 			
-			// 1.
+			//ter todos os users que o senderID segue num arraylist
 			File currentUserFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
 			ArrayList following = new ArrayList();
-
 			try (Scanner scCurrentUserFollowing = new Scanner(currentUserFollowingFile)) {
 				while (scCurrentUserFollowing.hasNextLine()) {
 					String line = scCurrentUserFollowing.nextLine();
@@ -1742,77 +1723,79 @@ public class SeiTchizServer {
 				System.exit(-1);
 			}
 
-			// 2.
-			// Verificar se o senderID não segue nenhum usuário
-			if(following.size() == 0) return retorno.add(1);
-			
-			for(int i = 0; i < following.size(); i++) {
-				// 2.1.
-				
-				// número de photos do user following.get(i)
-				File currentUserPhotoFolder = new File("../files/userStuff/" + following.get(i) + "/photos");
-				FileFilter filter = new FileFilter() {
-					public boolean accept(File f) {
-						return f.getName().endsWith("jpg");
-					}	
-				};
-				File[] photoFiles = currentUserPhotoFolder.listFiles(filter);
-				int nPhotosCurrentUser = photoFiles.length;
+			//verificar se o senderID não segue nenhum usuário
+			if(following.size() == 0) {
+				retorno.add("1");
+			} else {
+				//percorrer cada usuario que senderID segue
+				for(int i = 0; i < following.size(); i++) {
 
-				// Verificar se photos == 0
-				if(nPhotosCurrentUser > 0) {
-					// 2.2.
-					for(int j = nPhotosCurrentUser; j > nPhotosCurrentUser - nPhotos; j--) {
-						if(j < 0) break;
-						int likes = 0;
-						// Aplicar filenamefilter para obter o ficheiro da photo com nome que começa com j	
-						// Obter o nome do ficheiro
-						// Fazer um split a partir do "-"
-						// Obter número de likes
-						// Fazer add ao retorno de:
-						// 	following.get(i) + "-" + j <Indentificador da photo no formato userID-counter>
-						//  likes.toString()
-						//  "../files/userStuff/" + following.get(i) + "/nPhotosCurrentUser/" + <photofilename> : filepath do ficheiro da foto 
-						File userFollowed = new File("../files/userStuff/" + following.get(i) + "/photos/counter.txt");
-						// int nPhotosCurrentUser = 0;
-						// try (Scanner scFollowing = new Scanner(userFollowed)) {
-						// 	nPhotosCurrentUser = Integer.parseInt(scFollowing.nextLine());
-						// 	scFollowing.close();
-						// } catch (Exception e) {
-						// 	e.printStackTrace();
-						// 	System.exit(-1);
-						// }
-		
+					//obter numero de photos do user following.get(i)
+					File currentUserPhotoFolder = new File("../files/userStuff/" + following.get(i) + "/photos");
+					FileFilter filterPhotos = new FileFilter() {
+						public boolean accept(File f) {
+							//aceitam se so fotos nos formatos jpg e png
+							return f.getName().endsWith("jpg") || f.getName().endsWith("png");
+						}	
+					};
+
+					File[] photoFiles = currentUserPhotoFolder.listFiles(filterPhotos);
+					int nPhotosCurrentUser = photoFiles.length;
 	
+					// se houver fotos no folder
+					if(nPhotosCurrentUser > 0) {
+						//percorrer todas as fotos do currentUser e colocar em arrayComTudo: photoID, numero de likes, photoPath
+						for(int j = 0; j < nPhotosCurrentUser; j++) {
+							//add photoID
+							String[] aux = photoFiles[i].getName().split(".");
+							arrayComTudo.add(aux[0]);
+
+							//add numero de likes
+							File likeFile = new File("../files/userStuff/" + following.get(i) + "/photos/" + aux[0] + ".txt");
+							try(Scanner scLike = new Scanner(likeFile);) {
+								if(scLike.hasNextLine()) {
+									arrayComTudo.add(scLike.nextLine());
+								}
+							} catch (IOException e) {
+								e.printStackTrace();
+								System.exit(-1);
+							}
+							
+							//add photoPath
+							arrayComTudo.add("../files/userStuff/" + following.get(i) + "/photos/" + photoFiles[i].getName());
+						}
 					}
-				} else {
-					retorno.add(following.get(i) + "-NOPHOTO");
 				}
-				
-			}	
 
-        //     // Caso não tenha sido encontrado o grupo nos ficheiros do senderID devolver um estado de erro
-        //     if(fileName == null) {
-        //         return null;
-        //     }
+				//se no fim de percorrer todos os users que o cliente segue e nenhum tem fotos
+				if(arrayComTudo.isEmpty()) {
+					retorno.add("2");
+				} else {
+					if(nPhotos >= (arrayComTudo.size()/3)) {
+						//se o nPhotos pedido e maior ou igual a arrayComTudo entao devolver logo arrayComTudo
+						retorno = arrayComTudo;
+					} else {
+						//caso contrario e preciso filtrar as nPhotos fotos de todas as fotos em arrayComTudo com os valores de counter mais alto
 
-        //     groupParticipants = new File("../files/groups/" + fileName + "/participants.txt");
+						for(int i = 0; i < nPhotos; i++) {
+							int highestIDNumber = 0;
+							for(int j = 0; j < arrayComTudo.size(); j += 3) {
+								//conta apenas depois do hifen (por exemplo photo-5 fica 5)
+								if(Integer.parseInt(arrayComTudo.get(j).substring(6)) > highestIDNumber) {
+									highestIDNumber = Integer.parseInt(arrayComTudo.get(j).substring(6));
+									//arrayComTudo.get(j).substring(6)
+									arrayComTudo.g
+								}
+							}
+						}
+						
 
-		// 	// 1.
-		// 	try (Scanner scParticipants = new Scanner(groupParticipants)) {
-		// 		while (scParticipants.hasNextLine()) {
-		// 			String line = scParticipants.nextLine();
-        //             ownerPaticipants.append(line + ',');
-		// 		}
-		// 		scParticipants.close();
-		// 	} catch (Exception e) {
-		// 		e.printStackTrace();
-		// 		System.exit(-1);
-		// 	}
+					}
 
-		// 	return ownerPaticipants.toString();
-        // }
+				}
+			}
 
+			return retorno;
 		}
 	}
 }
