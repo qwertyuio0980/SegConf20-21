@@ -314,17 +314,18 @@ public class SeiTchizServer {
 
 					case "p":
 
-						System.out.println(".....1.....");
 						//incrementar valor do counter em globalPhotoCounter.txt
 						File fileCounter = new File("../files/serverStuff/globalPhotoCounter.txt");
 						int counter = 0; // valor 0 por default so para nao chatear o sonarlint
 						
-						try(Scanner scCounter= new Scanner(fileCounter);
-						FileWriter fwCounter= new FileWriter(fileCounter, false);) {
-							System.out.println(".....12.....");
+						try {
+							Scanner scCounter= new Scanner(fileCounter);
 							counter = Integer.parseInt(scCounter.nextLine());
 							counter += 1;
+							FileWriter fwCounter= new FileWriter(fileCounter, false);
 							fwCounter.write(String.valueOf(counter));
+							scCounter.close();
+							fwCounter.close();
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -1767,7 +1768,7 @@ public class SeiTchizServer {
 						//percorrer todas as fotos do currentUser e colocar em arrayComTudo: photoID, numero de likes, photoPath
 						for(int j = 0; j < nPhotosCurrentUser; j++) {
 							//add photoID
-							String[] aux = photoFiles[i].getName().split(".");
+							String[] aux = photoFiles[i].getName().split("\\.");
 							arrayComTudo.add(aux[0]);
 
 							//add numero de likes
