@@ -24,7 +24,6 @@ public class SeiTchizServer {
 	public File globalPhotoCounterFile;
 
 	public static void main(String[] args) {
-		System.out.println("");
 		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
 		if (args.length == 1 && args[0].contentEquals("45678")) {
@@ -93,8 +92,6 @@ public class SeiTchizServer {
 			System.exit(-1);
 		}
 		
-		
-
 		while (true) {
 			try {
 				Socket inSoc = sSoc.accept();
@@ -103,7 +100,6 @@ public class SeiTchizServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
 		}
 
 		// sSoc.close();

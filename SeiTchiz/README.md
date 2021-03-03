@@ -6,7 +6,7 @@ Francisco Freire
 David Rodrigues
 
 ----------------------
-Limitações da Fase 1
+Limitações do Trabalho da Fase 1
 
 O unico argumento que deve ser passado obrigatoriamente para o servidor correr é 45678.
 
@@ -20,15 +20,17 @@ Mensagens nao devem conter dois pontos(:) nem hifens(-).
 
 UserIDs inseridos nos comandos que recebem userIDs nao devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
+Um user que ja esteja logged on nao deve fazer login enquanto a sessao inicial nao tenha sido terminada.
+
 groupIDs inseridos nos comandos que recebem userIDs nao devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 As fotos que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
 Ou seja O argumento <photo> de post deve ser foto<1 a 4>.jpg
 
-FALTA LIMITACOES DO WALL (SE EXISTIREM)
+FALTA LIMITACOES DO WALL
 
 ----------------------
-Como correr o Trabalho da Fase 1
+Como compilar e executar o Trabalho da Fase 1
 
 FALTA METER COMO CORRER O TRAB
 
