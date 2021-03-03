@@ -202,16 +202,28 @@ public class SeiTchiz {
 			case "l":
 			case "like":
 
-				if (option.length != 2 || option[1].contains("/") || option[1].contains(":")
-				|| option[1].contains("-")) {
+				if (option.length != 2) {
 					System.out.println(separador);
-					System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode conter espacos, "
-							+ "dois pontos, hifens ou forward slashes no nome.");
+					System.out.println("Opcao \"like\" recebe argumento <photoID> que consiste apenas em photo-<numero da foto>.");
 					System.out.println(separador);
 				break;
 				}
 
+				// envia-se o photoID que se procura
+				resultado = cs.like(option[1]);
+
+				if (resultado == 0) {
+					System.out.println(separador);
+					System.out.println("Colocou um \"like\" na foto com ID:" + option[1]);
+					System.out.println(separador);
+				} else {
+					System.out.println(separador);
+					System.out.println("Ocorreu um erro a fazer a operacao... \n "
+							+ "Razoes possiveis: -A foto com o photoID indicado nao existe.");
+					System.out.println(separador);
+				}
 				break;
+
 			case "n":
 			case "newgroup":
 

@@ -734,33 +734,33 @@ public class ClientStub {
 		return resultado;
 	}
 
-	// /**
-	//  * Metodo que faz pedido ao servidor para dar like na foto com photoID dado
-	//  * 
-	//  * @param senderID String que representa o ID da foto
-	//  * @return 0 se o pedido teve sucesso e -1 caso contrario
-	//  */
-	// public int like(String photoID) {
-	// 	int resultado = -1;
-	// 	try {
-	// 		// enviar tipo de operacao
-	// 		out.writeObject("l");
+	/**
+	 * Metodo que faz pedido ao servidor para dar like na foto com photoID dado
+	 * 
+	 * @param photoID String que representa o ID da foto
+	 * @return 0 se o pedido teve sucesso e -1 caso contrario
+	 */
+	public int like(String photoID) {
+		int resultado = -1;
+		try {
+			// enviar tipo de operacao
+			out.writeObject("l");
 
-	// 		// enviar groupID:ID do user que fez o pedido
-	// 		out.writeObject(photoID);
+			// enviar groupID:ID do user que fez o pedido
+			out.writeObject(photoID);
 
-	// 		// receber o resultado da operacao
-	// 		resultado = (int) in.readObject();
+			// receber o resultado da operacao
+			resultado = (int) in.readObject();
 
-	// 	} catch (IOException e) {
-	// 		// TODO Auto-generated catch block
-	// 		e.printStackTrace();
-	// 	} catch (ClassNotFoundException e) {
-	// 		// TODO Auto-generated catch block
-	// 		e.printStackTrace();
-	// 	}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-	// 	return resultado;
-	// }
+		return resultado;
+	}
 
 }

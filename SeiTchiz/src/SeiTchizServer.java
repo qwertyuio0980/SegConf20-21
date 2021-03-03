@@ -331,8 +331,6 @@ public class SeiTchizServer {
 							e.printStackTrace();
 						}
 
-						System.out.println(".....123.....");
-
 						try {
 							com.receiveFilePost(userID);
 							com.send(true);
@@ -383,13 +381,22 @@ public class SeiTchizServer {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-
 						break;
+
 					case "l":
 
-						// TODO
+						try {
+							// receber <photoID>
+							aux = (String) inStream.readObject();
 
+							// enviar estado da operacao
+							outStream.writeObject(like(aux));
+
+						} catch (ClassNotFoundException e1) {
+							e1.printStackTrace();
+						}
 						break;
+
 					case "n":
 
 						try {
@@ -1719,10 +1726,11 @@ public class SeiTchizServer {
 		 * 
 		 * @param senderID String designando o usuário corrente
 		 * @param nPhotos int represntando o número de fotos mais recentes a serão retornadas
-		 * @return TODO
+		 * @return ArrayList com cada fotoID, numero de likes e path dessa foto das mais recentes de
+		 * users que o senderID segue
 		 */
 		public ArrayList wall(String senderID, int nPhotos) {
-			// CODIGOS DE RESPOSTA ESPECIAL:
+			// codigos de resposta de erro
 			// "1" = senderID não segue nenhum usuário
 			// "2" = todos os usuarios que o senderID segue nao tem fotos
 
@@ -1832,6 +1840,45 @@ public class SeiTchizServer {
 			}
 
 			return retorno;
+		}
+
+		/**
+		 * Metodo que coloca um like na foto com o id photoID
+		 * 
+		 * @param photoID String com o ID da foto a adicionar like
+		 * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
+		 */
+		public int like(String photoID) {
+
+			//para fazer like a uma foto
+			//percorrer todos os folders de users em userStuff e ver se existe um ficheiro photoID.txt no subfolder photos
+			File userStuffFolder = new File("../files/userStuff");
+			File[] allUserFiles = userStuffFolder.listFiles();
+			for(File userFile: allUserFiles) {
+				File likesFile = new File("../files/userStuff/" + userFile.getName() + "/photos/" + photoID + ".txt");
+				if(likesFile.exists()) {
+					//se encontrar incrementar o valor que la estiver por 1 e devolver 0
+					int nLikes = 0;
+					try {
+						Scanner scLikes = new Scanner(likesFile);
+						if(scLikes.hasNextLine()) {
+							nLikes = Integer.valueOf(scLikes.nextLine());
+						}
+						scLikes.close();
+						FileWriter fwLikes = new FileWriter(likesFile, false);
+						fwLikes.write(String.valueOf(nLikes + 1));
+						fwLikes.close();
+						return 0;
+					} catch(IOException e) {
+						e.printStackTrace();
+						System.exit(-1);
+					}
+					return 0;
+				}
+			}
+
+			//se percorrer todos os subfolders photos de todos os users e nao encontrar o ficheiro devolver -1
+			return -1;
 		}
 	}
 }
