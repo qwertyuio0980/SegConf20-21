@@ -1776,22 +1776,37 @@ public class SeiTchizServer {
 						retorno = arrayComTudo;
 					} else {
 						//caso contrario e preciso filtrar as nPhotos fotos de todas as fotos em arrayComTudo com os valores de counter mais alto
-
 						for(int i = 0; i < nPhotos; i++) {
 							int highestIDNumber = 0;
+							int indexOfHighestIDNumber = 0;
+
 							for(int j = 0; j < arrayComTudo.size(); j += 3) {
 								//conta apenas depois do hifen (por exemplo photo-5 fica 5)
 								if(Integer.parseInt(arrayComTudo.get(j).substring(6)) > highestIDNumber) {
 									highestIDNumber = Integer.parseInt(arrayComTudo.get(j).substring(6));
-									//arrayComTudo.get(j).substring(6)
-									arrayComTudo.g
+									indexOfHighestIDNumber = j;
 								}
 							}
+
+							//add do photoID
+							retorno.add(arrayComTudo.get(indexOfHighestIDNumber));
+
+							//add do numero de likes
+							retorno.add(arrayComTudo.get(indexOfHighestIDNumber + 1));
+
+							//add do path da photo
+							retorno.add(arrayComTudo.get(indexOfHighestIDNumber + 2));
+
+							//remover o mesmo photoID de arrayComTudo
+							arrayComTudo.remove(indexOfHighestIDNumber);
+
+							//remover o mesmo numero de likes de arrayComTudo
+							arrayComTudo.remove(indexOfHighestIDNumber + 1);
+
+							//remover o mesmo path da photo de arrayComTudo
+							arrayComTudo.remove(indexOfHighestIDNumber + 2);
 						}
-						
-
 					}
-
 				}
 			}
 

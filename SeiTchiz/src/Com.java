@@ -144,13 +144,32 @@ public class Com {
 
 		File gpcFile = new File("../files/serverStuff/globalPhotoCounter.txt");
 		int globalCounter = 0;
-		Scanner scGPC = new Scanner(gpcFile);
-		if(scGPC.hasNextLine()) {
-			globalCounter = Integer.parseInt(scGPC.nextLine());
+		try(Scanner scGPC = new Scanner(gpcFile);) {
+			if(scGPC.hasNextLine()) {
+				globalCounter = Integer.parseInt(scGPC.nextLine());
+			}
+		} catch(IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
 		}
-			
-		File file = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter);
+
+		File photoFile;
+		if(nomeFicheiro.endsWith(".jpg")) {
+			photoFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".jpg");
+		} else if(nomeFicheiro.endsWith(".png")) {
+			photoFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".png");
+		} else {
+			//CASO DE ERRO
+		}
+
 		
+
+		File likesFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".txt");
+		FileWriter fwLikes = new FileWriter(likesFile, true);
+		BufferedWriter bwLikes = new BufferedWriter(fwLikes);
+		bwLikes.write("0");
+		bwLikes.close();
+
 		FileOutputStream fos = new FileOutputStream(file);
 		while ((offset + 1024) < (int) tamanho) {
 			bytesRead = in.read(byteArray, 0, 1024);

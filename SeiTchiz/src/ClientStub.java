@@ -666,9 +666,8 @@ public class ClientStub {
 			}
 
 		} catch (IOException e) {
-			System.out.println("------------------------------------------");
-			System.out.println("Nao foi possivel fazer post da fotografia");
-			System.out.println("------------------------------------------");
+			e.printStackTrace();
+			System.exit(-1);
 		}
 
 		return bool;

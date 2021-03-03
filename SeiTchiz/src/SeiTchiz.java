@@ -146,18 +146,24 @@ public class SeiTchiz {
 
 			case "p":
 			case "post":
-
-				if (option.length != 2 || option[1].contains("-")) {
-					System.out.println(separador);
-					System.out.println("Opcao \"post\" recebe o argumento <photo>.");
-					System.out.println(separador);
-				} else {
+				
+				if (option.length == 2 && !option[1].contains("-") && (option[1].endsWith(".jpg") || option[1].endsWith(".png"))) {
 					boolean answer = cs.post(option[1]);
 					if (answer) {
 						System.out.println(separador);
 						System.out.println("A fotografia foi postada com sucesso");
 						System.out.println(separador);
+					} else {
+						System.out.println(separador);
+						System.out.println("Ocorreu um erro a fazer a operacao... \n " +
+						"A fotografia nao foi postada com sucesso");
+						System.out.println(separador);
 					}
+				} else {
+					System.out.println(separador);
+					System.out.println("Opcao \"post\" recebe o argumento <photo> que tem " +
+					"de acabar obrigatoriamente com \".jpg\" ou \".png\" e nao pode conter hifens.");
+					System.out.println(separador);
 				}
 				break;
 				
