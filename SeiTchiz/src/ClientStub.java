@@ -32,6 +32,19 @@ public class ClientStub {
 
 		com = new Com(clientSocket, in, out);
 
+		// Criar ficheiro onde ficarao guardadas as fotos recebidas
+		File wall = new File("../wall");
+		// Caso ainda nao exista o diretorio wall, criar-lo
+		if(!wall.isDirectory()) {
+			try{
+				wall.mkdir();
+			} catch(Exception e) {
+				System.out.println("Erro ao criar diretorio 'wall'");
+				System.exit(-1);
+			}
+		}
+		
+
 	}
 
 	/**
@@ -652,11 +665,8 @@ public class ClientStub {
 	 */
 	public boolean post(String pathFile) {
 
-		//pathFile = 
 		File file = new File("../Fotos/" + pathFile);
-
 		boolean bool = false;
-
 		try {
 			com.send("p");
 			com.sendFile("../Fotos/" + pathFile);
@@ -683,7 +693,8 @@ public class ClientStub {
 	 */
 	public String[] wall(String senderID, int nPhotos) {
 
-		String resultado = null;
+		String resultado[] = null;
+		int tamanhoArray = 0;
 		try {
 			// enviar tipo de operação
 			out.writeObject("w");
@@ -691,15 +702,36 @@ public class ClientStub {
 			out.writeObject(senderID);
 			// enviar número de fotografias mais recentes
 			out.writeObject(nPhotos);
-			// receber o resultado da operação
 			
-			// tratar o resultado da operação
+			tamanhoArray = (int) in.readObject();
+
+			// receber numero que e valor de erro ou tamanho do array
+			if(tamanhoArray == -1) {
+				resultado = new String[1];
+				resultado[0] = (String) in.readObject();
+			} else {
+				// Cada photo sera representada por duas entradas no array resultado:
+				// 1.photoID
+				// 2.likes
+				resultado = new String[tamanhoArray*2];
+
+				// Loop for para receber os 3 instreams de cada foto
+				for(int i = 0; i < tamanhoArray; i+=2) {
+					// Receber identificador da photo
+					resultado[i] = (String) in.readObject();
+					// Receber numero de likes na foto atual
+					resultado[i+1] = (String) in.readObject();
+					// Receber e guardar ficheiro da foto
+					com.receiveFileWall();
+				}
+			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ClassNotFoundException e1) {
+			e1.printStackTrace();
 		}
 
-		return null;
+		return resultado;
 	}
 
 }

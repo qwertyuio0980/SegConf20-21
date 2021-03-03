@@ -1,12 +1,16 @@
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
+import java.io.FileWriter;
+import java.io.BufferedWriter;	
+
 
 public class Com {
 
@@ -153,16 +157,11 @@ public class Com {
 			System.exit(-1);
 		}
 
-		File photoFile;
-		if(nomeFicheiro.endsWith(".jpg")) {
-			photoFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".jpg");
-		} else if(nomeFicheiro.endsWith(".png")) {
-			photoFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".png");
-		} else {
-			//CASO DE ERRO
-		}
-
+		File photoFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".jpg");
 		
+		if(nomeFicheiro.endsWith(".png")) {
+			photoFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".png");
+		}
 
 		File likesFile = new File("../files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".txt");
 		FileWriter fwLikes = new FileWriter(likesFile, true);
@@ -170,21 +169,23 @@ public class Com {
 		bwLikes.write("0");
 		bwLikes.close();
 
-		FileOutputStream fos = new FileOutputStream(file);
-		while ((offset + 1024) < (int) tamanho) {
-			bytesRead = in.read(byteArray, 0, 1024);
-			fos.write(byteArray, 0, bytesRead);
-			fos.flush();
-			offset += bytesRead;
+		try(FileOutputStream fos = new FileOutputStream(photoFile)) {
+			while ((offset + 1024) < (int) tamanho) {
+				bytesRead = in.read(byteArray, 0, 1024);
+				fos.write(byteArray, 0, bytesRead);
+				fos.flush();
+				offset += bytesRead;
+			}
+	
+			if ((1024 + offset) != (int) tamanho) {
+				bytesRead = in.read(byteArray, 0, (int) tamanho - offset);
+				fos.write(byteArray, 0, bytesRead);
+				fos.flush();
+			}
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
 		}
-
-		if ((1024 + offset) != (int) tamanho) {
-			bytesRead = in.read(byteArray, 0, (int) tamanho - offset);
-			fos.write(byteArray, 0, bytesRead);
-			fos.flush();
-		}
-		System.out.println();
-		fos.close();
 	}
 
 	/**
@@ -194,14 +195,14 @@ public class Com {
 	 * @throws ClassNotFoundException
 	 * @throws IOException
 	 */
-	public void receiveFile(String userName) throws ClassNotFoundException, IOException {
+	public void receiveFileWall() throws ClassNotFoundException, IOException {
 
 		String nomeFicheiro = (String) in.readObject();
 		long tamanho = in.readLong();
 		int bytesRead = 0;
 		int offset = 0;
 		byte[] byteArray = new byte[1024];
-		File file = new File("../files/userStuff/" + userName + "/photos/" + nomeFicheiro + "-" + TODO);
+		File file = new File("../wall/" + nomeFicheiro);
 		
 		FileOutputStream fos = new FileOutputStream(file);
 		while ((offset + 1024) < (int) tamanho) {

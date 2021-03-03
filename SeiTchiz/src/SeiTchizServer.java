@@ -52,6 +52,10 @@ public class SeiTchizServer {
 			System.exit(-1);
 		}
 
+		// FileWriter fwGPC;
+		// BufferedWriter bwGPC;
+		Writer globalPhotoCounterFile;
+
 		// criacao dos folders e files vazios por default
 		try {
 
@@ -67,15 +71,18 @@ public class SeiTchizServer {
 			usersFile = new File("../files/serverStuff/users.txt");
 			usersFile.createNewFile();
 
-			globalPhotoCounterFile = new File("../files/serverStuff/globalPhotoCounter.txt");
-			globalPhotoCounterFile.createNewFile();
+			// globalPhotoCounterFile = new File("../files/serverStuff/globalPhotoCounter.txt");
+			// globalPhotoCounterFile.createNewFile();
+			// fwGPC = new FileWriter(globalPhotoCounterFile, false);
+			// bwGPC = new BufferedWriter(fwGPC);
+			// bwGPC.write("0");
+			// bwGPC.close();
 
-			FileWriter fwGPC = new FileWriter(globalPhotoCounterFile, true);
-			BufferedWriter bwGPC = new BufferedWriter(fwGPC);
-			bwGPC.write("0");
-			bwGPC.close();
-
-			// Criar diretorio para guardar informacoes sobre os grupos
+			globalPhotoCounterFile = new BufferedWriter(
+					new FileWriter("../files/serverStuff/globalPhotoCounter.txt", true));
+			globalPhotoCounterFile.write("0");
+			globalPhotoCounterFile.close();
+			
 			groupsFolder = new File("../files/groups");
 			groupsFolder.mkdirs();
 			
@@ -85,6 +92,8 @@ public class SeiTchizServer {
 			System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
 			System.exit(-1);
 		}
+		
+		
 
 		while (true) {
 			try {
@@ -254,6 +263,7 @@ public class SeiTchizServer {
 					String groupID = null;
 					String grupos = null;
 					int nPhotos = 0;
+					ArrayList arrayAEnviar;
 
 					// realizar a operacao pedida
 					switch (op) {
@@ -304,12 +314,14 @@ public class SeiTchizServer {
 
 					case "p":
 
+						System.out.println(".....1.....");
 						//incrementar valor do counter em globalPhotoCounter.txt
 						File fileCounter = new File("../files/serverStuff/globalPhotoCounter.txt");
 						int counter = 0; // valor 0 por default so para nao chatear o sonarlint
 						
 						try(Scanner scCounter= new Scanner(fileCounter);
 						FileWriter fwCounter= new FileWriter(fileCounter, false);) {
+							System.out.println(".....12.....");
 							counter = Integer.parseInt(scCounter.nextLine());
 							counter += 1;
 							fwCounter.write(String.valueOf(counter));
@@ -317,6 +329,8 @@ public class SeiTchizServer {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
+
+						System.out.println(".....123.....");
 
 						try {
 							com.receiveFilePost(userID);
@@ -337,16 +351,33 @@ public class SeiTchizServer {
 							// receber nPhotos
 							nPhotos = (int) inStream.readObject();
 
-							// Chamar funcao wall passando os argumentos recebidos e receber a resposta
-							// TODO: tratar a resposta do método
-							//outStream.writeObject(wall(aux, nPhotos));
+							arrayAEnviar = wall(aux, nPhotos);
 
-							// Enviar resposta
-							if(grupos == null) {
-								outStream.writeObject("");
+							if(arrayAEnviar.size() < 3) {
+								//enviar numero de erro (que e -1)
+								outStream.writeObject(-1);
+
+								//enviar o array que neste caso apenas vai conter "1" ou "2"
+								outStream.writeObject(arrayAEnviar.get(0));
+								
+								
 							} else {
-								outStream.writeObject(grupos);
+
+								//enviar numero de photoPaths
+								outStream.writeObject(arrayAEnviar.size()/3);
+								
+								for(int j=0; j < arrayAEnviar.size(); j+=3) {
+									// Enviar identificador da photo
+									outStream.writeObject(arrayAEnviar.get(j));
+
+									// Enviar o numero de likes da photo
+									outStream.writeObject(arrayAEnviar.get(j+1));
+									
+									// Identificador da photo ao com.java
+									com.sendFile(arrayAEnviar.get(j+2).toString());
+								}
 							}
+							
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -1695,23 +1726,12 @@ public class SeiTchizServer {
 			// "2" = todos os usuarios que o senderID segue nao tem fotos
 
 			//inicializar o arraylist que sera devolvido e array a filtrar
-			ArrayList<String> retorno = new ArrayList();
-			ArrayList<String> arrayComTudo = new ArrayList();
-
-			//obter o counter global de fotos
-			int counterGlobal = 0;
-			File gpcFile = new File("../files/serverStuff/globalPhotoCounter.txt");
-			try(Scanner scGPC = new Scanner(gpcFile);) {
-				if(scGPC.hasNextLine()) {
-					counterGlobal = Integer.parseInt(scGPC.nextLine());
-				}
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			ArrayList<String> retorno = new ArrayList<>();
+			ArrayList<String> arrayComTudo = new ArrayList<>();
 			
 			//ter todos os users que o senderID segue num arraylist
 			File currentUserFollowingFile = new File("../files/userStuff/" + senderID + "/following.txt");
-			ArrayList following = new ArrayList();
+			ArrayList<String> following = new ArrayList<>();
 			try (Scanner scCurrentUserFollowing = new Scanner(currentUserFollowingFile)) {
 				while (scCurrentUserFollowing.hasNextLine()) {
 					String line = scCurrentUserFollowing.nextLine();

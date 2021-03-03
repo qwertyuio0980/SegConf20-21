@@ -48,6 +48,7 @@ public class SeiTchiz {
 			String mensagem = null;
 			StringBuilder sbMensagem = new StringBuilder();
 			String[] listaMensagens = null;
+			String[] photoIDLikesPair = null;
 
 			try {
 				System.out.print(">>>");
@@ -170,20 +171,45 @@ public class SeiTchiz {
 			case "w":
 			case "wall":
 
-				if(option.length != 2 || SeiTchiz.isPositiveInt(option[1])) {
+				if(option.length != 2 || !SeiTchiz.isPositiveInt(option[1])) {
 					System.out.println(separador);
 					System.out.println("Opcao \"wall\" recebe o argumento <nPhotos> que tem de ser um numero inteiro positivo.");
 					System.out.println(separador);
+					break;
 				}
 
-				// TODO
+				// envia-se o senderID e o numero de fotos
+				photoIDLikesPair = cs.wall(args[1], Integer.parseInt(option[1]));
 
+				if(photoIDLikesPair.length == 1 && photoIDLikesPair[0].contentEquals("1")) {
+					System.out.println(separador);
+					System.out.println("O cliente nao segue nenhum user.");
+					System.out.println(separador);
+				} else if(photoIDLikesPair.length == 1 && photoIDLikesPair[0].contentEquals("2"))  {
+					System.out.println(separador);
+					System.out.println("Todos os users que o cliente segue nao tem fotos nos seus murais.");
+					System.out.println(separador);
+				} else {
+					System.out.println(separador);
+					for(int i = 0; i < photoIDLikesPair.length; i += 2) {
+						System.out.println("Foto com ID: " + photoIDLikesPair[i] + "\nNumero de likes: " +
+						photoIDLikesPair[i + 1]);
+					}
+					System.out.println(separador);
+				}
 				break;
 
 			case "l":
 			case "like":
 
-				// TODO
+				if (option.length != 2 || option[1].contains("/") || option[1].contains(":")
+				|| option[1].contains("-")) {
+					System.out.println(separador);
+					System.out.println("Opcao \"newgroup\" recebe argumento <groupID> que nao pode conter espacos, "
+							+ "dois pontos, hifens ou forward slashes no nome.");
+					System.out.println(separador);
+				break;
+				}
 
 				break;
 			case "n":
