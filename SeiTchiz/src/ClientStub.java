@@ -198,6 +198,7 @@ public class ClientStub {
 			// Caso fromServer == 1: Novo cliente foi criado com as credenciais passadas
 			System.out.println("Sign up e login feitos com sucesso, Insira o seu nome de utilizador para continuar.");
 			try {
+				System.out.print(">>>");
 				Scanner sc = new Scanner(System.in); // não podemos fechar o scanner ou fechamos a porta (System.In)
 				String a = sc.nextLine();
 				while (a.contains(":") || a.contains(" ")) {
@@ -703,9 +704,11 @@ public class ClientStub {
 			// enviar número de fotografias mais recentes
 			out.writeObject(nPhotos);
 			
+			//receber tamanho do array a devolver
 			tamanhoArray = (int) in.readObject();
 
-			// receber numero que e valor de erro ou tamanho do array
+			System.out.println("valor do tamanho total recebido a dividir por 3 e " + tamanhoArray);
+
 			if(tamanhoArray == -1) {
 				resultado = new String[1];
 				resultado[0] = (String) in.readObject();
@@ -716,13 +719,16 @@ public class ClientStub {
 				resultado = new String[tamanhoArray*2];
 
 				// Loop for para receber os 3 instreams de cada foto
-				for(int i = 0; i < tamanhoArray; i+=2) {
+				for(int i = 0; i < tamanhoArray*3; i+=3) {
 					// Receber identificador da photo
 					resultado[i] = (String) in.readObject();
+					System.out.println("atingido " + i);
 					// Receber numero de likes na foto atual
 					resultado[i+1] = (String) in.readObject();
+					System.out.println("atingido " + (i+1));
 					// Receber e guardar ficheiro da foto
 					com.receiveFileWall();
+					System.out.println("atingido " + (i+2));
 				}
 			}
 		} catch (IOException e) {

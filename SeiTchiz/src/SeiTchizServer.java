@@ -78,7 +78,7 @@ public class SeiTchizServer {
 			// bwGPC.close();
 
 			globalPhotoCounterFile = new BufferedWriter(
-					new FileWriter("../files/serverStuff/globalPhotoCounter.txt", true));
+					new FileWriter("../files/serverStuff/globalPhotoCounter.txt", false));
 			globalPhotoCounterFile.write("0");
 			globalPhotoCounterFile.close();
 			
@@ -318,6 +318,7 @@ public class SeiTchizServer {
 							Scanner scCounter= new Scanner(fileCounter);
 							counter = Integer.parseInt(scCounter.nextLine());
 							counter += 1;
+
 							FileWriter fwCounter= new FileWriter(fileCounter, false);
 							fwCounter.write(String.valueOf(counter));
 							scCounter.close();
@@ -346,8 +347,12 @@ public class SeiTchizServer {
 							// receber nPhotos
 							nPhotos = (int) inStream.readObject();
 
+							//executar o wall
 							arrayAEnviar = wall(aux, nPhotos);
 
+							System.out.println("size do arrayAEnviar e " + arrayAEnviar.size());
+
+							//caso de erro
 							if(arrayAEnviar.size() < 3) {
 								//enviar numero de erro (que e -1)
 								outStream.writeObject(-1);
@@ -355,7 +360,7 @@ public class SeiTchizServer {
 								//enviar o array que neste caso apenas vai conter "1" ou "2"
 								outStream.writeObject(arrayAEnviar.get(0));
 								
-								
+							//caso funcionamento normal
 							} else {
 
 								//enviar numero de photoPaths
