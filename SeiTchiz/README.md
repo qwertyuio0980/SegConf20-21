@@ -32,5 +32,20 @@ FALTA LIMITACOES DO WALL
 ----------------------
 Como compilar e executar o Trabalho da Fase 1
 
-FALTA METER COMO CORRER O TRAB
+FAZER OS PASSOS NESTA ORDEM:
+PARA COMPILAR SERVIDOR
+javac -d bin src/SeiTchizServer.java src/Com.java
 
+PARA COMPILAR CLIENTE
+javac -d bin src/SeiTchiz.java src/ClientStub.java src/Com.java
+
+PARA CORRER SERVIDOR COM POLICIES
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy SeiTchizServer 45678
+
+PARA CORRER CLIENTE COM POLICIES
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy SeiTchiz <IP>:<45678> <userID> <userPassword>
+
+PARA CORRER CLIENTE COM JARS
+
+
+PARA CORRER CLIENTE COM JARS

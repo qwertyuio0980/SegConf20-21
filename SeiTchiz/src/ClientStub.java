@@ -707,7 +707,7 @@ public class ClientStub {
 			//receber tamanho do array a devolver
 			tamanhoArray = (int) in.readObject();
 
-			System.out.println("valor do tamanho total recebido a dividir por 3 e " + tamanhoArray);
+			System.out.println("valor do tamanhoArray " + tamanhoArray);
 
 			if(tamanhoArray == -1) {
 				resultado = new String[1];

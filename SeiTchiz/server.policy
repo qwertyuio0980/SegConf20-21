@@ -1,5 +1,9 @@
-
 //dar todas as permissoes
-grant {
+grant codeBase "file:bin/" {
+    permission java.security.AllPermission;
+};
+
+//permissoes mais afinadas POR FAZER
+grant codeBase "file:SeiTchizServer.jar" {
     permission java.security.AllPermission;
 };
