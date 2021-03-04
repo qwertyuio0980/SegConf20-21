@@ -1,9 +1,11 @@
-//dar todas as permissoes
 grant codeBase "file:bin/" {
-    permission java.security.AllPermission;
+    permission java.net.SocketPermission "*:1-", "accept,listen,resolve";
+    permission java.io.FilePermission "files","write";
+    permission java.io.FilePermission "files/-","write,read,delete";
 };
 
-//permissoes mais afinadas POR FAZER
 grant codeBase "file:SeiTchizServer.jar" {
-    permission java.security.AllPermission;
+    permission java.net.SocketPermission "*:1-", "accept,listen,resolve";
+    permission java.io.FilePermission "files","write";
+    permission java.io.FilePermission "files/-","write,read,delete";
 };
