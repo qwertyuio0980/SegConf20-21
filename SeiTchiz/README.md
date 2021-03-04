@@ -48,6 +48,12 @@ groupIDs inseridos nos comandos que recebem userIDs nao devem conter espaços ne
 As fotos que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
 Ou seja O argumento <photo> de post deve ser foto<1 a 4>.jpg
 
+A pasta bin nao deve ser apagada.
+
+A pasta files pode ser apagada para dar um "restart" do servidor e todos os seus conteudos
+
+WALL ESTA NOT DONE BEM
+
 ----------------------
 Como compilar e executar o Trabalho da Fase 1(Entregar esta parte)
 
