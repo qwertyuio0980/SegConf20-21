@@ -1,0 +1,44 @@
+
+k
+squid:S106ò"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿHRMAJORZ
+CODE_SMELL
+j
+squid:S106_"9Replace this use of System.out or System.err by a logger.(¾¥×ıÿÿÿÿHRMAJORZ
+CODE_SMELL
+j
+squid:S106F"9Replace this use of System.out or System.err by a logger.(ËÂ³ŠøÿÿÿÿHŠRMAJORZ
+CODE_SMELL
+€squid:S1192¢"ODefine a constant instead of duplicating this literal "/photos/photo-" 3 times.(¦…µ HÿRCRITICALZ
+CODE_SMELL
+j
+squid:S106Y"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿH‹RMAJORZ
+CODE_SMELL
+wsquid:S2095Ñ"NUse try-with-resources or close this "FileOutputStream" in a "finally" clause.(ŠÀø¯H‚RBLOCKERZBUG
+j
+squid:S106/"9Replace this use of System.out or System.err by a logger.(¨ÔôşÿÿÿÿH‡RMAJORZ
+CODE_SMELL
+k
+squid:S106Ş"9Replace this use of System.out or System.err by a logger.(ªÓ¼áşÿÿÿÿHRMAJORZ
+CODE_SMELL
+f
+squid:S106ì"9Replace this use of System.out or System.err by a logger.(ŸÉôÁHRMAJORZ
+CODE_SMELL
+Ysquid:S1148¼"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH†RMINORZVULNERABILITY
+zsquid:S2095ª"LUse try-with-resources or close this "BufferedWriter" in a "finally" clause.(ì‹¾şÿÿÿÿHƒRBLOCKERZBUG
+j
+squid:S106@"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿHˆRMAJORZ
+CODE_SMELL
+Xsquid:S11480"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH„RMINORZVULNERABILITY
+j
+squid:S106G"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿH‰RMAJORZ
+CODE_SMELL
+j
+squid:S106X"9Replace this use of System.out or System.err by a logger.(ÌˆÉøÿÿÿÿHŒRMAJORZ
+CODE_SMELL
+k
+squid:S106ñ"9Replace this use of System.out or System.err by a logger.(†™ÃÏùÿÿÿÿH‘RMAJORZ
+CODE_SMELL
+zsquid:S2095w"MUse try-with-resources or close this "FileInputStream" in a "finally" clause.(¾¡½ßÿÿÿÿÿHRBLOCKERZBUG
+Ysquid:S1148"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH…RMINORZVULNERABILITY
+‰squid:S1192¢"QDefine a constant instead of duplicating this literal "files/userStuff/" 3 times.(¦…µ 8Å…ƒòÿ.HõRCRITICALZ
+CODE_SMELL

@@ -5,8 +5,29 @@ Martim Silva
 Francisco Freire
 David Rodrigues
 
+
 ----------------------
-Limitações do Trabalho da Fase 1
+
+PARA FAZER OS JARS:
+1.Compilar ficheiros ATUAIS para a pasta bin
+2.right click no package do server ou cliente
+3.export -> java -> jarfile
+4.verificar se o package correto e o que esta selecionado
+5.selecionar a opcao export java source files and resources(3a opcao)
+6.selecionar o path na root do projeto e o nome do jar é SeiTchizServer para servidor e SeiTchiz para o cliente
+7.Fazer Next e nao fazer nada na pagina que aparece
+8.Fazer Next denovo e em "Select the class of the application entry point" fazer browse
+e meter a classe que tem o main
+
+PARA CORRER SERVIDOR COM POLICIES E JAR
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678
+
+PARA CORRER CLIENTE COM POLICIES E JAR
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <IP>:<45678> <userID> <userPassword>
+
+
+----------------------
+Limitações do Trabalho da Fase 1(Entregar esta parte)
 
 O unico argumento que deve ser passado obrigatoriamente para o servidor correr é 45678.
 
@@ -27,25 +48,18 @@ groupIDs inseridos nos comandos que recebem userIDs nao devem conter espaços ne
 As fotos que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
 Ou seja O argumento <photo> de post deve ser foto<1 a 4>.jpg
 
-FALTA LIMITACOES DO WALL
-
 ----------------------
-Como compilar e executar o Trabalho da Fase 1
+Como compilar e executar o Trabalho da Fase 1(Entregar esta parte)
 
 FAZER OS PASSOS NESTA ORDEM:
 PARA COMPILAR SERVIDOR
-javac -d bin src/SeiTchizServer.java src/Com.java
+javac -d bin src/server/SeiTchizServer.java src/server/Com.java
 
 PARA COMPILAR CLIENTE
-javac -d bin src/SeiTchiz.java src/ClientStub.java src/Com.java
+javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/client/Com.java
 
 PARA CORRER SERVIDOR COM POLICIES
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy SeiTchizServer 45678
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678
 
 PARA CORRER CLIENTE COM POLICIES
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy SeiTchiz <IP>:<45678> <userID> <userPassword>
-
-PARA CORRER CLIENTE COM JARS
-
-
-PARA CORRER CLIENTE COM JARS
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <IP>:<45678> <userID> <userPassword>

@@ -1,0 +1,192 @@
+
+dsquid:S1135³"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH÷RINFOZ
+CODE_SMELL
+f
+squid:S106É"9Replace this use of System.out or System.err by a logger.(ß’ŞÎHøRMAJORZ
+CODE_SMELL
+k
+squid:S106°"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿHùRMAJORZ
+CODE_SMELL
+k
+squid:S106Ÿ"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿHúRMAJORZ
+CODE_SMELL
+k
+squid:S106È"9Replace this use of System.out or System.err by a logger.(Ûá¤ÏşÿÿÿÿHûRMAJORZ
+CODE_SMELL
+Ysquid:S1148ı"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHüRMINORZVULNERABILITY
+Ysquid:S1148ï"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHıRMINORZVULNERABILITY
+dsquid:S1135"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHşRINFOZ
+CODE_SMELL
+ssquid:S2147‰"ECombine this catch with the one at line 646, which has the same body.(ıàÑÎHÿRMINORZ
+CODE_SMELL
+Ysquid:S1148°"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH€RMINORZVULNERABILITY
+ssquid:S2147®"ECombine this catch with the one at line 427, which has the same body.(ıàÑÎHRMINORZ
+CODE_SMELL
+dsquid:S1135Ì"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH‚RINFOZ
+CODE_SMELL
+e
+squid:S106\"9Replace this use of System.out or System.err by a logger.(ÆÀûıHƒRMAJORZ
+CODE_SMELL
+Ysquid:S1148±"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH„RMINORZVULNERABILITY
+ssquid:S2147î"ECombine this catch with the one at line 364, which has the same body.(ıàÑÎH…RMINORZ
+CODE_SMELL
+j
+squid:S106,"9Replace this use of System.out or System.err by a logger.(àÁü¶ÿÿÿÿÿH†RMAJORZ
+CODE_SMELL
+Ysquid:S1148­"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH‡RMINORZVULNERABILITY
+Ysquid:S1148í"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHˆRMINORZVULNERABILITY
+dsquid:S1135Œ"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH‰RINFOZ
+CODE_SMELL
+dsquid:S1135ï"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHŠRINFOZ
+CODE_SMELL
+dsquid:S1135Ø"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH‹RINFOZ
+CODE_SMELL
+msquid:S2259‘"GA "NullPointerException" could be thrown; "resultado" is nullable here.(ïÈóHŒRMAJORZBUG
+Ysquid:S1148í"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHRMINORZVULNERABILITY
+dsquid:S1135Š"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHRINFOZ
+CODE_SMELL
+dsquid:S1135"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHRINFOZ
+CODE_SMELL
+dsquid:S1135‘"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHRINFOZ
+CODE_SMELL
+Ysquid:S1148ğ"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH‘RMINORZVULNERABILITY
+ssquid:S2147½"ECombine this catch with the one at line 186, which has the same body.(ï­£ÄH’RMINORZ
+CODE_SMELL
+€squid:S1192×"JDefine a constant instead of duplicating this literal "atingido " 3 times.(²ßÏ–üÿÿÿÿH“RCRITICALZ
+CODE_SMELL
+ssquid:S2147Â"ECombine this catch with the one at line 320, which has the same body.(ıàÑÎH”RMINORZ
+CODE_SMELL
+f
+squid:S106Ë"9Replace this use of System.out or System.err by a logger.(¥¿Ñ×H•RMAJORZ
+CODE_SMELL
+k
+squid:S106¾"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿH–RMAJORZ
+CODE_SMELL
+k
+squid:S106ş"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿH—RMAJORZ
+CODE_SMELL
+dsquid:S1135Ï"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH˜RINFOZ
+CODE_SMELL
+k
+squid:S106´"9Replace this use of System.out or System.err by a logger.(Ä¯³üÿÿÿÿH™RMAJORZ
+CODE_SMELL
+Ysquid:S1148‹"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHšRMINORZVULNERABILITY
+Ysquid:S1148Ğ"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH›RMINORZVULNERABILITY
+msquid:S1854":Remove this useless assignment to local variable "groups".(¡ŠõûÿÿÿÿHœRMAJORZ
+CODE_SMELL
+k
+squid:S106ƒ"9Replace this use of System.out or System.err by a logger.(„ˆœİÿÿÿÿÿHRMAJORZ
+CODE_SMELL
+dsquid:S1135‡"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHRINFOZ
+CODE_SMELL
+dsquid:S1135ü"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHŸRINFOZ
+CODE_SMELL
+csquid:S1135f"2Complete the task associated to this TODO comment.(¶ŞíşÿÿÿÿH RINFOZ
+CODE_SMELL
+j
+squid:S106C"9Replace this use of System.out or System.err by a logger.(¼á‘ôüÿÿÿÿH¡RMAJORZ
+CODE_SMELL
+k
+squid:S106×"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿH¢RMAJORZ
+CODE_SMELL
+fsquid:S1197»"8Move the array designator from the variable to the type.(ÖÅñH£RMINORZ
+CODE_SMELL
+dsquid:S1135ÿ"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH¤RINFOZ
+CODE_SMELL
+Ysquid:S1148Í"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH¥RMINORZVULNERABILITY
+f
+squid:S106…"9Replace this use of System.out or System.err by a logger.(ÆÀûıH¦RMAJORZ
+CODE_SMELL
+ssquid:S2147Î"ECombine this catch with the one at line 459, which has the same body.(ıàÑÎH§RMINORZ
+CODE_SMELL
+f
+squid:S106Ş"9Replace this use of System.out or System.err by a logger.(›Ü H¨RMAJORZ
+CODE_SMELL
+Ysquid:S1148"#Use a logger to log this exception.(ÂşÿâûÿÿÿÿH©RMINORZVULNERABILITY
+j
+squid:S106"9Replace this use of System.out or System.err by a logger.(­øıÿÿÿÿHªRMAJORZ
+CODE_SMELL
+ksquid:S1854Ÿ"8Remove this useless assignment to local variable "file".(Ä”¬üÿÿÿÿH«RMAJORZ
+CODE_SMELL
+ssquid:S2147²"ECombine this catch with the one at line 559, which has the same body.(ıàÑÎH¬RMINORZ
+CODE_SMELL
+Ysquid:S1148€"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH­RMINORZVULNERABILITY
+ssquid:S2147î"ECombine this catch with the one at line 491, which has the same body.(ıàÑÎH®RMINORZ
+CODE_SMELL
+Ysquid:S1148´"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH¯RMINORZVULNERABILITY
+k
+squid:S106›"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿH°RMAJORZ
+CODE_SMELL
+Ysquid:S1148¢"#Use a logger to log this exception.(ÂşÿâûÿÿÿÿH±RMINORZVULNERABILITY
+Ysquid:S1148ã"#Use a logger to log this exception.(ÂşÿâûÿÿÿÿH²RMINORZVULNERABILITY
+Ysquid:S1148á"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH³RMINORZVULNERABILITY
+Ysquid:S1148Ó"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH´RMINORZVULNERABILITY
+Ysquid:S1148Ù"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHµRMINORZVULNERABILITY
+ssquid:S2147ş"ECombine this catch with the one at line 763, which has the same body.(ıàÑÎH¶RMINORZ
+CODE_SMELL
+dsquid:S1135¯"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH·RINFOZ
+CODE_SMELL
+ssquid:S2147Ú"ECombine this catch with the one at line 599, which has the same body.(ıàÑÎH¸RMINORZ
+CODE_SMELL
+Ysquid:S1148"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH¹RMINORZVULNERABILITY
+k
+squid:S106Ú"9Replace this use of System.out or System.err by a logger.(ÿí ¦üÿÿÿÿHºRMAJORZ
+CODE_SMELL
+Tsquid:S1168Ô"&Return an empty array instead of null.(¥¹ïH»RMAJORZ
+CODE_SMELL
+Ysquid:S1148Ã"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH¼RMINORZVULNERABILITY
+Ysquid:S1148Ü"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿH½RMINORZVULNERABILITY
+e
+squid:S106q"9Replace this use of System.out or System.err by a logger.(¬ÿ‰ˆH¾RMAJORZ
+CODE_SMELL
+dsquid:S1135Û"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿH¿RINFOZ
+CODE_SMELL
+Ysquid:S1148"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHÀRMINORZVULNERABILITY
+dsquid:S1135ì"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHÁRINFOZ
+CODE_SMELL
+j
+squid:S106x"9Replace this use of System.out or System.err by a logger.(¶¨ÉÁúÿÿÿÿHÂRMAJORZ
+CODE_SMELL
+csquid:S1135I"2Complete the task associated to this TODO comment.(¶ŞíşÿÿÿÿHÃRINFOZ
+CODE_SMELL
+msquid:S1854à":Remove this useless assignment to local variable "groups".(¡ŠõûÿÿÿÿHÄRMAJORZ
+CODE_SMELL
+Ysquid:S1148"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHÅRMINORZVULNERABILITY
+ssquid:S2147"ECombine this catch with the one at line 395, which has the same body.(ıàÑÎHÆRMINORZ
+CODE_SMELL
+e
+squid:S106T"9Replace this use of System.out or System.err by a logger.(¬ÿ‰ˆHÇRMAJORZ
+CODE_SMELL
+f
+squid:S106Å"9Replace this use of System.out or System.err by a logger.(ŒåÄHÈRMAJORZ
+CODE_SMELL
+j
+squid:S106}"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿHÉRMAJORZ
+CODE_SMELL
+Ysquid:S1148ª"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHÊRMINORZVULNERABILITY
+Tsquid:S1168„"&Return an empty array instead of null.(¥¹ïHËRMAJORZ
+CODE_SMELL
+k
+squid:S106Ï"9Replace this use of System.out or System.err by a logger.(«†´·şÿÿÿÿHÌRMAJORZ
+CODE_SMELL
+ssquid:S2147"ECombine this catch with the one at line 525, which has the same body.(ıàÑÎHÍRMINORZ
+CODE_SMELL
+Ysquid:S1148ˆ"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHÎRMINORZVULNERABILITY
+dsquid:S1135¬"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHÏRINFOZ
+CODE_SMELL
+Ysquid:S1148Á"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHĞRMINORZVULNERABILITY
+msquid:S2259â"GA "NullPointerException" could be thrown; "resultado" is nullable here.(ïÈóHÑRMAJORZBUG
+k
+squid:S106×"9Replace this use of System.out or System.err by a logger.(²ßÏ–üÿÿÿÿHÒRMAJORZ
+CODE_SMELL
+k
+squid:S106»"9Replace this use of System.out or System.err by a logger.(ïù¯¯ûÿÿÿÿHÓRMAJORZ
+CODE_SMELL
+\squid:S1481Ÿ")Remove this unused "file" local variable.(Ä”¬üÿÿÿÿHÔRMINORZ
+CODE_SMELL
+Ysquid:S1148’"#Use a logger to log this exception.(€ÉÔ…ıÿÿÿÿHÕRMINORZVULNERABILITY
+dsquid:S1135°"2Complete the task associated to this TODO comment.(ÕÌ®şÿÿÿÿHÖRINFOZ
+CODE_SMELL
+k
+squid:S106İ"9Replace this use of System.out or System.err by a logger.(åòñŞşÿÿÿÿH×RMAJORZ
+CODE_SMELL
