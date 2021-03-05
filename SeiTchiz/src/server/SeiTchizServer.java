@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.print.event.PrintEvent;
+
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.FilenameFilter;
@@ -352,8 +354,6 @@ public class SeiTchizServer {
 
 							//executar o wall
 							arrayAEnviar = wall(aux, nPhotos);
-
-							System.out.println("size do arrayAEnviar e " + arrayAEnviar.size());
 
 							//caso de erro
 							if(arrayAEnviar.size() < 3) {
@@ -881,9 +881,7 @@ public class SeiTchizServer {
 			File[] files = groupsFolder.listFiles(filter);
 
 			File ownerGroupFolder = new File("files/groups/" + senderIDgroupID);
-			for(int i = 0; i < files.length; i++) {
-				System.out.println(files[i].getName());
-			}
+			
 			if (files.length == 0) {
 				// caso nao existir criar esse folder
 				if (ownerGroupFolder.mkdir()) {
@@ -1724,7 +1722,7 @@ public class SeiTchizServer {
 
 		/**
 		 * Retorna as nPhotos mais recentes dos usuários seguidos por senderID bem como o número
-		 * de likes em cada fotografia. 
+		 * de likes em cada fotografia.
 		 * Caso existam menos de nPhotos de um certo usuário disponíveis, são retornadas as que estão.
 		 * Caso o usuário seguido não tenha nenhuma foto, isto será assinalado
 		 * 
@@ -1734,6 +1732,19 @@ public class SeiTchizServer {
 		 * users que o senderID segue
 		 */
 		public ArrayList wall(String senderID, int nPhotos) {
+			// LOGICA:
+			// 1.Buscar todos as fotos de todos os usuarios seguidos
+			// 2.Criar uma lista com os counters das fotos
+			// 3.Obter o maior indice
+			// 4.Buscar as fotos no intervalo: range(<maior indice>,<maior indice> - nPhotos)
+			// 5.Fazer um loop pra percorrer os counters no intervalo
+			//  5.2.Verificar se i nao eh menor que o numero de fotos no array de fotos obtido
+			// 	5.1.Buscar a foto com counter i
+			// 		5.2.Caso nao exista foto com counter i, buscar foto counter i-1, pular uma posicao da lista de counters
+			// 		5.3.Adicionar foto ao array retorno com as informacoes: <photoID>, <likes>, <filepath>
+			// 6.Retornar array com todas as fotos validas
+			// TODO: verificar se podemos representar o photoID como: <userID>-<photo><counter>
+
 			// codigos de resposta de erro
 			// "1" = senderID não segue nenhum usuário
 			// "2" = todos os usuarios que o senderID segue nao tem fotos
@@ -1757,13 +1768,13 @@ public class SeiTchizServer {
 			}
 
 			//verificar se o senderID não segue nenhum usuário
-			if(following.size() == 0) {
+			if(following.isEmpty()) {
 				retorno.add("1");
 			} else {
 				//percorrer cada usuario que senderID segue
 				for(int i = 0; i < following.size(); i++) {
 
-					//obter numero de photos do user following.get(i)
+					//obter photos do user following.get(i)
 					File currentUserPhotoFolder = new File("files/userStuff/" + following.get(i) + "/photos");
 					FileFilter filterPhotos = new FileFilter() {
 						public boolean accept(File f) {
@@ -1780,7 +1791,8 @@ public class SeiTchizServer {
 						//percorrer todas as fotos do currentUser e colocar em arrayComTudo: photoID, numero de likes, photoPath
 						for(int j = 0; j < nPhotosCurrentUser; j++) {
 							//add photoID
-							String[] aux = photoFiles[i].getName().split("\\.");
+							// TODO: mudar para <userID-photoID>
+							String[] aux = photoFiles[j].getName().split("\\.");
 							arrayComTudo.add(aux[0]);
 
 							//add numero de likes
@@ -1795,7 +1807,7 @@ public class SeiTchizServer {
 							}
 							
 							//add photoPath
-							arrayComTudo.add("files/userStuff/" + following.get(i) + "/photos/" + photoFiles[i].getName());
+							arrayComTudo.add("files/userStuff/" + following.get(i) + "/photos/" + photoFiles[j].getName());
 						}
 					}
 				}
@@ -1808,7 +1820,7 @@ public class SeiTchizServer {
 						//se o nPhotos pedido e maior ou igual a arrayComTudo entao devolver logo arrayComTudo
 						retorno = arrayComTudo;
 					} else {
-						//caso contrario e preciso filtrar as nPhotos fotos de todas as fotos em arrayComTudo com os valores de counter mais alto
+						//caso contrario eh preciso filtrar as nPhotos fotos de todas as fotos em arrayComTudo com os valores de counter mais alto
 						for(int i = 0; i < nPhotos; i++) {
 							int highestIDNumber = 0;
 							int indexOfHighestIDNumber = 0;
@@ -1824,6 +1836,7 @@ public class SeiTchizServer {
 							//add do photoID
 							retorno.add(arrayComTudo.get(indexOfHighestIDNumber));
 
+
 							//add do numero de likes
 							retorno.add(arrayComTudo.get(indexOfHighestIDNumber + 1));
 
@@ -1834,10 +1847,10 @@ public class SeiTchizServer {
 							arrayComTudo.remove(indexOfHighestIDNumber);
 
 							//remover o mesmo numero de likes de arrayComTudo
-							arrayComTudo.remove(indexOfHighestIDNumber + 1);
+							arrayComTudo.remove(indexOfHighestIDNumber);
 
 							//remover o mesmo path da photo de arrayComTudo
-							arrayComTudo.remove(indexOfHighestIDNumber + 2);
+							arrayComTudo.remove(indexOfHighestIDNumber);
 						}
 					}
 				}
