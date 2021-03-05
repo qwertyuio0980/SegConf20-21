@@ -52,6 +52,8 @@ A pasta bin nao deve ser apagada.
 
 A pasta files pode ser apagada para dar um "restart" do servidor e todos os seus conteudos
 
+Como dito no enunciado nao foi implementado o check de um utilizador dar multiplos likes a mesma fotografia nem um utilizador dar like a sua propria fotografia.
+
 WALL ESTA NOT DONE BEM
 
 ----------------------

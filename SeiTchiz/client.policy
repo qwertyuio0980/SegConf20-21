@@ -1,5 +1,4 @@
 grant codeBase "file:bin/" {
-    //permission java.security.AllPermission;
     permission java.net.SocketPermission "*:1-","resolve,connect";
     permission java.io.FilePermission "wall","read,write";
     permission java.io.FilePermission "wall/-","read,write";
@@ -7,7 +6,6 @@ grant codeBase "file:bin/" {
 };
 
 grant codeBase "file:SeiTchiz.jar" {
-    //permission java.security.AllPermission;
     permission java.net.SocketPermission "*:1-","resolve,connect";
     permission java.io.FilePermission "wall","read,write";
     permission java.io.FilePermission "wall/-","read,write";
