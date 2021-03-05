@@ -27,43 +27,47 @@ java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar 
 
 
 ----------------------
-LimitaÃ§Ãµes do Trabalho da Fase 1(Entregar esta parte)
+Grupo 35
+Martim Silva 51304
+Francisco Freire 52177
+David Rodrigues 53307
+----------------------
+Limitações do Trabalho da Fase 1
 
-O unico argumento que deve ser passado obrigatoriamente para o servidor correr Ã© 45678.
+O unico argumento que deve ser passado obrigatoriamente para o servidor correr é 45678.
 
-O serverAdress passado pelo cliente como argumento pode ser apenas <endereÃ§o IP> (por ex:localhost) ou <endereÃ§o IP>:<porto 45678> (por ex: localhost:45678).
+O serverAdress passado pelo cliente como argumento pode ser apenas <endereço IP> (por ex:localhost) ou <endereço IP>:<porto 45678> (por ex: localhost:45678).
 
-Username e passwords passados como argumento em SeiTchiz nÃ£o devem conter espaÃ§os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+Username e passwords passados como argumento em SeiTchiz não devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
-Nomes de grupos nao devem conter espaÃ§os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+Nomes de grupos nao devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 Mensagens nao devem conter dois pontos(:) nem hifens(-).
 
-UserIDs inseridos nos comandos que recebem userIDs nao devem conter espaÃ§os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+UserIDs inseridos nos comandos que recebem userIDs nao devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 Um user que ja esteja logged on nao deve fazer login enquanto a sessao inicial nao tenha sido terminada.
 
-groupIDs inseridos nos comandos que recebem userIDs nao devem conter espaÃ§os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+groupIDs inseridos nos comandos que recebem userIDs nao devem conter espaços nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
-As fotos que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
+As fotos de stock que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
 Ou seja O argumento <photo> de post deve ser foto<1 a 4>.jpg
 
 A pasta bin nao deve ser apagada.
 
 A pasta files pode ser apagada para dar um "restart" do servidor e todos os seus conteudos
 
-Como dito no enunciado nao foi implementado o check de um utilizador dar multiplos likes a mesma fotografia nem um utilizador dar like a sua propria fotografia.
+Como não foi dito no enunciado nao foi implementado o impedimento de um utilizador dar multiplos likes a mesma fotografia nem um utilizador poder dar like a sua propria fotografia.
 
-WALL ESTA NOT DONE BEM
+Para interromper o funcionamento de um cliente usar a opcao s ou stop
 
 ----------------------
-Como compilar e executar o Trabalho da Fase 1(Entregar esta parte)
+Como compilar e executar o Trabalho da Fase 1
 
-FAZER OS PASSOS NESTA ORDEM:
-PARA COMPILAR SERVIDOR
+PARA COMPILAR SERVIDOR COM POLICIES
 javac -d bin src/server/SeiTchizServer.java src/server/Com.java
 
-PARA COMPILAR CLIENTE
+PARA COMPILAR CLIENTE COM POLICIES
 javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/client/Com.java
 
 PARA CORRER SERVIDOR COM POLICIES
@@ -71,3 +75,13 @@ java -cp bin -Djava.security.manager -Djava.security.policy==server.policy serve
 
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <IP>:<45678> <userID> <userPassword>
+tal como diz no enunciado o porto e a password podem ser omitidas aqui
+
+PARA CORRER SERVIDOR COM POLICIES POR JAR
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678
+
+PARA CORRER CLIENTE COM POLICIES POR JAR
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <IP>:<45678> <userID> <userPassword>
+tal como diz no enunciado o porto e a password podem ser omitidas aqui
+
+----------------------
