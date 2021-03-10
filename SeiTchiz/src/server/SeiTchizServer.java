@@ -18,6 +18,8 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.io.FilenameFilter;
 
+import communication.Com;
+
 public class SeiTchizServer {
 
 	public int port;

@@ -9,6 +9,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
+import communication.Com;
+
 public class ClientStub {
 
 	private Socket clientSocket;
