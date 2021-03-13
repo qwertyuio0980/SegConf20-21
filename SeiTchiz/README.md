@@ -32,23 +32,23 @@ Martim Silva 51304
 Francisco Freire 52177
 David Rodrigues 53307
 ----------------------
-Limita��es do Trabalho da Fase 1
+Limita��es do Trabalho da Fase 1
 
-O unico argumento que deve ser passado obrigatoriamente para o servidor correr � 45678.
+O unico argumento que deve ser passado obrigatoriamente para o servidor correr � 45678.
 
-O serverAdress passado pelo cliente como argumento pode ser apenas <endere�o IP> (por ex:localhost) ou <endere�o IP>:<porto 45678> (por ex: localhost:45678).
+O serverAdress passado pelo cliente como argumento pode ser apenas <endere�o IP> (por ex:localhost) ou <endere�o IP>:<porto 45678> (por ex: localhost:45678).
 
-Username e passwords passados como argumento em SeiTchiz n�o devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+Username e passwords passados como argumento em SeiTchiz n�o devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
-Nomes de grupos nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+Nomes de grupos nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 Mensagens nao devem conter dois pontos(:) nem hifens(-).
 
-UserIDs inseridos nos comandos que recebem userIDs nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+UserIDs inseridos nos comandos que recebem userIDs nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 Um user que ja esteja logged on nao deve fazer login enquanto a sessao inicial nao tenha sido terminada.
 
-groupIDs inseridos nos comandos que recebem userIDs nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+groupIDs inseridos nos comandos que recebem userIDs nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 As fotos de stock que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
 Ou seja O argumento <photo> de post deve ser foto<1 a 4>.jpg
@@ -57,7 +57,7 @@ A pasta bin nao deve ser apagada.
 
 A pasta files pode ser apagada para dar um "restart" do servidor e todos os seus conteudos
 
-Como n�o foi dito no enunciado nao foi implementado o impedimento de um utilizador dar multiplos likes a mesma fotografia nem um utilizador poder dar like a sua propria fotografia.
+Como n�o foi dito no enunciado nao foi implementado o impedimento de um utilizador dar multiplos likes a mesma fotografia nem um utilizador poder dar like a sua propria fotografia.
 
 Para interromper o funcionamento de um cliente usar a opcao s ou stop
 
@@ -85,3 +85,10 @@ java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar 
 tal como diz no enunciado o porto e a password podem ser omitidas aqui
 
 ----------------------
+
+TODO:
+1. Cada grupo mantido pelo servidor usará uma chave de grupo simétrica AES para cifrar e decifrar mensagens trocadas nesse grupo. A cifra será fim-a-fim, i.e., o servidor não terá acesso ao conteúdo das mensagens trocadas, significando que ambas as operações de cifrar e decifrar são efetuadas pelo cliente. Por exemplo, quando um utilizador envia uma mensagem para um grupo, esta será cifrada no cliente antes do seu envio. O servidor recebe a mensagem cifrada e armazena-a. Da mesma forma, quando um utilizador pede ao servidor as mensagens do grupo, este envia para a máquina cliente as mensagens cifradas (tal como estão armazenadas) e será o cliente que as decifra e as mostra ao utilizador.
+
+2. Finalmente, para maximizar ainda mais a confiança no ambiente de execução, o servidor deve armazenar a lista de utilizadores, a lista de seguidores de cada utilizador, e a associação entre utilizadores e grupos, em ficheiros cifrados. Isto garante que ninguém além do servidor corretamente inicializado consegue ler esses ficheiros. 
+
+3. A informação sobre likes e as próprias fotografias não precisam de ser cifradas Contudo, o servidor deve ser capaz de verificar se a integridade das fotografias armazenadas não foi comprometida, antes de as enviar aos clientes.
