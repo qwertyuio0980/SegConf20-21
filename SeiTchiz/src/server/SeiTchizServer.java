@@ -4,14 +4,20 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.stream.IntStream;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.print.event.PrintEvent;
 
 import java.io.FileWriter;
@@ -22,13 +28,20 @@ import communication.Com;
 
 public class SeiTchizServer {
 
-	public int port;
-	public File filesFolder;
-	public File serverStuffFolder;
-	public File userStuffFolder;
-	public File usersFile;
-	public File groupsFolder;
-	public File globalPhotoCounterFile;
+	private int port;
+
+	private File filesFolder;
+	private File serverStuffFolder;
+	private File userStuffFolder;
+	private File usersFile;
+	private File groupsFolder;
+	private File globalPhotoCounterFile;
+	private File keysFolder;
+
+	private Socket socket;
+	private ObjectOutputStream outStream;
+	private ObjectInputStream inStream;
+
 
 	public static void main(String[] args) {
 		System.out.println("--------------servidor iniciado-----------");
@@ -91,11 +104,30 @@ public class SeiTchizServer {
 			
 			groupsFolder = new File("files/groups");
 			groupsFolder.mkdirs();
+
+			keysFolder = new File("files/serverStuff/keys");
+			keysFolder.mkdirs();
+
+			// Criar chaves necessárias
+				// gerar uma chave aleatória para utilizar com o AES para 
+				// verificar o Hash das fotos
+			KeyGenerator photosKg = KeyGenerator.getInstance("AES");
+			photosKg.init(128);
+			SecretKey photosKey = photosKg.generateKey();
+			byte[] photoKeyEncoded = photosKey.getEncoded();
+			FileOutputStream photosKos = new FileOutputStream("files/serverStuff/keys/photos.key");
+			ObjectOutputStream photosOos = new ObjectOutputStream(photosKos);
+			photosOos.writeObject(photoKeyEncoded);
+			photosOos.close();
+			photosOos.close();
 			
 			System.out.println("ficheiros de esqueleto do servidor criados");
 			System.out.println("------------------------------------------");
 		} catch (IOException e) {
 			System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
+			System.exit(-1);
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Houve um erro na criacao das chaves no servidor");
 			System.exit(-1);
 		}
 		
@@ -201,8 +233,6 @@ public class SeiTchizServer {
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 
-		private Socket socket = null;
-
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
 			System.out.println("Thread a correr no server para cada um cliente");
@@ -213,8 +243,8 @@ public class SeiTchizServer {
 		 */
 		public void run() throws NullPointerException {
 			try {
-				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+				outStream = new ObjectOutputStream(socket.getOutputStream());
+				inStream = new ObjectInputStream(socket.getInputStream());
 				
 				Com com = new Com(socket, inStream, outStream);
 				
@@ -336,7 +366,7 @@ public class SeiTchizServer {
 						}
 
 						try {
-							com.receiveFilePost(userID);
+							post(userID);
 							com.send(true);
 						} catch (ClassNotFoundException e2) {
 							com.send(false);	
@@ -577,7 +607,7 @@ public class SeiTchizServer {
          * @param senderID Usuario que seguira o userID
          * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
          */
-		public int follow(String userID, String senderID) {
+		private int follow(String userID, String senderID) {
 			int resultado = -1;
 			boolean encontrado = false;
 
@@ -665,7 +695,7 @@ public class SeiTchizServer {
 		 * @param senderID Usuario que deixara de seguir userID
 		 * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
 		 */
-		public int unfollow(String userID, String senderID) {
+		private int unfollow(String userID, String senderID) {
 			// TODO: Nao e necessario criar esta var
 			int resultado = -1;
 			boolean encontrado = false;
@@ -733,7 +763,7 @@ public class SeiTchizServer {
 		 * @param userID Usuario deixado de seguir por senderID
 		 * @param senderID Usuario que deixara de seguir userID
 		 */
-		public void unfollowAux(String userID, String senderID) {
+		private void unfollowAux(String userID, String senderID) {
 
 			File sendersFollowingFile = new File("files/userStuff/" + senderID + "/following.txt");
 			File sendersFollowingTEMPFile = new File("files/userStuff/" + senderID + "/followingTemp.txt");
@@ -815,6 +845,79 @@ public class SeiTchizServer {
 
 		}
 
+
+		/**
+		 * Recebe fotos do cliente userName e criar os ficheiros necessários
+		* dentro da área deste cliente no servidor
+		* 
+		* @param userName String que representa o ID do cliente para onde 
+		* os ficheiros relacionados a foto sao colocados
+		* @throws ClassNotFoundException
+		* @throws IOException
+		*/
+		private void post(String userName) throws ClassNotFoundException, IOException {
+	
+			String nomeFicheiro = (String) inStream.readObject();
+			long tamanho = inStream.readLong();
+			int bytesRead = 0;
+			int offset = 0;
+			byte[] byteArray = new byte[1024];
+	
+			File gpcFile = new File("files/serverStuff/globalPhotoCounter.txt");
+			int globalCounter = 0;
+			try(Scanner scGPC = new Scanner(gpcFile);) {
+				if(scGPC.hasNextLine()) {
+					globalCounter = Integer.parseInt(scGPC.nextLine());
+				}
+			} catch(IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+	
+			File photoFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".jpg");
+			
+			if(nomeFicheiro.endsWith(".png")) {
+				photoFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".png");
+			}
+	
+			File likesFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".txt");
+			FileWriter fwLikes = new FileWriter(likesFile, true);
+			BufferedWriter bwLikes = new BufferedWriter(fwLikes);
+			bwLikes.write("0");
+			bwLikes.close();
+	
+			try(FileOutputStream fos = new FileOutputStream(photoFile)) {
+				while ((offset + 1024) < (int) tamanho) {
+					bytesRead = inStream.read(byteArray, 0, 1024);
+					fos.write(byteArray, 0, bytesRead);
+					fos.flush();
+					offset += bytesRead;
+				}
+		
+				if ((1024 + offset) != (int) tamanho) {
+					bytesRead = inStream.read(byteArray, 0, (int) tamanho - offset);
+					fos.write(byteArray, 0, bytesRead);
+					fos.flush();
+				}
+			} catch(FileNotFoundException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			// FileOutputStream fos = new FileOutputStream("test");
+			// Mac mac = Mac.getInstance("HmacSHA1");
+			// SecretKey key = … //obtém a chave secreta de alguma forma
+			// mac.init(key);
+			// ObjectOutputStream oos = new ObjectOutputStream(fos);
+			// String data = "This have I thought good to deliver thee, ......";
+			// byte buf[] = data.getBytes( );
+			// mac.update(buf);
+			// oos.writeObject(data);
+			// oos.writeObject(mac.doFinal( ));
+			// fos.close();
+		}
+
+		
 		/**
 		 * Metodo que devolve uma String contendo todos os seguidores do
 		 * cliente que fez o pedido
@@ -823,7 +926,7 @@ public class SeiTchizServer {
 		 * @return String com todos os seguidores ou string vazia se
 		 * o cliente nao tiver seguidores
 		 */
-		public String viewfollowers(String senderID) {
+		private String viewfollowers(String senderID) {
 
 			// procurar no folder de users no do sender se o ficheiro followers.txt esta
 			// vazio
@@ -862,7 +965,7 @@ public class SeiTchizServer {
 		 *                 ou 1 caso haja algum erro no processo
 		 * @return 0 se for criado o grupo com sucesso e -1 caso contrario
 		 */
-		public int newgroup(String groupID, String senderID) {
+		private int newgroup(String groupID, String senderID) {
 			String senderIDgroupID = senderID + "-" + groupID;
 
 
@@ -959,7 +1062,7 @@ public class SeiTchizServer {
 		 * @param senderID usuario atual
 		 * @return 0 caso sucesso ao adicionar o usuario ao grupo, -1 caso contrario
 		 */
-		public int addu(String userID, String groupID, String senderID) {
+		private int addu(String userID, String groupID, String senderID) {
 
 			File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
 			File counterFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.txt");
@@ -1044,7 +1147,7 @@ public class SeiTchizServer {
 		 * @return 0 caso o usuario tenha sido removido do grupo com sucesso, -1 caso
 		 *         contrario
 		 */
-		public int removeu(String userID, String groupID, String senderID) {
+		private int removeu(String userID, String groupID, String senderID) {
 			// Remove o userID do ficheiro participants.txt no diretorio do grupo
 			// Remove o senderID-groupID do ficheiro participant.txt no diretorio userID
 
@@ -1163,7 +1266,7 @@ public class SeiTchizServer {
 		 * @param userID usuario a ser usado na busca por grupos
 		 * @return Optional<List> contendo todos os grupos achados
 		 */
-		public String ginfo(String userID) {
+		private String ginfo(String userID) {
 			// Ler os ficheiros owner.txt e participant.txt
 			// 1. Criar um StringBuilder e ir colocando as linhas do ficheiro owner.txt
 			// Os grupos dos quais eh dono serao os primeiros a serem adicionados a SB.
@@ -1288,7 +1391,7 @@ public class SeiTchizServer {
 		 * @param mensagem String com a mensagem em si
 		 * @return 0 se a operacao foi realizada com sucesso, -1 caso contrario
 		 */
-		public int msg(String groupID, String senderID, String mensagem) {
+		private int msg(String groupID, String senderID, String mensagem) {
 
 			File senderParticipantFile = new File("files/userStuff/" + senderID + "/participant.txt");
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
@@ -1318,7 +1421,7 @@ public class SeiTchizServer {
 		 * @param senderID String com o ID do cliente que fez o pedido msg
 		 * @param mensagem String com a propria mensagem
 		 */
-		public void msgAux(String groupFolder, String senderID, String mensagem) {
+		private void msgAux(String groupFolder, String senderID, String mensagem) {
 			// metodo onde se envia mesmo a mensagem
 
 			// 1.incrementar valor do counter em counter.txt
@@ -1400,7 +1503,7 @@ public class SeiTchizServer {
 		 * @param senderID String que representa o cliene que fez o pedido
 		 * @return true se o grupo passado como argumento e o correto e false caso contrario
 		 */
-		public boolean isCorrectGroup(String ownerGroupPair, String senderID) {
+		private boolean isCorrectGroup(String ownerGroupPair, String senderID) {
 			File groupParticipantsFile = new File("files/groups/" + ownerGroupPair + "/participants.txt");
 
 			// grupo tem de existir
@@ -1434,7 +1537,7 @@ public class SeiTchizServer {
 		 * @param senderID String com o ID do cliente que fez o pedido canCollectOrHistory
 		 * @return 0 se for possivel fazer o pedido collect ou o pedido history, -1 caso contrario
 		 */
-		public int canCollectOrHistory(String groupID, String senderID) {
+		private int canCollectOrHistory(String groupID, String senderID) {
 
 			File senderParticipantFile = new File("files/userStuff/" + senderID + "/participant.txt");
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
@@ -1466,7 +1569,7 @@ public class SeiTchizServer {
 		 * conteudo da mesma e se o cliente nao tem mensagens nenhumas por ler
 		 * devolve "-empty"
 		 */
-		public String[] collect(String groupID, String senderID) {
+		private String[] collect(String groupID, String senderID) {
 
 			String[] listaMensagensDefault = { "-empty" };
 			String parUserGroup = "";
@@ -1625,7 +1728,7 @@ public class SeiTchizServer {
 		 * conteudo da mesma e se o cliente nao tem mensagens nenhumas ja lidas
 		 * devolve "-empty"
 		 */
-		public String[] history(String groupID, String senderID) {
+		private String[] history(String groupID, String senderID) {
 
 			String[] listaMensagensDefault = { "-empty" };
 			String parUserGroup = "";
@@ -1733,7 +1836,7 @@ public class SeiTchizServer {
 		 * @return ArrayList com cada fotoID, numero de likes e path dessa foto das mais recentes de
 		 * users que o senderID segue
 		 */
-		public ArrayList wall(String senderID, int nPhotos) {
+		private ArrayList wall(String senderID, int nPhotos) {
 			// LOGICA:
 			// 1.Buscar todos as fotos de todos os usuarios seguidos
 			// 2.Criar uma lista com os counters das fotos
@@ -1867,7 +1970,7 @@ public class SeiTchizServer {
 		 * @param photoID String com o ID da foto a adicionar like
 		 * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
 		 */
-		public int like(String photoID) {
+		private int like(String photoID) {
 
 			//para fazer like a uma foto
 			//percorrer todos os folders de users em userStuff e ver se existe um ficheiro photoID.txt no subfolder photos

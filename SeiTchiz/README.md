@@ -65,10 +65,10 @@ Para interromper o funcionamento de um cliente usar a opcao s ou stop
 Como compilar e executar o Trabalho da Fase 1
 
 PARA COMPILAR SERVIDOR COM POLICIES
-javac -d bin src/server/SeiTchizServer.java src/server/Com.java
+javac -d bin src/server/SeiTchizServer.java src/communication/Com.java
 
 PARA COMPILAR CLIENTE COM POLICIES
-javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/client/Com.java
+javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java
 
 PARA CORRER SERVIDOR COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678
