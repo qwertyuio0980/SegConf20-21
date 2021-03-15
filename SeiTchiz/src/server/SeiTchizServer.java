@@ -1,8 +1,12 @@
 package server;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,14 +14,22 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.stream.IntStream;
 
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import javax.imageio.ImageIO;
 import javax.print.event.PrintEvent;
 
 import java.io.FileWriter;
@@ -111,25 +123,26 @@ public class SeiTchizServer {
 			// Criar chaves necessárias
 				// gerar uma chave aleatória para utilizar com o AES para 
 				// verificar o Hash das fotos
-			KeyGenerator photosKg = KeyGenerator.getInstance("AES");
-			photosKg.init(128);
-			SecretKey photosKey = photosKg.generateKey();
-			byte[] photoKeyEncoded = photosKey.getEncoded();
-			FileOutputStream photosKos = new FileOutputStream("files/serverStuff/keys/photos.key");
-			ObjectOutputStream photosOos = new ObjectOutputStream(photosKos);
-			photosOos.writeObject(photoKeyEncoded);
-			photosOos.close();
-			photosOos.close();
+			// KeyGenerator photosKg = KeyGenerator.getInstance("AES");
+			// photosKg.init(128);
+			// SecretKey photosKey = photosKg.generateKey();
+			// byte[] photoKeyEncoded = photosKey.getEncoded();
+			// FileOutputStream photosKos = new FileOutputStream("files/serverStuff/keys/photos.key");
+			// ObjectOutputStream photosOos = new ObjectOutputStream(photosKos);
+			// photosOos.writeObject(photoKeyEncoded);
+			// photosOos.close();
+			// photosOos.close();
 			
 			System.out.println("ficheiros de esqueleto do servidor criados");
 			System.out.println("------------------------------------------");
 		} catch (IOException e) {
 			System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
 			System.exit(-1);
-		} catch (NoSuchAlgorithmException e) {
-			System.out.println("Houve um erro na criacao das chaves no servidor");
-			System.exit(-1);
-		}
+		} 
+		// catch (NoSuchAlgorithmException e) {
+			// System.out.println("Houve um erro na criacao das chaves no servidor");
+			// System.exit(-1);
+		// }
 		
 		while (true) {
 			try {
@@ -885,12 +898,16 @@ public class SeiTchizServer {
 			BufferedWriter bwLikes = new BufferedWriter(fwLikes);
 			bwLikes.write("0");
 			bwLikes.close();
-	
-			try(FileOutputStream fos = new FileOutputStream(photoFile)) {
+
+			try {
+				FileOutputStream fos = new FileOutputStream(photoFile);
 				while ((offset + 1024) < (int) tamanho) {
 					bytesRead = inStream.read(byteArray, 0, 1024);
+
+					// Escrever bytes para o ficheiro que guardará a foto
 					fos.write(byteArray, 0, bytesRead);
 					fos.flush();
+
 					offset += bytesRead;
 				}
 		
@@ -898,23 +915,43 @@ public class SeiTchizServer {
 					bytesRead = inStream.read(byteArray, 0, (int) tamanho - offset);
 					fos.write(byteArray, 0, bytesRead);
 					fos.flush();
+				}	
+
+				// Criar ficheiro contendo a hash do conteúdo da foto recebida
+					// Obter o conteudo da foto como um array de bytes 
+				BufferedImage bImage = ImageIO.read(photoFile);
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				ImageIO.write(bImage, photoFile.getName().split("\\.")[1], bos);
+				byte[] data = bos.toByteArray();
+					// Obter hash do conteudo da foto
+				MessageDigest hashMd = MessageDigest.getInstance("SHA");
+				hashMd.update(data);
+				byte[] hash = hashMd.digest();
+					// Guardar hash no ficheiro 
+				File hashFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".hash");
+				FileOutputStream HashFos = null;
+				try {
+					HashFos = new FileOutputStream(hashFile);
+					HashFos.write(hash);
+				} catch (FileNotFoundException e) {
+					System.out.println("File not found" + e);
+					System.exit(-1);
+				} finally {
+					if (HashFos != null) {
+						HashFos.close();
+					}
 				}
+				bos.close();
+				fos.close();
+
+
 			} catch(FileNotFoundException e) {
 				e.printStackTrace();
 				System.exit(-1);
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				System.exit(-1);
 			}
-
-			// FileOutputStream fos = new FileOutputStream("test");
-			// Mac mac = Mac.getInstance("HmacSHA1");
-			// SecretKey key = … //obtém a chave secreta de alguma forma
-			// mac.init(key);
-			// ObjectOutputStream oos = new ObjectOutputStream(fos);
-			// String data = "This have I thought good to deliver thee, ......";
-			// byte buf[] = data.getBytes( );
-			// mac.update(buf);
-			// oos.writeObject(data);
-			// oos.writeObject(mac.doFinal( ));
-			// fos.close();
 		}
 
 		
