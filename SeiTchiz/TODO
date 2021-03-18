@@ -1,0 +1,37 @@
+TODO
+
+--------TRABALHO-------
+
+Dia 5 de abril, até às 23:55 horas. O código deve conter:
+
+3. Mudar argumentos recebidos pelo servidor e cliente
+
+3.1. Estabelecimento de ligação com TLS/SSL(truststore/keystore)
+
+3.2. Autenticação do cliente com nonce
+
+3.3 Comandos:
+	-post
+	-newgroup
+	-addu
+	-removeu
+	-msg
+	-collect
+	-history
+	
+--------RELATORIO-------
+
+Dia 7 de abril, até às 23:55 horas. O relatório do trabalho deve ser entregue em formato PDF e conter:
+
+• Como compilar o projeto;
+• Como executar o projeto com os ficheiros de permissões (cliente e servidor);
+• As passwords das keystores dos utilizadores correspondentes.
+• Decisões de desenho das soluções implementadas, nomeadamente em termos de arquitetura de software, de segurança, de desempenho e de funcionalidade;
+• Limitações do trabalho.
+
+--------AUTOAVAL-------
+
+Dia 8 de abril, até às 23:55 horas. 
+
+Cada aluno preenche no Moodle um formulário de auto-avaliação das contribuições 
+individuais de cada elemento do grupo, considerando as duas fases do trabalho.
