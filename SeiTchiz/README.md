@@ -103,3 +103,42 @@ TODO:
             3.2.1. Descodificação da hash encriptada
             3.2.2. Hash da foto não encriptada
             3.2.3. Comparação entre as duas Hash
+
+**DÚVIDAS**
+1. Estrutura dos keystore's
+    1.1. Cada cliente terá sua própria keystore
+    1.2. O servidor terá sua própria keystore
+    1.3. A truststore será uma keystore com import do ficheiro .cert contendo 
+
+
+**CHAVES & KeyStores**
+
+comandos:
+
+**Criar chaves:
+keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
+keytool -genkeypair -alias 4Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 4KS
+
+**Verificar chaves:
+keytool -list -storetype JCEKS -keystore <myKeys>
+keytool -list -storetype JCEKS -keystore serverKS
+keytool -list -storetype JCEKS -keystore 1KS
+keytool -list -storetype JCEKS -keystore 2KS
+keytool -list -storetype JCEKS -keystore 3KS
+keytool -list -storetype JCEKS -keystore 4KS
+
+**Exportar certificado de uma chave pública de uma keystore:
+keytool -exportcert -alias <alias> -storetype JCEKS -keystore <keystore> -file <filepath> (.cer file) 
+keytool -exportcert -alias serverKey -storetype JCEKS -keystore serverKS -file ../PubKeys/server.cer
+keytool -exportcert -alias 1Key -storetype JCEKS -keystore 1KS -file ../PubKeys/client1.cer 
+keytool -exportcert -alias 2Key -storetype JCEKS -keystore 2KS -file ../PubKeys/client2.cer
+keytool -exportcert -alias 3Key -storetype JCEKS -keystore 3KS -file ../PubKeys/client3.cer
+keytool -exportcert -alias 4Key -storetype JCEKS -keystore 4KS -file ../PubKeys/client4.cer
+
+
+        <keystore> <alias> <password>
+**Server: serverKS serverKey server
+**1 (Client): 1KS    1Key      passclient1
+**2 (Client): 2KS    2Key      passclient2
+**3 (Client): 3KS    3Key      passclient3
+**4 (Client): 4KS    4Key      passclient4

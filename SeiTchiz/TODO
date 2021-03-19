@@ -2,13 +2,13 @@ TODO
 
 --------TRABALHO-------
 
-Dia 5 de abril, até às 23:55 horas. O código deve conter:
+Dia 5 de abril, atï¿½ ï¿½s 23:55 horas. O cï¿½digo deve conter:
 
 3. Mudar argumentos recebidos pelo servidor e cliente
 
-3.1. Estabelecimento de ligação com TLS/SSL(truststore/keystore)
+3.1. Estabelecimento de ligaï¿½ï¿½o com TLS/SSL(truststore/keystore)
 
-3.2. Autenticação do cliente com nonce
+3.2. Autenticaï¿½ï¿½o do cliente com nonce
 
 3.3 Comandos:
 	-post
@@ -19,19 +19,24 @@ Dia 5 de abril, até às 23:55 horas. O código deve conter:
 	-collect
 	-history
 	
+NAO ESQUECER:
+contexto do utilizador tem de estar fora do servidor
+quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta de keystores
+
+
 --------RELATORIO-------
 
-Dia 7 de abril, até às 23:55 horas. O relatório do trabalho deve ser entregue em formato PDF e conter:
+Dia 7 de abril, atï¿½ ï¿½s 23:55 horas. O relatï¿½rio do trabalho deve ser entregue em formato PDF e conter:
 
-• Como compilar o projeto;
-• Como executar o projeto com os ficheiros de permissões (cliente e servidor);
-• As passwords das keystores dos utilizadores correspondentes.
-• Decisões de desenho das soluções implementadas, nomeadamente em termos de arquitetura de software, de segurança, de desempenho e de funcionalidade;
-• Limitações do trabalho.
+ï¿½ Como compilar o projeto;
+ï¿½ Como executar o projeto com os ficheiros de permissï¿½es (cliente e servidor);
+ï¿½ As passwords das keystores dos utilizadores correspondentes.
+ï¿½ Decisï¿½es de desenho das soluï¿½ï¿½es implementadas, nomeadamente em termos de arquitetura de software, de seguranï¿½a, de desempenho e de funcionalidade;
+ï¿½ Limitaï¿½ï¿½es do trabalho.
 
 --------AUTOAVAL-------
 
-Dia 8 de abril, até às 23:55 horas. 
+Dia 8 de abril, atï¿½ ï¿½s 23:55 horas. 
 
-Cada aluno preenche no Moodle um formulário de auto-avaliação das contribuições 
+Cada aluno preenche no Moodle um formulï¿½rio de auto-avaliaï¿½ï¿½o das contribuiï¿½ï¿½es 
 individuais de cada elemento do grupo, considerando as duas fases do trabalho.

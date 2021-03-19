@@ -8,26 +8,32 @@ public class SeiTchiz {
 
 	public static void main(String[] args) {
 
+		String separador = "------------------------------------------";
 		int arglen = args.length;
 		
 		// numero de argumentos passados errado
-		if (arglen > 3 || arglen < 2) {
-			System.out.println("Numero de argumentos dado errado. Usar SeiTchiz <IP:45678> <clientID> [password]"
-					+ "\n ou SeiTchiz <IP> <clientID> [password] \n ou  SeiTchiz <IP:45678> <clientID> \n ou SeiTchiz <IP> <clientID>");
+		if (arglen != 5 || args[4].contains(":") || args[4].contains("/") || 
+		args[4].contains("-") || args[4].contains(" ") || args[4].contains(",") || 
+		args[1].length() < 7 || args[2].length() < 7 || args[3].length() < 7) {
+			System.out.println(separador);
+			System.out.println("Erro encontrado nos argumentos passados..." +
+			"Usar SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID> sem espacos em nenhum argumento;" +
+			"<clientID> nao deve conter dois pontos \":\" ou espaco \" \" ou hifen \"-\" ou forward slash \"/\" ou virgula \",\";" +
+			"<truststore>,<keystore> e <keystore-password> devem conter cada um no minimo 7 caracteres.");
+			System.out.println(separador);
 			System.exit(-1);
 		}
 
 		// cria ligacao com socket
-		ClientStub cs = new ClientStub(args[0]);
-		String separador = "------------------------------------------";
+		System.out.println(separador);
+		ClientStub cs = new ClientStub(args);
+		System.out.println(separador);
+
+		//a partir daqui ja se fez a ligacao TLS (POR FAZER)
 
 		// efetuar login
 		System.out.println(separador);
-		if (arglen == 3) {
-			cs.login(args[1], args[2]);
-		} else if (arglen == 2) {
-			cs.login(args[1]);
-		}
+		cs.efetuarLogin();
 		System.out.println(separador);
 
 		boolean stop = false;

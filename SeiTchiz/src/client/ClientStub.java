@@ -2,11 +2,25 @@ package client;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.Certificate;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.Scanner;
 
 import communication.Com;
@@ -16,12 +30,25 @@ public class ClientStub {
 	private Socket clientSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
+	
 	private int defaultPort = 45678;
+
 	private Com com;
+	
+	private String truststore; 
+	private String keystore;
+	private String keystorePassword;
+	private String clientID;
 
-	public ClientStub(String ipPort) {
+	public ClientStub(String[] argsClient) {
 
-		conectarServidor(ipPort);
+		conectarServidor(argsClient[0]);
+
+		// Inicializar variáveis globais
+		this.truststore = argsClient[1];
+		this.keystore = argsClient[2];
+		this.keystorePassword = argsClient[3];
+		this.clientID = argsClient[4];
 
 		// Criar Streams de leitura e escrita
 		this.in = null;
@@ -47,8 +74,6 @@ public class ClientStub {
 				System.exit(-1);
 			}
 		}
-		
-
 	}
 
 	/**
@@ -58,9 +83,9 @@ public class ClientStub {
 	 * 
 	 * @param ipPort String que representa o par IP:Porto
 	 */
-	public void conectarServidor(String ipPort) {
+	public void conectarServidor(String serverAdress) {
 
-		String[] aux = ipPort.split(":");
+		String[] aux = serverAdress.split(":");
 		if (aux.length == 1) {
 			conectar(aux[0], defaultPort);
 		} else if (aux.length == 2 && aux[1].contentEquals("45678")) {
@@ -72,76 +97,6 @@ public class ClientStub {
 	}
 
 	/**
-	 * Método que verifica se a informacao pessoal do cliente e aceitavel na
-	 * aplicacao SeiTchiz caso nao for devolve uma mensagem de erro a esclarecer
-	 * o cliente caso contrario efetua o login
-	 * 
-	 * @param clientID String que representa o ID do cliente
-	 * @param passwd String que representa a password do cliente
-	 */
-	public void login(String clientID, String passwrd) {
-
-		// nomes criados nao podem ter ":" ou "/" ou "-" ou " "
-		if (clientID.contains(":") || clientID.contains("/") || clientID.contains("-") || clientID.contains(" ")) {
-			System.out.println("Formato do userID incorreto(userID nao deve conter "
-					+ "dois pontos \":\" ou espaco \" \" ou hifen \"-\" ou forward slash \"/\"");
-			System.exit(-1);
-		}
-
-		if (passwrd.contains(" ") || passwrd.equals("")) {
-			// as passwrds poderiam ter um espaço no meio. Seria melhor restringir apenas
-			// passwrds vazias.
-			System.out.println(
-					"Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter)"
-							+ " \n Indique uma password valida: ");
-			System.exit(-1);
-		} else {
-			efetuarLogin(clientID, passwrd);
-		}
-	}
-
-	/**
-	 * Método que verifica se a informacao pessoal do cliente e aceitavel na
-	 * aplicacao SeiTchiz tambem pede a password pois esta ainda nao foi fornecida
-	 * e caso estas informacoes nao forem aceitaveis devolve uma mensagem de erro 
-	 * a esclarecer o cliente caso contrario efetua o login
-	 * 
-	 * @param clientID String contendo o client id do usuário
-	 */
-	public void login(String clientID) {
-
-		// nomes criados nao podem ter ":" ou "/" ou "-" ou " "
-		if (clientID.contains(":") || clientID.contains("/") || clientID.contains("-") || clientID.contains(" ")) {
-			System.out.println("Formato do userID incorreto(userID nao deve conter "
-					+ "dois pontos \":\" ou espaco \" \" ou hifen \"-\" ou forward slash \"/\"");
-			System.exit(-1);
-		}
-
-		String passwrd = null;
-		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		System.out.println("password: ");
-		while (passwrd == null) {
-			try {
-				passwrd = reader.readLine();
-			} catch (Exception e) {
-				System.err.println(e.getMessage());
-				System.exit(-1);
-			}
-
-			if (passwrd.contains(" ") || passwrd.equals("")) {
-				// as passwrds poderiam ter um espaço no meio. Seria melhor restringir apenas
-				// passwrds vazias.
-				passwrd = null;
-				System.out.println(
-						"Formato de password incorreto(password nao deve conter espaços e ter no minimo um caracter)"
-								+ " \n Indique uma password valida: ");
-			}
-		}
-
-		efetuarLogin(clientID, passwrd);
-	}
-
-	/**
 	 * Conectar com o servidor com o ip passado e porto passados por uma nova
 	 * socket
 	 * 
@@ -150,7 +105,6 @@ public class ClientStub {
 	 * @requires ip != null
 	 */
 	public void conectar(String ip, int port) {
-
 		try {
 			this.clientSocket = new Socket(ip, port);
 		} catch (IOException e) {
@@ -160,75 +114,183 @@ public class ClientStub {
 	}
 
 	/**
-	 * Metodo de comunicacao com o servidor sobre a autenticacao
-	 * do cliente e ve se o cliente pos alguma informacao errada
-	 * ou se se trata de um user novo ou um user que esta a voltar
-	 * a sua conta que ja tinha sido criada antes
+     * Metodo de comunicacao com o servidor sobre a autenticacao
+     * do cliente e ve se o cliente pos alguma informacao errada
+     * ou se se trata de um user novo ou um user que esta a voltar
+     * a sua conta que ja tinha sido criada antes
+     * 
+     * @param truststore String que representa o certificado de chave publica do servidor
+     * @param keystore String que representa o par de chaves do clientID
+     * @param keystorePassword String que representa a password da keystore
+     * @param clientID String que representa o ID do cliente
+     */
+    public void efetuarLogin() {
+
+        // Mandar os objetos para o servidor
+        try {
+            this.out.writeObject(clientID);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            closeConnection();
+            System.exit(-1);
+        }
+
+        System.out.println("client enviou clientID para o server");
+
+        // Receber resposta do servidor, um (nonce) e int (flag de registo no servidor)
+        Long nonce = 0L;
+        try {
+            nonce = (Long) in.readObject();
+        } catch (ClassNotFoundException e) {
+            System.err.println(e.getMessage());
+            closeConnection();
+            System.exit(-1);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            closeConnection();
+            System.exit(-1);
+		}
+
+        int flag = 1;
+        try {
+            flag = (Integer) in.readObject();
+        } catch (ClassNotFoundException e) {
+            System.err.println(e.getMessage());
+            closeConnection();
+            System.exit(-1);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            closeConnection();
+            System.exit(-1);
+		}
+
+        // Enviar assinatura para o servidor de acordo com a flag recebida pelo mesmo
+        boolean res = sendSigned(nonce, flag);
+
+        if(res) {
+            // Assinatura recebida e lida com sucesso pelo servidor
+            System.out.println("Login efetuado com sucesso.");
+        } else {
+            // Erro ao ler a assinatura do servidor
+            System.out.println("Erro ao fazer login.");
+            closeConnection();
+            System.exit(-1);
+        }
+    }
+
+	/**
+     * Envia nonce assinado para o servidor
+     * Caso a flag seja igual a 0 (Client corrente já registado no servidor) envia o nonce e o mesmo assinado para ser verificado
+     * pelo servidor 
+     * Caso a flag seja igual a 1 (Client corrente ainda não registado no servidor) envia o nonce, o mesmo assinado 
+     * assim como a chave pública do client
 	 * 
-	 * @param clientID String que representa o nome do cliente
-	 * @param passwrd Sring que representa a password do cliente
-	 */
-	public void efetuarLogin(String clientID, String passwrd) {
+     * @param nonce nonce a ser assinado e enviado ao servidor
+     * @param flag indica o registo ou não do Client corrente no servidor
+     */
+    private boolean sendSigned(Long nonce, int flag) {
 
-		// Mandar os objetos para o servidor
+        // Obter chaves do Client corrente
+        // Obter certificado
+		KeyStore kstore = null;
 		try {
-			this.out.writeObject(clientID);
-			out.writeObject(passwrd);
+			kstore = KeyStore.getInstance("JCEKS");
+		} catch (KeyStoreException e2) {
+			System.out.println("Erro ao obter keystore");
+            closeConnection();
+            System.exit(-1);
+		}
+		try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
+			kstore.load(kfile, this.keystorePassword.toCharArray());
+		} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+			System.out.println("Erro ao dar load de keystore");
+            closeConnection();
+            System.exit(-1);
+		}
+        
+        Certificate cert = null;
+		try {
+			cert = (Certificate) kstore.getCertificate(this.clientID);
+		} catch (KeyStoreException e1) {
+			System.out.println("Erro ao buscar certificado do cliente");
+            closeConnection();
+            System.exit(-1);
+		}
+        // Obter chave pública
+        PublicKey pubKey = cert.getPublicKey();
+        // Obter uma chave privada da keystore
+        PrivateKey privKey = null;
+		try {
+			privKey = (PrivateKey) kstore.getKey(this.clientID, this.keystorePassword.toCharArray());
+		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+			System.out.println("Erro ao obter chave privada");
+            closeConnection();
+            System.exit(-1);
+		}
+
+        // Assinar nonce
+        Signature s = null;
+		try {
+			s = Signature.getInstance("MD5withRSA");
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Erro ao obter assinatura");
+            closeConnection();
+            System.exit(-1);
+		}
+        try {
+			s.initSign(privKey);
+		} catch (InvalidKeyException e) {
+			System.out.println("erro: chave invalida");
+            closeConnection();
+            System.exit(-1);
+		}
+        byte buf[] = Long.toString(nonce).getBytes();
+        try {
+			s.update(buf);
+		} catch (SignatureException e) {
+			System.out.println("erro a fazer update");
+            closeConnection();
+            System.exit(-1);
+		}
+        // Enviar nonce
+        try {
+			out.writeObject(nonce);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
-			System.exit(-1);
+            closeConnection();
+            System.exit(-1);
+		}
+        // Enviar nonce assinado
+        try {
+			out.writeObject(s.sign());
+		} catch (SignatureException | IOException e) {
+			System.out.println("erro a enviar assinatura");
+            closeConnection();
+            System.exit(-1);
 		}
 
-		System.out.println("cliente enviou username e passwd para o servidor");
+        // Analisar flag
+        if(flag == 1) {
+            try {
+				out.writeObject(cert);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
 
-		// Receber resposta do servidor
-		int fromServer = 0;
+        // Devolver resposta do servidor
+        boolean res = false;
 		try {
-			fromServer = (Integer) in.readObject();
-		} catch (ClassNotFoundException e) {
+			res = (boolean) in.readObject();
+		} catch (ClassNotFoundException | IOException e) {
 			System.err.println(e.getMessage());
-			System.exit(-1);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
+            closeConnection();
+            System.exit(-1);
 		}
 
-		switch (fromServer) {
-		case 0:
-			// Caso fromServer == 0: Login foi feito com sucesso
-			System.out.println("Login foi feito com sucesso");
-			break;
-		case 1:
-			// Caso fromServer == 1: Novo cliente foi criado com as credenciais passadas
-			System.out.println("Sign up e login feitos com sucesso, Insira o seu nome de utilizador para continuar.");
-			try {
-				System.out.print(">>>");
-				Scanner sc = new Scanner(System.in); // não podemos fechar o scanner ou fechamos a porta (System.In)
-				String a = sc.nextLine();
-				while (a.contains(":") || a.contains(" ")) {
-					System.out.println("Username nao pode conter \":\"(dois pontos ou \" \"(espacos)");
-					a = sc.nextLine();
-				}
-				out.writeObject(a);
-			}
-			// sc.close(); caso fechemos o scanner, fechamos tbm o system.IN o que faz com
-			// que dê erro (stream closed)
-			catch (IOException e) {
-				System.err.println(e.getMessage());
-				System.exit(-1);
-			}
-			break;
-
-		case (-1):
-			// Caso fromServer == -1: Password invalida
-			System.out.println("Password invalida. A fechar aplicacao...");
-			System.exit(-1);
-			break;
-		default:
-			break;
-		}
-
-	}
+        return res;
+    }
 
 	/**
 	 * Metodo que efetua a comunicacao entre um user que quer seguir outro
@@ -766,6 +828,15 @@ public class ClientStub {
 		}
 
 		return resultado;
+	}
+
+	/**
+	 * Fecha a conexão com o servidor
+	 */
+	private void closeConnection() {
+		this.in.close();
+		this.clientSocket.close();
+		this.out.close();
 	}
 
 }
