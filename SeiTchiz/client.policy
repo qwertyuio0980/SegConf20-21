@@ -3,6 +3,7 @@ grant codeBase "file:bin/" {
     permission java.io.FilePermission "wall","read,write";
     permission java.io.FilePermission "wall/-","read,write";
     permission java.io.FilePermission "Fotos/-","read";
+    permission java.io.FilePermission "keystores/-","read";
 };
 
 grant codeBase "file:SeiTchiz.jar" {
@@ -10,4 +11,9 @@ grant codeBase "file:SeiTchiz.jar" {
     permission java.io.FilePermission "wall","read,write";
     permission java.io.FilePermission "wall/-","read,write";
     permission java.io.FilePermission "Fotos/-","read";
+    permission java.io.FilePermission "keystores/-","read";
+};
+
+grant codeBase "file:${java.home}/lib/ext/*" { 
+    permission java.security.AllPermission; 
 };

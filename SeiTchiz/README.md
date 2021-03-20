@@ -127,18 +127,25 @@ keytool -list -storetype JCEKS -keystore 2KS
 keytool -list -storetype JCEKS -keystore 3KS
 keytool -list -storetype JCEKS -keystore 4KS
 
-**Exportar certificado de uma chave pública de uma keystore:
+
+
+//APAGAR ESTE BLOCO
+//---------------FAZ SE ISTO NO CODIGO DO SERVER--------------------------------------------
+**Exportar certificado de uma chave publica de uma keystore: 
 keytool -exportcert -alias <alias> -storetype JCEKS -keystore <keystore> -file <filepath> (.cer file) 
 keytool -exportcert -alias serverKey -storetype JCEKS -keystore serverKS -file ../PubKeys/server.cer
-keytool -exportcert -alias 1Key -storetype JCEKS -keystore 1KS -file ../PubKeys/client1.cer 
-keytool -exportcert -alias 2Key -storetype JCEKS -keystore 2KS -file ../PubKeys/client2.cer
-keytool -exportcert -alias 3Key -storetype JCEKS -keystore 3KS -file ../PubKeys/client3.cer
-keytool -exportcert -alias 4Key -storetype JCEKS -keystore 4KS -file ../PubKeys/client4.cer
+keytool -exportcert -alias 1KS -storetype JCEKS -keystore 1KS -file ../PubKeys/client1.cer 
+keytool -exportcert -alias 2KS -storetype JCEKS -keystore 2KS -file ../PubKeys/client2.cer
+keytool -exportcert -alias 3KS -storetype JCEKS -keystore 3KS -file ../PubKeys/client3.cer
+keytool -exportcert -alias 4KS -storetype JCEKS -keystore 4KS -file ../PubKeys/client4.cer
+//---------------FAZ SE ISTO NO CODIGO DO SERVER--------------------------------------------
 
 
+
+//MUDEI O NOME DOS ALIASES PARA SEREM IGUAIS AOS NOMES DAS KEYSTORES PORQUE FICA MAIS FACIL
         <keystore> <alias> <password>
-**Server: serverKS serverKey server
-**1 (Client): 1KS    1Key      passclient1
-**2 (Client): 2KS    2Key      passclient2
-**3 (Client): 3KS    3Key      passclient3
-**4 (Client): 4KS    4Key      passclient4
+**Server: serverKS serverKS server
+**1 (Client): 1KS    1KS     passclient1
+**2 (Client): 2KS    2KS     passclient2
+**3 (Client): 3KS    3KS     passclient3
+**4 (Client): 4KS    4KS     passclient4

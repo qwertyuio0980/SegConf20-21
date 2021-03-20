@@ -13,8 +13,7 @@ public class SeiTchiz {
 		
 		// numero de argumentos passados errado
 		if (arglen != 5 || args[4].contains(":") || args[4].contains("/") || 
-		args[4].contains("-") || args[4].contains(" ") || args[4].contains(",") || 
-		args[1].length() < 7 || args[2].length() < 7 || args[3].length() < 7) {
+		args[4].contains("-") || args[4].contains(" ") || args[4].contains(",") || args[3].length() < 7) {
 			System.out.println(separador);
 			System.out.println("Erro encontrado nos argumentos passados..." +
 			"Usar SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID> sem espacos em nenhum argumento;" +

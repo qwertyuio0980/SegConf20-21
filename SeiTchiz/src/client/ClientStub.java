@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.Certificate;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -20,6 +19,8 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
@@ -44,13 +45,13 @@ public class ClientStub {
 
 		conectarServidor(argsClient[0]);
 
-		// Inicializar variáveis globais
+		// Inicializar variaveis globais
 		this.truststore = argsClient[1];
 		this.keystore = argsClient[2];
 		this.keystorePassword = argsClient[3];
 		this.clientID = argsClient[4];
 
-		// Criar Streams de leitura e escrita
+		// Criar streams de leitura e escrita
 		this.in = null;
 		this.out = null;
 		try {
@@ -126,7 +127,7 @@ public class ClientStub {
      */
     public void efetuarLogin() {
 
-        // Mandar os objetos para o servidor
+        // Mandar o clientID para o servidor
         try {
             this.out.writeObject(clientID);
         } catch (IOException e) {
@@ -134,8 +135,6 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
         }
-
-        System.out.println("client enviou clientID para o server");
 
         // Receber resposta do servidor, um (nonce) e int (flag de registo no servidor)
         Long nonce = 0L;
@@ -183,10 +182,10 @@ public class ClientStub {
      * Caso a flag seja igual a 0 (Client corrente já registado no servidor) envia o nonce e o mesmo assinado para ser verificado
      * pelo servidor 
      * Caso a flag seja igual a 1 (Client corrente ainda não registado no servidor) envia o nonce, o mesmo assinado 
-     * assim como a chave pública do client
+     * assim como a chave publica do client
 	 * 
      * @param nonce nonce a ser assinado e enviado ao servidor
-     * @param flag indica o registo ou não do Client corrente no servidor
+     * @param flag indica o registo ou nao do Client corrente no servidor
      */
     private boolean sendSigned(Long nonce, int flag) {
 
@@ -196,6 +195,7 @@ public class ClientStub {
 		try {
 			kstore = KeyStore.getInstance("JCEKS");
 		} catch (KeyStoreException e2) {
+			e2.printStackTrace();
 			System.out.println("Erro ao obter keystore");
             closeConnection();
             System.exit(-1);
@@ -210,18 +210,20 @@ public class ClientStub {
         
         Certificate cert = null;
 		try {
-			cert = (Certificate) kstore.getCertificate(this.clientID);
+			cert = (Certificate) kstore.getCertificate(keystore);//alias e igual ao nome do keystore
 		} catch (KeyStoreException e1) {
 			System.out.println("Erro ao buscar certificado do cliente");
             closeConnection();
             System.exit(-1);
 		}
-        // Obter chave pública
+		
+        // Obter chave publica
         PublicKey pubKey = cert.getPublicKey();
+        
         // Obter uma chave privada da keystore
         PrivateKey privKey = null;
 		try {
-			privKey = (PrivateKey) kstore.getKey(this.clientID, this.keystorePassword.toCharArray());
+			privKey = (PrivateKey) kstore.getKey(keystore, this.keystorePassword.toCharArray());
 		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
 			System.out.println("Erro ao obter chave privada");
             closeConnection();
@@ -244,6 +246,7 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
+        
         byte buf[] = Long.toString(nonce).getBytes();
         try {
 			s.update(buf);
@@ -252,14 +255,7 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
-        // Enviar nonce
-        try {
-			out.writeObject(nonce);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-            closeConnection();
-            System.exit(-1);
-		}
+        
         // Enviar nonce assinado
         try {
 			out.writeObject(s.sign());
@@ -271,11 +267,27 @@ public class ClientStub {
 
         // Analisar flag
         if(flag == 1) {
-            try {
-				out.writeObject(cert);
+        	
+        	// Enviar nonce
+	        try {
+				out.writeObject(nonce);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.err.println(e.getMessage());
+	            closeConnection();
+	            System.exit(-1);
+			}
+        	
+	        // Enviar certificado
+            try {
+				out.writeObject(cert.getEncoded());
+			} catch (IOException e) {
+				System.out.println("erro a enviar assinatura");
+	            closeConnection();
+	            System.exit(-1);
+			} catch (CertificateEncodingException e) {
+				System.out.println("erro a enviar assinatura");
+	            closeConnection();
+	            System.exit(-1);
 			}
         }
 
@@ -831,12 +843,17 @@ public class ClientStub {
 	}
 
 	/**
-	 * Fecha a conexão com o servidor
+	 * Fecha a conexao com o servidor
 	 */
 	private void closeConnection() {
-		this.in.close();
-		this.clientSocket.close();
-		this.out.close();
+		try {
+			this.out.close();
+			this.in.close();
+			this.clientSocket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

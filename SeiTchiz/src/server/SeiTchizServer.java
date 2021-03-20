@@ -2,6 +2,7 @@ package server;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -17,6 +18,9 @@ import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -60,12 +64,12 @@ public class SeiTchizServer {
 
 		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
-		if (args.length == 3 && args[0].contentEquals("45678")) {
+		if (args.length == 3 && args[0].equals("45678")) {
 			server.startServer(args);
 		} else {
-			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\"");
+			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\" e tem de ter 3 argumentos" +
+			"<port> <keystore> <keystore-password>");
 		}
-
 	}
 
 	/**
@@ -144,7 +148,7 @@ public class SeiTchizServer {
 		while (true) {
 			try {
 				Socket inSoc = sSoc.accept();
-				ServerThread newServerThread = new ServerThread(inSoc, args[1], args[2]);
+				ServerThread newServerThread = new ServerThread(inSoc, arguments[1], arguments[2]);
 				newServerThread.start();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -155,9 +159,9 @@ public class SeiTchizServer {
 	}
 
 	/**
-	 * Método que devolve um Long gerado aleatoriamente
+	 * Metodo que devolve um Long gerado aleatoriamente
 	 * 
-	 * @return Long aleatório
+	 * @return Long aleatorio
 	 */
 	private Long generateRandomLong() {
 		return new Random().nextLong();
@@ -174,6 +178,8 @@ public class SeiTchizServer {
 	 *         e autenticada
 	 */
 	public int isAuthenticated(String clientID) {
+		//NOTA: ESTE METODO NAO IMPLEMENTA A CIFRACAO QUE O SERVER TEM DE FAZER
+		
 		String line;
 		String[] currentUserPublicKey;
 		try (Scanner scanner = new Scanner(usersFile)) {
@@ -196,7 +202,7 @@ public class SeiTchizServer {
 	}
 
 	/**
-	 * Metodo que adiciona um par user, username e password á lista do servidor
+	 * Metodo que adiciona um par user, username e password a lista do servidor
 	 * e cria todos os ficheiros base que cada cliente tera
 	 * 
 	 * @param clientID String que representa o ID do cliente para o qual se esta 
@@ -267,13 +273,15 @@ public class SeiTchizServer {
 			try {
 				outStream = new ObjectOutputStream(socket.getOutputStream());
 				inStream = new ObjectInputStream(socket.getInputStream());
-				
+			
 				Com com = new Com(socket, inStream, outStream);
 				
 				String clientID = null;
 				Long sentNonce = 0L;
+				Long receivedNonce = 0L;
 				int newUserFlag = 1;//por default trata-se de um novo user
-
+				
+				
 				// autenticacao
 				try {
 					//ler clientID
@@ -281,43 +289,72 @@ public class SeiTchizServer {
 
 					//criar o nonce e enviar ao cliente
 					sentNonce = generateRandomLong();
-					outStream.writeObject(sentNonce);;
+					outStream.writeObject(sentNonce);
 
 					//ver se clientID ja esta em users.txt (AINDA NAO ESTA FEITO DE MANEIRA CIFRADA)
 					newUserFlag = isAuthenticated(clientID);
 					if (newUserFlag == 1) {
 						//caso user ser novo
 						outStream.writeObject(1);
-						addUserPubKey(clientID, clientsPublicKey);
+						
+						//1.receber nonce e verificar se e igual a sentNonce
+						receivedNonce = (Long) inStream.readObject();
+
+						//2.receber assinatura do nonce com chave privada do client e o certificado
+						byte signature[] = (byte[]) inStream.readObject();
+						
+						//3.receber o certificado
+						byte certificadoBytes[] = (byte[]) inStream.readObject();
+						CertificateFactory cFac = CertificateFactory.getInstance("X509");
+						Certificate certificadoConteudo = cFac.generateCertificate(new ByteArrayInputStream(certificadoBytes));
+						
+						File certFile = new File("PubKeys/" + clientID + ".cer");
+						certFile.createNewFile();
+						
+						FileOutputStream fosCert = new FileOutputStream(certFile);
+						fosCert.write(certificadoConteudo.getEncoded());
+
+						//3.verificar essa assinatura com o certificado que o cliente mandou e que sentNonce e igual a receivedNonce
+						
+
+						//se der tudo certo guarda-se o clientID e o cliente fica autenticado
+						
+						//addUserPubKey(clientID, clientPubKey);//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
+						
+						
+						//caso contrario envia-se mensagem de erro ao cliente
+						
+						
 					} else {
 						//caso user ser antigo
 						outStream.writeObject(0);
 
+						//1.receber assinatura do nonce
+						
+						
+						fInStream = new FileInputStream("keystores/" + clientID);
+						byte signature[] = (byte[]) inStream.readObject();
+						
+						
+						//2.verificar o nonce com a chave publica do cliente 
+						
+						//se correr bem o cliente esta autenticado
+						
+						
+						//caso contrario envia-se mensagem de erro ao cliente
+						
+						
+						
+						
 						//NOTA NAO SE TRATA DO CASO DE UM USER JA ESTAR AUTENTICADO 
 						//E FAZER LOG ON UMA SEGUNDA VEZ POR OUTRO TERMINAL
-						
 					}
-
-					
-
-					//caso sim enviar nonce e flag levantada ao cliente
-
-
-
-					//caso nao enviar nonce e flag baixada ao cliente
-
-
-					//1.receber nonce e verificar se e igual a sentNonce e...
-
-
-					//2.receber assinatura do nonce com chave privada do client e
-					//verificar essa assinatura com o certificado que o cliente mandou
-
-
-					//se estas 2 coisas acontecerem bem guarda-se o clientID
 
 				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
+				} catch (CertificateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
 
@@ -409,12 +446,12 @@ public class SeiTchizServer {
 						}
 
 						try {
-							post(userID);
+							post(clientID);
 							com.send(true);
 						} catch (ClassNotFoundException e2) {
 							com.send(false);	
 							e2.printStackTrace();
-							System.out.println("Ocorreu um erro enquanto o utilizador " + userID + " tentava postar uma fotografia.");
+							System.out.println("Ocorreu um erro enquanto o utilizador " + clientID + " tentava postar uma fotografia.");
 						}
 						break;
 
@@ -2069,5 +2106,6 @@ public class SeiTchizServer {
 			//se percorrer todos os subfolders photos de todos os users e nao encontrar o ficheiro devolver -1
 			return -1;
 		}
+		
 	}
 }
