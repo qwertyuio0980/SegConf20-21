@@ -104,48 +104,69 @@ TODO:
             3.2.2. Hash da foto não encriptada
             3.2.3. Comparação entre as duas Hash
 
+
+Mudar argumentos recebidos pelo servidor e cliente
+
+Estabelecimento de ligacao com TLS/SSL(truststore/keystore)
+
+Autenticacao do cliente com nonce
+
+Comandos:
+	-post
+	-newgroup
+	-addu
+	-removeu
+	-msg
+	-collect
+	-history
+	
+NAO ESQUECER:
+contexto do utilizador tem de estar fora do servidor
+quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta de keystores            
+
 **DÚVIDAS**
-1. Estrutura dos keystore's
+1. Estrutura dos keystores
     1.1. Cada cliente terá sua própria keystore
     1.2. O servidor terá sua própria keystore
     1.3. A truststore será uma keystore com import do ficheiro .cert contendo 
 
+2. Em que forma será passado o certificado passado pelo cliente quando o mesmo é corrido.
 
-**CHAVES & KeyStores**
+
+**Chaves & Keystores**
 
 comandos:
 
 **Criar chaves:
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
+
+keytool -genkeypair -alias serverKeys -keyalg RSA -keysize 2048 -storetype JCEKS -keystore serverKeyStore
+keytool -genkeypair -alias 1Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 1KS
+keytool -genkeypair -alias 2Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 2KS
+keytool -genkeypair -alias 3Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 3KS
 keytool -genkeypair -alias 4Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 4KS
 
 **Verificar chaves:
-keytool -list -storetype JCEKS -keystore <myKeys>
-keytool -list -storetype JCEKS -keystore serverKS
+keytool -list -storetype JCEKS -keystore <clientID + 'KS'>
+
+keytool -list -storetype JCEKS -keystore serverKeyStore
 keytool -list -storetype JCEKS -keystore 1KS
 keytool -list -storetype JCEKS -keystore 2KS
 keytool -list -storetype JCEKS -keystore 3KS
 keytool -list -storetype JCEKS -keystore 4KS
 
+NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYSTORE = NOME DO ALIAS
+**  (Server):      serverKeyStore   serverKeyStore      passserver
+** (Client1):          1KS             1KS              passclient1
+** (Client2):          2KS             2KS              passclient2
+** (Client3):          3KS             3KS              passclient3
+** (Client4):          4KS             4KS              passclient4
+                  <keystore> <alias = clientID + 'Key'> <password>
 
+**Criar chaves em uma certa keystore:**
 
-//APAGAR ESTE BLOCO
-//---------------FAZ SE ISTO NO CODIGO DO SERVER--------------------------------------------
-**Exportar certificado de uma chave publica de uma keystore: 
-keytool -exportcert -alias <alias> -storetype JCEKS -keystore <keystore> -file <filepath> (.cer file) 
-keytool -exportcert -alias serverKey -storetype JCEKS -keystore serverKS -file ../PubKeys/server.cer
-keytool -exportcert -alias 1KS -storetype JCEKS -keystore 1KS -file ../PubKeys/client1.cer 
-keytool -exportcert -alias 2KS -storetype JCEKS -keystore 2KS -file ../PubKeys/client2.cer
-keytool -exportcert -alias 3KS -storetype JCEKS -keystore 3KS -file ../PubKeys/client3.cer
-keytool -exportcert -alias 4KS -storetype JCEKS -keystore 4KS -file ../PubKeys/client4.cer
-//---------------FAZ SE ISTO NO CODIGO DO SERVER--------------------------------------------
+//Chave simétrica para o servidor:
+keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 
-
-
-//MUDEI O NOME DOS ALIASES PARA SEREM IGUAIS AOS NOMES DAS KEYSTORES PORQUE FICA MAIS FACIL
-        <keystore> <alias> <password>
-**Server: serverKS serverKS server
-**1 (Client): 1KS    1KS     passclient1
-**2 (Client): 2KS    2KS     passclient2
-**3 (Client): 3KS    3KS     passclient3
-**4 (Client): 4KS    4KS     passclient4
+//Chave assimétrica para cada cliente:
+keytool -genkeypair -alias <clientID + 'Key'> -storetype JCEKS -keystore <clientID + 'KeyStore'>

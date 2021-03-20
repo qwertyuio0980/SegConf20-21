@@ -129,6 +129,7 @@ public class ClientStub {
 
         // Mandar o clientID para o servidor
         try {
+			// 1. Mandar clientID
             this.out.writeObject(clientID);
         } catch (IOException e) {
             System.err.println(e.getMessage());
@@ -246,17 +247,24 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
-        
-        byte buf[] = Long.toString(nonce).getBytes();
         try {
-			s.update(buf);
+			s.update(longToBytes(nonce));
 		} catch (SignatureException e) {
 			System.out.println("erro a fazer update");
             closeConnection();
             System.exit(-1);
 		}
         
-        // Enviar nonce assinado
+		// Enviar nonce
+		try {
+			out.writeObject(nonce);
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+			closeConnection();
+			System.exit(-1);
+		}
+
+        // Enviar assinatura do nonce
         try {
 			out.writeObject(s.sign());
 		} catch (SignatureException | IOException e) {
@@ -267,15 +275,6 @@ public class ClientStub {
 
         // Analisar flag
         if(flag == 1) {
-        	
-        	// Enviar nonce
-	        try {
-				out.writeObject(nonce);
-			} catch (IOException e) {
-				System.err.println(e.getMessage());
-	            closeConnection();
-	            System.exit(-1);
-			}
         	
 	        // Enviar certificado
             try {
@@ -289,6 +288,7 @@ public class ClientStub {
 	            closeConnection();
 	            System.exit(-1);
 			}
+
         }
 
         // Devolver resposta do servidor
@@ -303,6 +303,31 @@ public class ClientStub {
 
         return res;
     }
+
+	/**
+	 * Metodo que converte um long em array de bytes
+	 * 
+	 * @param x long a converter
+	 * @return array de bytes convertidos
+	 */
+	public byte[] longToBytes(long x) {
+		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+		buffer.putLong(x);
+		return buffer.array();
+	}
+	
+	/**
+	 * Metodo que converte um array de bytes em long
+	 * 
+	 * @param bytes array de bytes a converter
+	 * @return long convertido
+	 */
+	public long bytesToLong(byte[] bytes) {
+		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+		buffer.put(bytes);
+		buffer.flip();//need flip 
+		return buffer.getLong();
+	}
 
 	/**
 	 * Metodo que efetua a comunicacao entre um user que quer seguir outro
@@ -395,7 +420,7 @@ public class ClientStub {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {c
 			e.printStackTrace();
 		}
 

@@ -16,12 +16,19 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.IntStream;
@@ -58,6 +65,13 @@ public class SeiTchizServer {
 	private Socket socket;
 	private ObjectOutputStream outStream;
 	private ObjectInputStream inStream;
+
+	// Server KeyStore & Keys
+	private final String serverKSPass = "server";
+	private final String serverKPass = "server";
+	private final String serverKS = "ServerKeyStore";
+	private final String serverK = "serverKey";
+	private final String storeType = "JCEKS";
 
 
 	public static void main(String[] args) {
@@ -115,26 +129,10 @@ public class SeiTchizServer {
 			groupsFolder = new File("files/groups");
 			groupsFolder.mkdirs();
 
-			keysFolder = new File("files/serverStuff/keys");
-			keysFolder.mkdirs();
-
-			// Criar chaves necessárias
-				// gerar uma chave aleatória para utilizar com o AES para 
-				// verificar o Hash das fotos
-			// KeyGenerator photosKg = KeyGenerator.getInstance("AES");
-			// photosKg.init(128);
-			// SecretKey photosKey = photosKg.generateKey();
-			// byte[] photoKeyEncoded = photosKey.getEncoded();
-			// FileOutputStream photosKos = new FileOutputStream("files/serverStuff/keys/photos.key");
-			// ObjectOutputStream photosOos = new ObjectOutputStream(photosKos);
-			// photosOos.writeObject(photoKeyEncoded);
-			// photosOos.close();
-			// photosOos.close();
-			
 			System.out.println("ficheiros de esqueleto do servidor criados");
 			System.out.println("------------------------------------------");
 		} catch (IOException e) {
-			System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
+			System.out.println("Houve um erro na criação de algum dos folders ou ficheiros de esqueleto");
 			System.exit(-1);
 		}
 		// catch (NoSuchAlgorithmException e) {
@@ -159,6 +157,90 @@ public class SeiTchizServer {
 	}
 
 	/**
+	 * Devolve a chave requerida contida na keystore passada
+	 * @param keyType tipo da chave a ser devolvida, 'k' (private key ou secret key), 'pk'(public key)
+	 * @param alias alias da chave a ser devolvida
+	 * @param keyStore nome da keystore que contém a chave pretendida
+	 * @param passwordKS password da keystore
+	 * @param passwordK password da key
+	 * @return Chave requerida ou null caso a mesma não exista
+	 */
+	private Key getKey(String keyType, String alias, String keyStore, String passwordKS, String passwordK, String storeType) {
+		// Obter keystore que guarda a chave requerida
+		FileInputStream kfile = null;
+		KeyStore kstore = null;
+		try {
+			kfile = new FileInputStream(keyStore);
+			kstore = KeyStore.getInstance(this.storeType);
+			kstore.load(kfile, passwordKS.toCharArray());
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		if(keyStore  == null) {
+			System.out.println("Erro: ao obter a keystore");
+			System.exit(-1);
+		}
+		// Obter chave requerida caso exista
+		if(keyType.equals("pk")) {
+			Certificate cert = null;
+			try {
+				cert = kstore.getCertificate(alias);
+			} catch (KeyStoreException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+			if(cert == null) {
+				System.out.println("Erro: ao obter certificado");
+				System.exit(-1);
+			} 
+			return cert.getPublicKey();
+		} else if(keyType.equals("p")) {
+			try {
+				return kstore.getKey(alias, passwordK.toCharArray());
+			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Procura e retorna o Certificate com alias passado contido no KeyStore passado
+	 * 
+	 * @param alias alias da keypair
+	 * @param keyStore keystore
+	 * @param passwordKS password da keystore
+	 * @param storeType storetype da keystore
+	 * @return Certificate caso exista um com alias no keystore 
+	 */
+	private Certificate getCert(String alias, String keyStore, String passwordKS, String storeType) {
+		// Obter keystore que guarda a chave requerida
+		FileInputStream kfile = null;
+		KeyStore kstore = null;
+		try {
+			kfile = new FileInputStream(keyStore);
+			kstore = KeyStore.getInstance(this.storeType);
+			kstore.load(kfile, passwordKS.toCharArray());
+		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		if(keyStore  == null) {
+			System.out.println("Erro: ao obter a keystore");
+			System.exit(-1);
+		}
+		try {
+			return kstore.getCertificate(alias);
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return null;
+	}
+
+	/**
 	 * Metodo que devolve um Long gerado aleatoriamente
 	 * 
 	 * @return Long aleatorio
@@ -180,6 +262,10 @@ public class SeiTchizServer {
 	public int isAuthenticated(String clientID) {
 		//NOTA: ESTE METODO NAO IMPLEMENTA A CIFRACAO QUE O SERVER TEM DE FAZER
 		
+		// Desencriptar o ficheiro users.cif
+		// Procurar o clientID no conteúdo deste ficheiro
+		// 
+
 		String line;
 		String[] currentUserPublicKey;
 		try (Scanner scanner = new Scanner(usersFile)) {
@@ -211,15 +297,18 @@ public class SeiTchizServer {
 	 * @param passwd String que representa a password do cliente
 	 * @return 0 se coloca com sucesso -1 caso contrario
 	 */
-	public int addUserPubKey(String clientID, String pubKey) {
+	public int addUserCertPath(String clientID, String certPath) {
 
 		try {
 			Writer output = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
-			output.append(clientID + "," + pubKey + "\n");
+			output.append(clientID + "," + certPath + "\n");
 			output.close();
 
 			File userPage = new File("files/userStuff/" + clientID);
 			userPage.mkdir();
+
+			File photosFolder = new File("files/userStuff/" + clientID + "/photos");
+			photosFolder.mkdir();
 
 			//ENCRIPTAR USERFOLLOWERS
 			Writer userFollowers = new BufferedWriter(
@@ -240,9 +329,6 @@ public class SeiTchizServer {
 			Writer userOwner = new BufferedWriter(
 					new FileWriter("files/userStuff/" + clientID + "/owner.txt", true));
 			userOwner.close();
-
-			File photosFolder = new File("files/userStuff/" + clientID + "/photos");
-			photosFolder.mkdir();
 
 			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
 			return 0;
@@ -281,7 +367,6 @@ public class SeiTchizServer {
 				Long receivedNonce = 0L;
 				int newUserFlag = 1;//por default trata-se de um novo user
 				
-				
 				// autenticacao
 				try {
 					//ler clientID
@@ -294,14 +379,14 @@ public class SeiTchizServer {
 					//ver se clientID ja esta em users.txt (AINDA NAO ESTA FEITO DE MANEIRA CIFRADA)
 					newUserFlag = isAuthenticated(clientID);
 					if (newUserFlag == 1) {
-						//caso user ser novo
+						//caso user ser novo enviar flag com 0
 						outStream.writeObject(1);
 						
-						//1.receber nonce e verificar se e igual a sentNonce
+						
 						receivedNonce = (Long) inStream.readObject();
 
-						//2.receber assinatura do nonce com chave privada do client e o certificado
-						byte signature[] = (byte[]) inStream.readObject();
+						//2.receber assinatura do nonce com chave privada do client
+						byte signatureBytes[] = (byte[]) inStream.readObject();
 						
 						//3.receber o certificado
 						byte certificadoBytes[] = (byte[]) inStream.readObject();
@@ -311,11 +396,41 @@ public class SeiTchizServer {
 						File certFile = new File("PubKeys/" + clientID + ".cer");
 						certFile.createNewFile();
 						
+						//ficheiro cer do novo cliente colocado em PubKeys
 						FileOutputStream fosCert = new FileOutputStream(certFile);
 						fosCert.write(certificadoConteudo.getEncoded());
 
 						//3.verificar essa assinatura com o certificado que o cliente mandou e que sentNonce e igual a receivedNonce
-						
+						PublicKey pk = certificadoConteudo.getPublicKey();
+						Signature s = null;
+						try {
+							s = Signature.getInstance("MD5withRSA");
+						} catch (NoSuchAlgorithmException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						try {
+							s.initVerify(pk);
+						} catch (InvalidKeyException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						s.update(longToBytes(receivedNonce));
+						if(s.verify(signatureBytes) && sentNonce.equals(receivedNonce)) {
+
+							//falta um metodo para adicionar o novo par clientID,path do Cert ao users.cif
+							
+							//mandar um boolean a dizer que orreu bem o login
+
+						} else {
+
+							//apagar ficheiro cert
+
+							//mandar um boolean a dizer que correu mal o login
+							
+
+						}
+
 
 						//se der tudo certo guarda-se o clientID e o cliente fica autenticado
 						
@@ -326,17 +441,17 @@ public class SeiTchizServer {
 						
 						
 					} else {
-						//caso user ser antigo
+						//caso user ser antigo enviar flag com 0
 						outStream.writeObject(0);
 
-						//1.receber assinatura do nonce
-						
-						
-						fInStream = new FileInputStream("keystores/" + clientID);
+						//1.receber nonce
+
+
+						//2.receber assinatura do nonce
 						byte signature[] = (byte[]) inStream.readObject();
 						
 						
-						//2.verificar o nonce com a chave publica do cliente 
+						//2.verificar o nonce com a chave publica do cliente e as signatures tambem
 						
 						//se correr bem o cliente esta autenticado
 						
@@ -2107,5 +2222,29 @@ public class SeiTchizServer {
 			return -1;
 		}
 		
+		/**
+		 * Metodo que converte um long em array de bytes
+		 * 
+		 * @param x long a converter
+		 * @return array de bytes convertidos
+		 */
+		public byte[] longToBytes(long x) {
+			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+			buffer.putLong(x);
+			return buffer.array();
+		}
+		
+		/**
+		 * Metodo que converte um array de bytes em long
+		 * 
+		 * @param bytes array de bytes a converter
+		 * @return long convertido
+		 */
+		public long bytesToLong(byte[] bytes) {
+			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+			buffer.put(bytes);
+			buffer.flip();//need flip 
+			return buffer.getLong();
+		}
 	}
 }
