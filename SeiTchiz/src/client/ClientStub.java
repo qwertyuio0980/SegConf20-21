@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -165,9 +166,9 @@ public class ClientStub {
 		}
 
         // Enviar assinatura para o servidor de acordo com a flag recebida pelo mesmo
-        boolean res = sendSigned(nonce, flag);
+        int res = sendSigned(nonce, flag);
 
-        if(res) {
+        if(res == 0) {
             // Assinatura recebida e lida com sucesso pelo servidor
             System.out.println("Login efetuado com sucesso.");
         } else {
@@ -187,8 +188,9 @@ public class ClientStub {
 	 * 
      * @param nonce nonce a ser assinado e enviado ao servidor
      * @param flag indica o registo ou nao do Client corrente no servidor
+     * @return devolve -1 se a autenticacao correu mal e 0 se correu bem
      */
-    private boolean sendSigned(Long nonce, int flag) {
+    private int sendSigned(Long nonce, int flag) {
 
         // Obter chaves do Client corrente
         // Obter certificado
@@ -292,9 +294,9 @@ public class ClientStub {
         }
 
         // Devolver resposta do servidor
-        boolean res = false;
+        int res = -1;
 		try {
-			res = (boolean) in.readObject();
+			res = (int) in.readObject();
 		} catch (ClassNotFoundException | IOException e) {
 			System.err.println(e.getMessage());
             closeConnection();
@@ -420,7 +422,7 @@ public class ClientStub {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {c
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 

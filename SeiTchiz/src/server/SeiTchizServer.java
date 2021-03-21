@@ -15,6 +15,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -23,6 +24,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.SignatureException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -67,10 +69,10 @@ public class SeiTchizServer {
 	private ObjectInputStream inStream;
 
 	// Server KeyStore & Keys
-	private final String serverKSPass = "server";
-	private final String serverKPass = "server";
+	private final String serverKSPass = "passserver";
+	private final String serverKPass = "passserver";
 	private final String serverKS = "ServerKeyStore";
-	private final String serverK = "serverKey";
+	private final String serverK = "serverKeyStore";
 	private final String storeType = "JCEKS";
 
 
@@ -366,6 +368,7 @@ public class SeiTchizServer {
 				Long sentNonce = 0L;
 				Long receivedNonce = 0L;
 				int newUserFlag = 1;//por default trata-se de um novo user
+				int resultadoLogin = -1;
 				
 				// autenticacao
 				try {
@@ -379,10 +382,10 @@ public class SeiTchizServer {
 					//ver se clientID ja esta em users.txt (AINDA NAO ESTA FEITO DE MANEIRA CIFRADA)
 					newUserFlag = isAuthenticated(clientID);
 					if (newUserFlag == 1) {
-						//caso user ser novo enviar flag com 0
-						outStream.writeObject(1);
+						//caso user ser novo enviar flag com 1
+						outStream.writeObject(newUserFlag);
 						
-						
+						//1.receber nonce
 						receivedNonce = (Long) inStream.readObject();
 
 						//2.receber assinatura do nonce com chave privada do client
@@ -392,15 +395,12 @@ public class SeiTchizServer {
 						byte certificadoBytes[] = (byte[]) inStream.readObject();
 						CertificateFactory cFac = CertificateFactory.getInstance("X509");
 						Certificate certificadoConteudo = cFac.generateCertificate(new ByteArrayInputStream(certificadoBytes));
-						
-						File certFile = new File("PubKeys/" + clientID + ".cer");
+						File certFile = new File("PubKeys/" + clientID + ".cer");//ficheiro cer do novo cliente colocado em PubKeys
 						certFile.createNewFile();
-						
-						//ficheiro cer do novo cliente colocado em PubKeys
 						FileOutputStream fosCert = new FileOutputStream(certFile);
 						fosCert.write(certificadoConteudo.getEncoded());
 
-						//3.verificar essa assinatura com o certificado que o cliente mandou e que sentNonce e igual a receivedNonce
+						//4.verificar essa assinatura com o certificado que o cliente mandou e que sentNonce e igual a receivedNonce
 						PublicKey pk = certificadoConteudo.getPublicKey();
 						Signature s = null;
 						try {
@@ -417,57 +417,72 @@ public class SeiTchizServer {
 						}
 						s.update(longToBytes(receivedNonce));
 						if(s.verify(signatureBytes) && sentNonce.equals(receivedNonce)) {
-
-							//falta um metodo para adicionar o novo par clientID,path do Cert ao users.cif
-							
-							//mandar um boolean a dizer que orreu bem o login
-
+							//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
+							int res = addUserCertPath(clientID, certFile.toString());
+							if(res == 0) {
+								//mandar um boolean a dizer que correu bem o login
+								resultadoLogin = 0;
+							} else {
+								//mandar um boolean a dizer que correu mal o login e apagar ficheiro cert
+								certFile.delete();
+								resultadoLogin = -1;
+							}
 						} else {
-
-							//apagar ficheiro cert
-
-							//mandar um boolean a dizer que correu mal o login
-							
-
+							//mandar um boolean a dizer que correu mal o login e apagar ficheiro cert
+							certFile.delete();
+							resultadoLogin = -1;
 						}
-
-
-						//se der tudo certo guarda-se o clientID e o cliente fica autenticado
-						
-						//addUserPubKey(clientID, clientPubKey);//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
-						
-						
-						//caso contrario envia-se mensagem de erro ao cliente
-						
-						
 					} else {
 						//caso user ser antigo enviar flag com 0
-						outStream.writeObject(0);
+						outStream.writeObject(newUserFlag);
 
 						//1.receber nonce
-
+						receivedNonce = (Long) inStream.readObject();
 
 						//2.receber assinatura do nonce
-						byte signature[] = (byte[]) inStream.readObject();
+						byte signatureBytes[] = (byte[]) inStream.readObject();
 						
+						File certFile = new File("PubKeys/" + clientID + ".cer");
+						FileInputStream fis = new FileInputStream(certFile);
+						CertificateFactory cFac = CertificateFactory.getInstance("X509");
+						Certificate certificado = cFac.generateCertificate(fis);
 						
-						//2.verificar o nonce com a chave publica do cliente e as signatures tambem
+						//3.verificar o nonce com a chave publica do cliente e as signatures tambem
+						PublicKey pk = certificado.getPublicKey();
+						Signature s = null;
+						try {
+							s = Signature.getInstance("MD5withRSA");
+						} catch (NoSuchAlgorithmException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						try {
+							s.initVerify(pk);
+						} catch (InvalidKeyException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						s.update(longToBytes(receivedNonce));
+						if(s.verify(signatureBytes) && sentNonce.equals(receivedNonce)) {
+							//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
+							int res = addUserCertPath(clientID, certFile.toString());
+							if(res == 0) {
+								resultadoLogin = 0;
+							} 
+						} 
 						
-						//se correr bem o cliente esta autenticado
+						outStream.writeObject(resultadoLogin);
 						
-						
-						//caso contrario envia-se mensagem de erro ao cliente
-						
-						
-						
-						
-						//NOTA NAO SE TRATA DO CASO DE UM USER JA ESTAR AUTENTICADO 
+						//COLOCAR NAS LIMITACOES
+						//NAO SE TRATA DO CASO DE UM USER JA ESTAR AUTENTICADO 
 						//E FAZER LOG ON UMA SEGUNDA VEZ POR OUTRO TERMINAL
 					}
-
 				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
 				} catch (CertificateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SignatureException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
