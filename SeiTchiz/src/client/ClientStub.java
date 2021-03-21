@@ -26,6 +26,7 @@ import java.security.cert.CertificateException;
 import java.util.Scanner;
 
 import communication.Com;
+import security.Security;
 
 public class ClientStub {
 
@@ -169,11 +170,16 @@ public class ClientStub {
         int res = sendSigned(nonce, flag);
 
         if(res == 0) {
-            // Assinatura recebida e lida com sucesso pelo servidor
-            System.out.println("Login efetuado com sucesso.");
+			if(flag == 0) {
+				// Client corrente já registado previamente no servidor. Assinatura e nonce enviados foram validados
+				System.out.println("Login efetuado com sucesso.");
+			} else if(flag == 1) {
+				// Client corrente foi registado com sucesso. Assinatura e nonce enviados foram validados
+				System.out.println("Sing up e autenticação efetuados com sucesso.");
+			}
         } else {
-            // Erro ao ler a assinatura do servidor
-            System.out.println("Erro ao fazer login.");
+            // Ocorreu um erro ao servidor verificar nonce e assinatura passados
+            System.out.println("Erro ao fazer autenticação.");
             closeConnection();
             System.exit(-1);
         }
@@ -191,9 +197,8 @@ public class ClientStub {
      * @return devolve -1 se a autenticacao correu mal e 0 se correu bem
      */
     private int sendSigned(Long nonce, int flag) {
-    	System.out.println("vaba");
-        // Obter chaves do Client corrente
-        // Obter certificado
+        // 1. Obter chaves do Client corrente
+        // 1.1. Obter certificado
 		KeyStore kstore = null;
 		try {
 			kstore = KeyStore.getInstance("JCEKS");
@@ -220,10 +225,7 @@ public class ClientStub {
             System.exit(-1);
 		}
 		
-        // Obter chave publica
-        PublicKey pubKey = cert.getPublicKey();
-        
-        // Obter uma chave privada da keystore
+        // 1.2. Obter chave privada
         PrivateKey privKey = null;
 		try {
 			privKey = (PrivateKey) kstore.getKey(keystore, this.keystorePassword.toCharArray());
@@ -275,23 +277,19 @@ public class ClientStub {
             System.exit(-1);
 		}
 
-        // Se o cliente for novo
+        // Client corrente ainda não possui registo prévio no servidor
         if(flag == 1) {
 	        // Enviar certificado
             try {
 				out.writeObject(cert.getEncoded());
-			} catch (IOException e) {
-				System.out.println("erro a enviar certificado");
-	            closeConnection();
-	            System.exit(-1);
-			} catch (CertificateEncodingException e) {
+			} catch (IOException | CertificateEncodingException e) {
 				System.out.println("erro a enviar certificado");
 	            closeConnection();
 	            System.exit(-1);
 			}
         }
 
-        // Devolver resposta do servidor
+        // Devolver resposta do servidor recebida
         int res = -1;
 		try {
 			res = (int) in.readObject();
