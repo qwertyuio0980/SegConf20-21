@@ -169,4 +169,4 @@ NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYST
 keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 
 //Chave assimétrica para cada cliente:
-keytool -genkeypair -alias <clientID + 'Key'> -storetype JCEKS -keystore <clientID + 'KeyStore'>
+keytool -genkeypair -alias <clientID + 'KS'> -storetype JCEKS -keystore <clientID + 'KS'>

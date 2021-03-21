@@ -35,9 +35,11 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.IntStream;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
@@ -55,6 +57,8 @@ import security.Security;
 
 public class SeiTchizServer {
 
+	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
+
 	private int port;
 
 	private File filesFolder;
@@ -68,6 +72,14 @@ public class SeiTchizServer {
 	private Socket socket;
 	private ObjectOutputStream outStream;
 	private ObjectInputStream inStream;
+
+	private Security sec;
+
+	// Server KeyStore & Keys
+	private String serverKeyStore;
+	private String serverKeyStorePassword;
+	private String storeType = "JCEKS";
+	
 
 	public static void main(String[] args) {
 
@@ -91,6 +103,7 @@ public class SeiTchizServer {
 	public void startServer(String[] arguments) {
 
 		ServerSocket sSoc = null;
+		this.sec = new Security();
 
 		try {
 			sSoc = new ServerSocket(Integer.parseInt(arguments[0]));
@@ -117,7 +130,7 @@ public class SeiTchizServer {
 			usersFile.createNewFile();
 
 			globalPhotoCounterFile = new BufferedWriter(
-					new FileWriter("files/serverStuff/globalPhotoCounter.txt", false));
+					new FileWriter(GLOBALCOUNTERFILE, false));
 			globalPhotoCounterFile.write("0");
 			globalPhotoCounterFile.close();
 			
@@ -160,14 +173,64 @@ public class SeiTchizServer {
 	 * servidor
 	 * 
 	 * @param clientID String que identifica o cliente que se pretende autenticar
-	 * @return -1 se o par nao corresponde ao que esta no ficheiro do servidor ou
-	 *         houve algum erro que impossibilitou a autenticacao 0 se autenticacao
-	 *         foi bem sucedida e 1 se "conta" nao existia antes e foi agora criada
-	 *         e autenticada
+	 * @return 0 se autenticacao foi bem sucedida e 1 se registo do clientID não existe no servidor
 	 */
 	public int isAuthenticated(String clientID) {
-		//NOTA: ESTE METODO NAO IMPLEMENTA A CIFRACAO QUE O SERVER TEM DE FAZER
-		
+
+		// Verificar se o ficheiro users.cif está vazio
+		// Caso esteja apenas ciframos a nova entrada do cliente novo e colocamos
+		// no novo ficheiro users.cif
+		File usersF = new File("files/serverStuff/users.cif");
+		if(usersF.length() == 0) {
+
+			// Colocar este código no método que adiciona o client 
+			// // Obter chave pública do servidor
+			// PublicKey pk = sec.getCert("serverKey", serverKeyStore, serverKeyStorePassword, storeType).getPublicKey();
+			
+			// // Cifrar entrada e guardar no ficheiro users.cif
+			// Cipher c = null;
+			// try {
+			// 	c = Cipher.getInstance("DSA");
+			// 	c.init(Cipher.ENCRYPT_MODE, pk);
+			// } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
+			// 	e.printStackTrace();
+			// 	System.exit(-1);
+			// }
+			// String newEntry = clientID + "," + "clientID.cer";
+			// byte[] input = newEntry.getBytes();
+			// byte[] encrypted = null;
+			// try {
+			// 	if(c != null) {
+			// 		encrypted = c.doFinal(input);
+			// 	} else {
+			// 		System.out.print("Erro ao criar Cipher");
+			// 		System.exit(-1);
+			// 	}
+			// } catch (IllegalBlockSizeException | BadPaddingException e) {
+			// 	e.printStackTrace();
+			// 	System.exit(-1);
+			// }
+			// FileOutputStream fs = null;
+			// try {
+			// 	fs = new FileOutputStream(usersF);
+			// 	fs.write(encrypted);
+			// 	fs.close();
+			// } catch (IOException e) {
+			// 	e.printStackTrace();
+			// 	System.exit(-1);
+			// }
+
+			return 1;
+			
+		} else {
+
+			// Decriptar o ficheiro users.cif
+			// Criar um ficheiro aux.txt
+			// Colocar o conteúdo decifrado nesse ficheiro
+			// Procurar o clientID no aux.txt
+			// Caso exista devolve 0, caso contrário 1
+		}
+
 		// Desencriptar o ficheiro users.cif
 		// Procurar o clientID no conteúdo deste ficheiro
 
@@ -247,11 +310,6 @@ public class SeiTchizServer {
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 		
-		// Server KeyStore & Keys
-		private String serverKeyStore;
-		private String serverKeyStorePassword;
-		private String storeType = "JCEKS";
-
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
 			this.serverKeyStore = serverKeyStore;
 			this.serverKeyStorePassword = serverKeyStorePassword;
@@ -267,7 +325,6 @@ public class SeiTchizServer {
 				outStream = new ObjectOutputStream(socket.getOutputStream());
 				inStream = new ObjectInputStream(socket.getInputStream());
 				Com com = new Com(socket, inStream, outStream);
-				CipherServerFiles csf = new CipherServerFiles();
 				
 				String clientID = null;
 				Long sentNonce = 0L;
@@ -463,7 +520,7 @@ public class SeiTchizServer {
 					case "p":
 
 						//incrementar valor do counter em globalPhotoCounter.txt
-						File fileCounter = new File("files/serverStuff/globalPhotoCounter.txt");
+						File fileCounter = new File(GLOBALCOUNTERFILE);
 						int counter = 0; // valor 0 por default so para nao chatear o sonarlint
 						
 						try {
@@ -978,7 +1035,7 @@ public class SeiTchizServer {
 			int offset = 0;
 			byte[] byteArray = new byte[1024];
 	
-			File gpcFile = new File("files/serverStuff/globalPhotoCounter.txt");
+			File gpcFile = new File(GLOBALCOUNTERFILE);
 			int globalCounter = 0;
 			try(Scanner scGPC = new Scanner(gpcFile);) {
 				if(scGPC.hasNextLine()) {
