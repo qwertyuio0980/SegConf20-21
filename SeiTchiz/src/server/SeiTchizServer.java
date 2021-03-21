@@ -68,14 +68,6 @@ public class SeiTchizServer {
 	private ObjectOutputStream outStream;
 	private ObjectInputStream inStream;
 
-	// Server KeyStore & Keys
-	private final String serverKSPass = "passserver";
-	private final String serverKPass = "passserver";
-	private final String serverKS = "ServerKeyStore";
-	private final String serverK = "serverKeyStore";
-	private final String storeType = "JCEKS";
-
-
 	public static void main(String[] args) {
 
 		System.out.println("--------------servidor iniciado-----------");
@@ -120,7 +112,7 @@ public class SeiTchizServer {
 			userStuffFolder = new File("files/userStuff");
 			userStuffFolder.mkdir();
 
-			usersFile = new File("files/serverStuff/users.txt");
+			usersFile = new File("files/serverStuff/users.cif");
 			usersFile.createNewFile();
 
 			globalPhotoCounterFile = new BufferedWriter(
@@ -158,89 +150,90 @@ public class SeiTchizServer {
 		// sSoc.close();
 	}
 
-	/**
-	 * Devolve a chave requerida contida na keystore passada
-	 * @param keyType tipo da chave a ser devolvida, 'k' (private key ou secret key), 'pk'(public key)
-	 * @param alias alias da chave a ser devolvida
-	 * @param keyStore nome da keystore que contém a chave pretendida
-	 * @param passwordKS password da keystore
-	 * @param passwordK password da key
-	 * @return Chave requerida ou null caso a mesma não exista
-	 */
-	private Key getKey(String keyType, String alias, String keyStore, String passwordKS, String passwordK, String storeType) {
-		// Obter keystore que guarda a chave requerida
-		FileInputStream kfile = null;
-		KeyStore kstore = null;
-		try {
-			kfile = new FileInputStream(keyStore);
-			kstore = KeyStore.getInstance(this.storeType);
-			kstore.load(kfile, passwordKS.toCharArray());
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		if(keyStore  == null) {
-			System.out.println("Erro: ao obter a keystore");
-			System.exit(-1);
-		}
-		// Obter chave requerida caso exista
-		if(keyType.equals("pk")) {
-			Certificate cert = null;
-			try {
-				cert = kstore.getCertificate(alias);
-			} catch (KeyStoreException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
-			if(cert == null) {
-				System.out.println("Erro: ao obter certificado");
-				System.exit(-1);
-			} 
-			return cert.getPublicKey();
-		} else if(keyType.equals("p")) {
-			try {
-				return kstore.getKey(alias, passwordK.toCharArray());
-			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Procura e retorna o Certificate com alias passado contido no KeyStore passado
-	 * 
-	 * @param alias alias da keypair
-	 * @param keyStore keystore
-	 * @param passwordKS password da keystore
-	 * @param storeType storetype da keystore
-	 * @return Certificate caso exista um com alias no keystore 
-	 */
-	private Certificate getCert(String alias, String keyStore, String passwordKS, String storeType) {
-		// Obter keystore que guarda a chave requerida
-		FileInputStream kfile = null;
-		KeyStore kstore = null;
-		try {
-			kfile = new FileInputStream(keyStore);
-			kstore = KeyStore.getInstance(this.storeType);
-			kstore.load(kfile, passwordKS.toCharArray());
-		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		if(keyStore  == null) {
-			System.out.println("Erro: ao obter a keystore");
-			System.exit(-1);
-		}
-		try {
-			return kstore.getCertificate(alias);
-		} catch (KeyStoreException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		return null;
-	}
+//	/**
+//	 * Devolve a chave requerida contida na keystore passada
+//	 * 
+//	 * @param keyType tipo da chave a ser devolvida, 'k' (private key ou secret key), 'pk'(public key)
+//	 * @param alias alias da chave a ser devolvida
+//	 * @param keyStore nome da keystore que contém a chave pretendida
+//	 * @param passwordKS password da keystore
+//	 * @param passwordK password da key
+//	 * @return Chave requerida ou null caso a mesma não exista
+//	 */
+//	private Key getKey(String keyType, String alias, String keyStore, String passwordKS, String passwordK, String storeType) {
+//		// Obter keystore que guarda a chave requerida
+//		FileInputStream kfile = null;
+//		KeyStore kstore = null;
+//		try {
+//			kfile = new FileInputStream(keyStore);
+//			kstore = KeyStore.getInstance(this.storeType);
+//			kstore.load(kfile, passwordKS.toCharArray());
+//		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		}
+//		if(keyStore  == null) {
+//			System.out.println("Erro: ao obter a keystore");
+//			System.exit(-1);
+//		}
+//		// Obter chave requerida caso exista
+//		if(keyType.equals("pk")) {
+//			Certificate cert = null;
+//			try {
+//				cert = kstore.getCertificate(alias);
+//			} catch (KeyStoreException e) {
+//				e.printStackTrace();
+//				System.exit(-1);
+//			}
+//			if(cert == null) {
+//				System.out.println("Erro: ao obter certificado");
+//				System.exit(-1);
+//			} 
+//			return cert.getPublicKey();
+//		} else if(keyType.equals("p")) {
+//			try {
+//				return kstore.getKey(alias, passwordK.toCharArray());
+//			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+//				e.printStackTrace();
+//				System.exit(-1);
+//			}
+//		}
+//		return null;
+//	}
+//
+//	/**
+//	 * Procura e retorna o Certificate com alias passado contido no KeyStore passado
+//	 * 
+//	 * @param alias alias da keypair
+//	 * @param keyStore keystore
+//	 * @param passwordKS password da keystore
+//	 * @param storeType storetype da keystore
+//	 * @return Certificate caso exista um com alias no keystore 
+//	 */
+//	private Certificate getCert(String alias, String keyStore, String passwordKS, String storeType) {
+//		// Obter keystore que guarda a chave requerida
+//		FileInputStream kfile = null;
+//		KeyStore kstore = null;
+//		try {
+//			kfile = new FileInputStream(keyStore);
+//			kstore = KeyStore.getInstance(this.storeType);
+//			kstore.load(kfile, passwordKS.toCharArray());
+//		} catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		}
+//		if(keyStore  == null) {
+//			System.out.println("Erro: ao obter a keystore");
+//			System.exit(-1);
+//		}
+//		try {
+//			return kstore.getCertificate(alias);
+//		} catch (KeyStoreException e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		}
+//		return null;
+//	}
 
 	/**
 	 * Metodo que devolve um Long gerado aleatoriamente
@@ -266,7 +259,6 @@ public class SeiTchizServer {
 		
 		// Desencriptar o ficheiro users.cif
 		// Procurar o clientID no conteúdo deste ficheiro
-		// 
 
 		String line;
 		String[] currentUserPublicKey;
@@ -302,7 +294,7 @@ public class SeiTchizServer {
 	public int addUserCertPath(String clientID, String certPath) {
 
 		try {
-			Writer output = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
+			Writer output = new BufferedWriter(new FileWriter("files/serverStuff/users.cif", true));
 			output.append(clientID + "," + certPath + "\n");
 			output.close();
 
@@ -314,22 +306,22 @@ public class SeiTchizServer {
 
 			//ENCRIPTAR USERFOLLOWERS
 			Writer userFollowers = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/followers.txt", true));
+					new FileWriter("files/userStuff/" + clientID + "/followers.cif", true));
 			userFollowers.close();
 
 			//ENCRIPTAR USERFOLLOWING
 			Writer userFollowing = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/following.txt", true));
+					new FileWriter("files/userStuff/" + clientID + "/following.cif", true));
 			userFollowing.close();
 
 			//ENCRIPTAR USERPARTICIPANT
 			Writer userParticipant = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/participant.txt", true));
+					new FileWriter("files/userStuff/" + clientID + "/participant.cif", true));
 			userParticipant.close();
 
 			//ENCRIPTAR USEROWNER
 			Writer userOwner = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/owner.txt", true));
+					new FileWriter("files/userStuff/" + clientID + "/owner.cif", true));
 			userOwner.close();
 
 			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
@@ -343,9 +335,11 @@ public class SeiTchizServer {
 
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
-
-		String serverKeyStore;
-		String serverKeyStorePassword;
+		
+		// Server KeyStore & Keys
+		private String serverKeyStore;
+		private String serverKeyStorePassword;
+		private String storeType = "JCEKS";
 
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
 			this.serverKeyStore = serverKeyStore;
@@ -361,14 +355,14 @@ public class SeiTchizServer {
 			try {
 				outStream = new ObjectOutputStream(socket.getOutputStream());
 				inStream = new ObjectInputStream(socket.getInputStream());
-			
 				Com com = new Com(socket, inStream, outStream);
+				CipherServerFiles csf = new CipherServerFiles();
 				
 				String clientID = null;
 				Long sentNonce = 0L;
 				Long receivedNonce = 0L;
 				int newUserFlag = 1;//por default trata-se de um novo user
-				int resultadoLogin = -1;
+				int resultadoLogin = -1;//por default o login nao e bem sucedido
 				
 				// autenticacao
 				try {

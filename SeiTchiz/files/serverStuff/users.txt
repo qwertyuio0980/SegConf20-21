@@ -1,0 +1,2 @@
+cliente1,PubKeys\cliente1.cer
+cliente1,PubKeys\cliente1.cer

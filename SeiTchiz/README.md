@@ -32,7 +32,7 @@ Martim Silva 51304
 Francisco Freire 52177
 David Rodrigues 53307
 ----------------------
-Limita��es do Trabalho da Fase 1
+Limita��es do Trabalho da Fase 2
 
 O unico argumento que deve ser passado obrigatoriamente para o servidor correr � 45678.
 
@@ -61,8 +61,10 @@ Como n�o foi dito no enunciado nao foi implementado o impedimento de um utiliz
 
 Para interromper o funcionamento de um cliente usar a opcao s ou stop
 
+ADICIONAR LIMITACOES DA FASE 2
+
 ----------------------
-Como compilar e executar o Trabalho da Fase 1
+Como compilar e executar o Trabalho da Fase 2
 
 PARA COMPILAR SERVIDOR COM POLICIES
 javac -d bin src/server/SeiTchizServer.java src/communication/Com.java
@@ -71,18 +73,16 @@ PARA COMPILAR CLIENTE COM POLICIES
 javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java
 
 PARA CORRER SERVIDOR COM POLICIES
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 <keystore> <keystore-password>
 
 PARA CORRER CLIENTE COM POLICIES
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <IP>:<45678> <userID> <userPassword>
-tal como diz no enunciado o porto e a password podem ser omitidas aqui
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
 
 PARA CORRER SERVIDOR COM POLICIES POR JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 <keystore> <keystore-password>
 
 PARA CORRER CLIENTE COM POLICIES POR JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <IP>:<45678> <userID> <userPassword>
-tal como diz no enunciado o porto e a password podem ser omitidas aqui
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
 
 ----------------------
 
@@ -140,11 +140,11 @@ comandos:
 **Criar chaves:
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
 
-keytool -genkeypair -alias serverKeys -keyalg RSA -keysize 2048 -storetype JCEKS -keystore serverKeyStore
-keytool -genkeypair -alias 1Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 1KS
-keytool -genkeypair -alias 2Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 2KS
-keytool -genkeypair -alias 3Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 3KS
-keytool -genkeypair -alias 4Key -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 4KS
+keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore serverKeyStore
+keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 1KS
+keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 2KS
+keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 3KS
+keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 4KS
 
 **Verificar chaves:
 keytool -list -storetype JCEKS -keystore <clientID + 'KS'>
@@ -161,7 +161,7 @@ NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYST
 ** (Client2):          2KS             2KS              passclient2
 ** (Client3):          3KS             3KS              passclient3
 ** (Client4):          4KS             4KS              passclient4
-                  <keystore> <alias = clientID + 'Key'> <password>
+                  <keystore>          <alias>            <password>
 
 **Criar chaves em uma certa keystore:**
 

@@ -191,7 +191,7 @@ public class ClientStub {
      * @return devolve -1 se a autenticacao correu mal e 0 se correu bem
      */
     private int sendSigned(Long nonce, int flag) {
-
+    	System.out.println("vaba");
         // Obter chaves do Client corrente
         // Obter certificado
 		KeyStore kstore = null;
@@ -275,22 +275,20 @@ public class ClientStub {
             System.exit(-1);
 		}
 
-        // Analisar flag
+        // Se o cliente for novo
         if(flag == 1) {
-        	
 	        // Enviar certificado
             try {
 				out.writeObject(cert.getEncoded());
 			} catch (IOException e) {
-				System.out.println("erro a enviar assinatura");
+				System.out.println("erro a enviar certificado");
 	            closeConnection();
 	            System.exit(-1);
 			} catch (CertificateEncodingException e) {
-				System.out.println("erro a enviar assinatura");
+				System.out.println("erro a enviar certificado");
 	            closeConnection();
 	            System.exit(-1);
 			}
-
         }
 
         // Devolver resposta do servidor
@@ -302,7 +300,6 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
-
         return res;
     }
 
