@@ -171,6 +171,11 @@ public class Security {
 	public int cifFilePK(String inputFile, String outputFile, PublicKey key) {
 
 		File inputF = new File(inputFile);
+		
+		if(!inputF.exists()) {
+			System.out.println("Ficheiro <" + inputFile + "> não existe");
+			return -1;
+		}
 
 		// obter algoritmo da key passada3.
 		String alg = key.getAlgorithm();
