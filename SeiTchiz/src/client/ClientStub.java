@@ -175,7 +175,7 @@ public class ClientStub {
 				System.out.println("Login efetuado com sucesso.");
 			} else if(flag == 1) {
 				// Client corrente foi registado com sucesso. Assinatura e nonce enviados foram validados
-				System.out.println("Sing up e autenticação efetuados com sucesso.");
+				System.out.println("Sign up e autenticação efetuados com sucesso.");
 			}
         } else {
             // Ocorreu um erro ao servidor verificar nonce e assinatura passados
@@ -298,6 +298,7 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
+
         return res;
     }
 
@@ -867,7 +868,7 @@ public class ClientStub {
 	/**
 	 * Fecha a conexao com o servidor
 	 */
-	private void closeConnection() {
+	protected void closeConnection() {
 		try {
 			this.out.close();
 			this.in.close();

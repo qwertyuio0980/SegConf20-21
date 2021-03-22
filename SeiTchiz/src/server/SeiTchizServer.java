@@ -69,13 +69,13 @@ public class SeiTchizServer {
 	private File groupsFolder;
 	private File globalPhotoCounterFile;
 	private File keysFolder;
-	private final String serverStuffPath = "files/serverStuff/";
-	private final String userStuffPath = "files/userStuff/";
-	private final String usersFileDec = "files/serverStuff/users.txt"; 
+	
 
 	private Socket socket;
 	private ObjectOutputStream outStream;
 	private ObjectInputStream inStream;
+	
+	
 
 
 	
@@ -167,8 +167,26 @@ public class SeiTchizServer {
 		protected String serverAlias;
 		protected String serverKeyStorePassword;
 		protected String storeType = "JCEKS";
-	
 		
+		private final String serverStuffPath = "files/serverStuff/";
+		private final String userStuffPath = "files/userStuff/";
+
+		private final String usersFileDec = "files/serverStuff/users.txt"; 
+		private final String usersFileCif = "files/serverStuff/users.cif";
+		
+		// private final String followingFileDec = "files/userStuff//following.txt";
+		// private final String followingFileCif = "files/userStuff//following.cif";
+		
+	    // private final String followersFileDec = "files/userStuff//followers.txt";
+		// private final String followersFileCif = "files/userStuff//followers.cif";
+
+	    // private final String participantFileDec = "files/userStuff//participant.txt";
+		// private final String participantFileCif = "files/userStuff//participant.cif";
+
+	    // private final String ownerFileDec = "files/userStuff//owner.txt";
+		// private final String ownerFileCif = "files/userStuff//owner.cif";
+		
+
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
 			this.serverKeyStore = "keystores/" + serverKeyStore;
 			this.serverAlias = serverKeyStore;
@@ -294,8 +312,8 @@ public class SeiTchizServer {
 								resultadoLogin = 0;
 							} 
 						} 
-						outStream.writeObject(resultadoLogin);
 					}
+				outStream.writeObject(resultadoLogin);
 				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
 				} catch (CertificateException e) {
@@ -845,31 +863,39 @@ public class SeiTchizServer {
          */
 		private int follow(String userID, String senderID) {
 			int resultado = -1;
-			boolean encontrado = false;
+			int encontrado = -1;
 
 			// userID nao pode ter ":" nem pode ser igual ao senderID
 			if (userID.contains(":") || userID.contains("-") || userID.contentEquals(senderID)) {
 				return resultado;
 			}
+			
+			// Decifrar users.cif e following.cif e followers.cif
+			// usersFileDec = "files/serverStuff/users.txt"; 
+			// followingFileDec = "files/userStuff/following.txt";
+			// followersFileDec = "files/userStuff/followers.txt";
+			
+			// Decriptar o ficheiro users.cif
+			// Obter chave privada para decifrar o conteúdo do ficheiro
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
+			sec.decFile(this.usersFileCif, this.usersFileDec, k);
 
-			// procurar da lista de users.txt se o userID pretendido existe
-			// TODO: tornar isto um metodo aux
-			try {
-				Scanner scanner = new Scanner(usersFile);
-				while (scanner.hasNextLine() && !encontrado) {
-					String line = scanner.nextLine();
-					String[] lineSplit = line.split(":");
-					if (lineSplit[0].contentEquals(userID)) {
-						encontrado = true;
-					}
-				}
-				scanner.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			// Procurar o clientID no aux.txt e devolve o resultado da busca
+			encontrado = userRegistered(userID);
 
 			// caso userID existe em users.txt
-			if (encontrado) {
+			if (encontrado == 0) {
+
+				// Obter public key para cifrar ficheiros que serão decifrados a seguir:
+				PublicKey pk = sec.getCert(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.storeType).getPublicKey();
+
+				// Decifrar ficheiro following.cif e colocar conteúdo no ficheiro following.txt
+				sec.decFile(this.userStuffPath + senderID + "/following.cif", this.userStuffPath + senderID + "/following.txt", k);
+
+				System.out.println("Decifrou following");
+
 				File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
 				Scanner sc;
 				try {
@@ -879,6 +905,8 @@ public class SeiTchizServer {
 						// caso userID ja se encontre no ficheiro de following de senderID devolver -1
 						if (line.contentEquals(userID)) {
 							sc.close();
+							//dar overwrite ao ficheiro following.cif com o conteudo de following.txt e apagar following.txt
+							sec.cifFilePK(this.userStuffPath + senderID + "/following.txt", this.userStuffPath + senderID + "/following.cif", pk);
 							return resultado;
 						}
 					}
@@ -902,6 +930,16 @@ public class SeiTchizServer {
 					e.printStackTrace();
 				}
 
+				//dar overwrite ao ficheiro following.cif com o conteudo de following.txt e apagar following.txt
+				sec.cifFilePK(this.userStuffPath + senderID + "/following.txt", this.userStuffPath + senderID + "/following.cif", pk);
+
+				System.out.println("Cifrou following");
+
+				// Decifrar ficheiro followers.cif e colocar conteúdo no ficheiro followers.txt
+				sec.decFile(this.userStuffPath + userID + "/followers.cif", this.userStuffPath + userID + "/followers.txt", k);
+
+				System.out.println("Decifrou followers");
+
 				// adicionar senderID a followers.txt de userID
 				File userIDsFollowersFile = new File(userStuffPath + userID + "/followers.txt");
 				try {
@@ -918,6 +956,11 @@ public class SeiTchizServer {
 					e.printStackTrace();
 				}
 
+				//dar overwrite ao ficheiro followers.cif com o conteudo de followers.txt e apagar followers.txt
+				sec.cifFilePK(this.userStuffPath + senderID + "/followers.txt", this.userStuffPath + senderID + "/followers.cif", pk);
+
+				System.out.println("Cifrou following");
+
 				resultado = 0;
 			}
 
@@ -932,8 +975,8 @@ public class SeiTchizServer {
 		 * @return 0 se a operacao foi feita com sucesso e -1 caso contrario
 		 */
 		private int unfollow(String userID, String senderID) {
-			// TODO: Nao e necessario criar esta var
-			int resultado = -1;
+
+			int resultado = -1; // TODO: Nao e necessario criar esta var
 			boolean encontrado = false;
 
 			// TODO: Tornar a verificacao da existencia do user uma funcao aux

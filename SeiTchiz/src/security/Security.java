@@ -129,6 +129,7 @@ public class Security {
 		FileInputStream fisDes = null;
 		CipherInputStream cis = null;
 		FileOutputStream fosDes = null;
+		File df = null;
 		try {
 
 			cDec = Cipher.getInstance(alg);
@@ -137,7 +138,9 @@ public class Security {
 			fisDes = new FileInputStream(cifFile);
 			cis = new CipherInputStream(fisDes, cDec);
 	
-			fosDes = new FileOutputStream(decFile);
+			df = new File(decFile);
+			df.createNewFile();
+			fosDes = new FileOutputStream(df);
 	
 			byte[] b = new byte[16];
 	
@@ -161,11 +164,12 @@ public class Security {
 	}
 
 	/**
-	 * Cifra, usando a PublicKey passada, o conteúdo do ficheiro inputFile e coloca o mesmo no ficheiro outputFile  
+	 * Cifra, usando a PublicKey passada, o conteúdo do ficheiro inputFile e coloca o mesmo no ficheiro outputFile. 
+	 * Ao final do processo deleta o ficheiro inputFile 
 	 * @param inputFile
 	 * @param outputFile
 	 * @param key
-	 * @return 0 caso o conteúdo do ficheiro inputFile tenha cido cifrado e colocado no outputFile com sucesso
+	 * @return 0 caso o conteúdo do ficheiro inputFile tenha sido cifrado e colocado no outputFile com sucesso
 	 * -1 caso contrário 
 	 */
 	public int cifFilePK(String inputFile, String outputFile, PublicKey key) {
@@ -212,6 +216,9 @@ public class Security {
 			e.printStackTrace();
 			return -1;
 		}
+		
+		// Deletar ficheiro input
+		inputF.delete();
 
 		return 0;
 	}

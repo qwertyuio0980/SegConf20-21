@@ -83,7 +83,8 @@ java -cp bin -Djava.security.manager -Djava.security.policy==server.policy serve
 
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 1KS passclient1 client1
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 3KS passclient3 client3
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 4KS passclient4 client4
 
 
 PARA CORRER SERVIDOR COM POLICIES POR JAR
@@ -151,20 +152,20 @@ comandos:
 **Criar chaves:
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
 
-keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore serverKeyStore
-keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 1KS
-keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 2KS
-keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 3KS
-keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore 4KS
+keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.serverKeyStore 
+keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.1KS
+keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.2KS
+keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.3KS
+keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.4KS
 
 **Verificar chaves:
 keytool -list -storetype JCEKS -keystore <clientID + 'KS'>
 
-keytool -list -storetype JCEKS -keystore serverKeyStore
-keytool -list -storetype JCEKS -keystore 1KS
-keytool -list -storetype JCEKS -keystore 2KS
-keytool -list -storetype JCEKS -keystore 3KS
-keytool -list -storetype JCEKS -keystore 4KS
+keytool -list -storetype JCEKS -keystore keystores.serverKeyStore
+keytool -list -storetype JCEKS -keystore keystores.1KS
+keytool -list -storetype JCEKS -keystore keystores.2KS
+keytool -list -storetype JCEKS -keystore keystores.3KS
+keytool -list -storetype JCEKS -keystore keystores.4KS
 
 NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYSTORE = NOME DO ALIAS
 **  (Server):      serverKeyStore   serverKeyStore      passserver
