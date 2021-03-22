@@ -32,7 +32,7 @@ Martim Silva 51304
 Francisco Freire 52177
 David Rodrigues 53307
 ----------------------
-Limita��es do Trabalho da Fase 2
+Limita��es do Trabalho da Fase 1
 
 O unico argumento que deve ser passado obrigatoriamente para o servidor correr � 45678.
 
@@ -61,22 +61,30 @@ Como n�o foi dito no enunciado nao foi implementado o impedimento de um utiliz
 
 Para interromper o funcionamento de um cliente usar a opcao s ou stop
 
-ADICIONAR LIMITACOES DA FASE 2
+Limita��es do Trabalho da Fase 2
+
+Nao e tratado o caso de um user que ja esta ligado ao sistema e estar autenticado poder fazer login mais vezes por outros terminais. 
+
+ADICIONAR MAIS LIMITACOES
+
 
 ----------------------
 Como compilar e executar o Trabalho da Fase 2
 
 PARA COMPILAR SERVIDOR COM POLICIES
-javac -d bin src/server/SeiTchizServer.java src/communication/Com.java
+javac -d bin src/server/SeiTchizServer.java src/communication/Com.java src/security/Security.java
 
 PARA COMPILAR CLIENTE COM POLICIES
-javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java
+javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java src/security/Security.java
 
 PARA CORRER SERVIDOR COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 <keystore> <keystore-password>
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 serverKeyStore passserver
 
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 1KS passclient1 client1
+
 
 PARA CORRER SERVIDOR COM POLICIES POR JAR
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 <keystore> <keystore-password>
@@ -131,6 +139,9 @@ quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta
     1.3. A truststore será uma keystore com import do ficheiro .cert contendo 
 
 2. Em que forma será passado o certificado passado pelo cliente quando o mesmo é corrido.
+
+3. O alias de cada cliente pode ser igual ao nome do ficheiro keystore?Nao sabemos como buscar o alias dentro do java para fazer o getCertificate
+
 
 
 **Chaves & Keystores**

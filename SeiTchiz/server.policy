@@ -3,6 +3,8 @@ grant codeBase "file:bin/" {
     permission java.io.FilePermission "files","write";
     permission java.io.FilePermission "files/-","write,read,delete";
     permission java.io.FilePermission "PubKeys/-","write,read";
+    permission java.io.FilePermission "keystores/serverKeyStore","read";
+    permission java.io.FilePermission "PubKeys/client1.cer","delete";
 };
 
 grant codeBase "file:SeiTchizServer.jar" {

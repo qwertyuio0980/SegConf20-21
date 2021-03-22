@@ -61,6 +61,7 @@ public class SeiTchizServer {
 
 	private int port;
 
+	// Files & paths
 	private File filesFolder;
 	private File serverStuffFolder;
 	private File userStuffFolder;
@@ -68,17 +69,15 @@ public class SeiTchizServer {
 	private File groupsFolder;
 	private File globalPhotoCounterFile;
 	private File keysFolder;
+	private final String serverStuffPath = "files/serverStuff/";
+	private final String userStuffPath = "files/userStuff/";
+	private final String usersFileDec = "files/serverStuff/users.txt"; 
 
 	private Socket socket;
 	private ObjectOutputStream outStream;
 	private ObjectInputStream inStream;
 
-	private Security sec;
 
-	// Server KeyStore & Keys
-	private String serverKeyStore;
-	private String serverKeyStorePassword;
-	private String storeType = "JCEKS";
 	
 
 	public static void main(String[] args) {
@@ -103,7 +102,6 @@ public class SeiTchizServer {
 	public void startServer(String[] arguments) {
 
 		ServerSocket sSoc = null;
-		this.sec = new Security();
 
 		try {
 			sSoc = new ServerSocket(Integer.parseInt(arguments[0]));
@@ -159,161 +157,24 @@ public class SeiTchizServer {
 	}
 
 
-	/**
-	 * Metodo que devolve um Long gerado aleatoriamente
-	 * 
-	 * @return Long aleatorio
-	 */
-	private Long generateRandomLong() {
-		return new Random().nextLong();
-	}
-
-	/**
-	 * Metodo que verifica se um user ja estao na lista de ficheiros do
-	 * servidor
-	 * 
-	 * @param clientID String que identifica o cliente que se pretende autenticar
-	 * @return 0 se autenticacao foi bem sucedida e 1 se registo do clientID não existe no servidor
-	 */
-	public int isAuthenticated(String clientID) {
-
-		// Verificar se o ficheiro users.cif está vazio
-		// Caso esteja apenas ciframos a nova entrada do cliente novo e colocamos
-		// no novo ficheiro users.cif
-		File usersF = new File("files/serverStuff/users.cif");
-		if(usersF.length() == 0) {
-
-			// Colocar este código no método que adiciona o client 
-			// // Obter chave pública do servidor
-			// PublicKey pk = sec.getCert("serverKey", serverKeyStore, serverKeyStorePassword, storeType).getPublicKey();
-			
-			// // Cifrar entrada e guardar no ficheiro users.cif
-			// Cipher c = null;
-			// try {
-			// 	c = Cipher.getInstance("DSA");
-			// 	c.init(Cipher.ENCRYPT_MODE, pk);
-			// } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
-			// 	e.printStackTrace();
-			// 	System.exit(-1);
-			// }
-			// String newEntry = clientID + "," + "clientID.cer";
-			// byte[] input = newEntry.getBytes();
-			// byte[] encrypted = null;
-			// try {
-			// 	if(c != null) {
-			// 		encrypted = c.doFinal(input);
-			// 	} else {
-			// 		System.out.print("Erro ao criar Cipher");
-			// 		System.exit(-1);
-			// 	}
-			// } catch (IllegalBlockSizeException | BadPaddingException e) {
-			// 	e.printStackTrace();
-			// 	System.exit(-1);
-			// }
-			// FileOutputStream fs = null;
-			// try {
-			// 	fs = new FileOutputStream(usersF);
-			// 	fs.write(encrypted);
-			// 	fs.close();
-			// } catch (IOException e) {
-			// 	e.printStackTrace();
-			// 	System.exit(-1);
-			// }
-
-			return 1;
-			
-		} else {
-
-			// Decriptar o ficheiro users.cif
-			// Criar um ficheiro aux.txt
-			// Colocar o conteúdo decifrado nesse ficheiro
-			// Procurar o clientID no aux.txt
-			// Caso exista devolve 0, caso contrário 1
-		}
-
-		// Desencriptar o ficheiro users.cif
-		// Procurar o clientID no conteúdo deste ficheiro
-
-		String line;
-		String[] currentUserPublicKey;
-		try (Scanner scanner = new Scanner(usersFile)) {
-			while (scanner.hasNextLine()) {
-				line = scanner.nextLine();
-				currentUserPublicKey = line.split(",");
-				if (clientID.equals(currentUserPublicKey[0])) {
-					// o usuario ja existe na lista de users
-					return 0;
-				}
-			}
-		} catch (FileNotFoundException e) {
-			System.out.println("lista de users/public keys nao existe");
-			e.printStackTrace();
-		}
-
-		// toda a lista foi percorrida e o user nao foi encontrado
-		// por isso trata-se de um novo user
-		return 1;
-	}
-
-	/**
-	 * Metodo que adiciona um par user, username e password a lista do servidor
-	 * e cria todos os ficheiros base que cada cliente tera
-	 * 
-	 * @param clientID String que representa o ID do cliente para o qual se esta 
-	 * a adicionar os ficheiros base do mesmo
-	 * @param userName String que representa o nome pessoal do cliente
-	 * @param passwd String que representa a password do cliente
-	 * @return 0 se coloca com sucesso -1 caso contrario
-	 */
-	public int addUserCertPath(String clientID, String certPath) {
-
-		try {
-			Writer output = new BufferedWriter(new FileWriter("files/serverStuff/users.cif", true));
-			output.append(clientID + "," + certPath + "\n");
-			output.close();
-
-			File userPage = new File("files/userStuff/" + clientID);
-			userPage.mkdir();
-
-			File photosFolder = new File("files/userStuff/" + clientID + "/photos");
-			photosFolder.mkdir();
-
-			//ENCRIPTAR USERFOLLOWERS
-			Writer userFollowers = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/followers.cif", true));
-			userFollowers.close();
-
-			//ENCRIPTAR USERFOLLOWING
-			Writer userFollowing = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/following.cif", true));
-			userFollowing.close();
-
-			//ENCRIPTAR USERPARTICIPANT
-			Writer userParticipant = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/participant.cif", true));
-			userParticipant.close();
-
-			//ENCRIPTAR USEROWNER
-			Writer userOwner = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/owner.cif", true));
-			userOwner.close();
-
-			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
-			return 0;
-		} catch (IOException e) {
-			System.out.println("Nao foi possivel autenticar este user");
-			e.printStackTrace();
-		}
-		return -1;
-	}
-
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
+
+		private Security sec;
+
+		// Server KeyStore & Keys
+		protected String serverKeyStore;
+		protected String serverAlias;
+		protected String serverKeyStorePassword;
+		protected String storeType = "JCEKS";
+	
 		
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
-			this.serverKeyStore = serverKeyStore;
+			this.serverKeyStore = "keystores/" + serverKeyStore;
+			this.serverAlias = serverKeyStore;
 			this.serverKeyStorePassword = serverKeyStorePassword;
 			socket = inSoc;
+			this.sec = new Security();
 			System.out.println("Thread a correr no server para cada um cliente");
 		}
 
@@ -343,6 +204,7 @@ public class SeiTchizServer {
 
 					//ver se clientID ja esta em users.txt (AINDA NAO ESTA FEITO DE MANEIRA CIFRADA)
 					newUserFlag = isAuthenticated(clientID);
+					
 					if (newUserFlag == 1) {
 						//caso user ser novo enviar flag com 1
 						outStream.writeObject(newUserFlag);
@@ -380,7 +242,7 @@ public class SeiTchizServer {
 						s.update(longToBytes(receivedNonce));
 						if(s.verify(signatureBytes) && sentNonce.equals(receivedNonce)) {
 							//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
-							int res = addUserCertPath(clientID, certFile.toString());
+							int res = addUserCertPath(clientID, certFile.getPath());
 							if(res == 0) {
 								//mandar um boolean a dizer que correu bem o login
 								resultadoLogin = 0;
@@ -432,12 +294,7 @@ public class SeiTchizServer {
 								resultadoLogin = 0;
 							} 
 						} 
-						
 						outStream.writeObject(resultadoLogin);
-						
-						//COLOCAR NAS LIMITACOES
-						//NAO SE TRATA DO CASO DE UM USER JA ESTAR AUTENTICADO 
-						//E FAZER LOG ON UMA SEGUNDA VEZ POR OUTRO TERMINAL
 					}
 				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
@@ -772,6 +629,213 @@ public class SeiTchizServer {
 			System.out.println("------------------------------------------");
 		}
 
+		/**
+		 * Metodo que devolve um Long gerado aleatoriamente
+		 * 
+		 * @return Long aleatorio
+		 */
+		private Long generateRandomLong() {
+			return new Random().nextLong();
+		}
+
+		/**
+		 * Metodo que verifica se um user ja estao na lista de ficheiros do
+		 * servidor
+		 * 
+		 * @param clientID String que identifica o cliente que se pretende autenticar
+		 * @return 0 se autenticacao foi bem sucedida e 1 se registo do clientID não existe no servidor
+		 */
+		public int isAuthenticated(String clientID) {
+
+			// Verificar se o ficheiro users.cif está vazio
+			// Caso esteja apenas ciframos a nova entrada do cliente novo e colocamos
+			// no novo ficheiro users.cif
+			File usersF = new File("files/serverStuff/users.cif");
+			if(usersF.length() == 0) {
+				return 1;
+			} else {
+				// Decriptar o ficheiro users.cif
+				// Obter chave privada para decifrar o conteúdo do ficheiro
+				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
+				sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k);
+				// Procurar o clientID no aux.txt e devolve o resultado da busca
+				return userRegistered(clientID);
+			}
+		}
+
+		/**
+		* Metodo que converte um long em array de bytes
+		* 
+		* @param x long a converter
+		* @return array de bytes convertidos
+		*/
+		private byte[] longToBytes(long x) {
+			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+			buffer.putLong(x);
+			return buffer.array();
+		}
+		
+		/**
+		* Metodo que converte um array de bytes em long
+		* 
+		* @param bytes array de bytes a converter
+		* @return long convertido
+		*/
+		private long bytesToLong(byte[] bytes) {
+			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+			buffer.put(bytes);
+			buffer.flip();//need flip 
+			return buffer.getLong();
+		}
+		
+		/**
+		 * Procura clientID passado no ficheiro que regista os clientes do sistema
+			* @param clientID cliente a ser procurado nos registos
+			* @return 0 caso o cliente está registado, 1 caso contrário, ou -1 caso o ficheiro contendo os registos não exista
+			* @requires clientID != null && clientID != ""
+			*/
+		private int userRegistered(String clientID) {
+
+			File usersF = new File("files/serverStuff/users.txt");
+			if(!usersF.exists()) {
+				return -1;
+			}
+
+			String line;
+			String[] currentUserPublicKey;
+			try (Scanner scanner = new Scanner(usersF)) {
+				while (scanner.hasNextLine()) {
+					line = scanner.nextLine();
+					currentUserPublicKey = line.split(",");
+					if (clientID.equals(currentUserPublicKey[0])) {
+						// o usuario ja existe na lista de users
+						// Deletar o ficheiro contendo os users
+						if(!usersF.delete()) {
+							System.out.println("Erro ao deletar o ficheiro users.txt");
+							return -1;
+						}
+						return 0;
+					}
+				}
+			} catch (FileNotFoundException e) {
+				System.out.println("lista de users/public keys nao existe");
+				e.printStackTrace();
+			}
+
+			// toda a lista foi percorrida e o user nao foi encontrado
+			return 1;
+		
+		}
+
+		/**
+		 * Adiciona uma linha no formato <clientID,password> aos registos de clientes no servidor
+		 * e cria os devidos recursos referentes ao novo cliente
+		 * @param clientID String representando o cliente a ser adicionado aos registos
+		 * @param certPath String representa o caminho para o ficheiro contendo o certificado do clientID
+		 * @return 0 se registo foi feito com sucesso, -1 caso contrario
+		 */
+		public int addUserCertPath(String clientID, String certPath) {
+
+			// Criar recursos para o novo cliente
+			int resourcesCreated = createClientResources(clientID);
+			// Verificar se os recursos foram criados com sucesso
+			if(resourcesCreated == -1) {
+				return -1;
+			}
+
+			if(this.serverKeyStore == null) {
+				System.out.println("serverKeyStore null");
+			}
+			if(this.serverKeyStorePassword == null) {
+				System.out.println("serverKeyStorePassword null");
+			}
+			if(this.storeType == null) {
+				System.out.println("storeType null");
+			}
+
+			System.out.println();
+			// Obter chave privada para decifrar o conteúdo do ficheiro contendo os registos dos clientes
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
+			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k) == -1) {
+				return -1;
+			}
+
+			// colocar a entrada <clientID,certPath> no ficheiro users.txt
+			Writer wr = null;
+			try {
+				wr = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
+				wr.append(clientID + "," + certPath);
+			} catch (IOException e) {
+				e.printStackTrace();
+				try {
+					wr.close();
+				} catch (IOException | NullPointerException e1) {
+					e1.printStackTrace();
+				}
+				return -1;
+			}
+
+			// Obter chave pública para cifrar o ficheiro users.txt
+			Certificate cer  = sec.getCert(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.storeType);
+			PublicKey pk = cer.getPublicKey();
+
+			// Fazer closes
+			try {
+				wr.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			// Cifrar o ficheiro users.txt como users.cif com a chave pública do servidor
+			return sec.cifFilePK("files/serverStuff/users.txt", "files/serverStuff/users.cif", pk);
+		}
+
+		/**
+		 * Cria os recursos necessários para o clienteID
+		 * @param clientID cliente aos quais os recursos pertencerão
+		 * @return 0 caso sejam criados todos os recursos com sucesso, -1 caso contrário
+		 * @requires clientID != null && clientID != "" 
+		 */
+		private int createClientResources(String clientID) {
+
+			try {
+				File userPage = new File(userStuffPath + clientID);
+				userPage.mkdir();
+
+				File photosFolder = new File(userStuffPath + clientID + "/photos");
+				photosFolder.mkdir();
+
+				Writer userFollowers = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/followers.cif", true));
+				userFollowers.close();
+
+				Writer userFollowing = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/following.cif", true));
+				userFollowing.close();
+
+				Writer userParticipant = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/participant.cif", true));
+				userParticipant.close();
+
+				Writer userOwner = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/owner.cif", true));
+				userOwner.close();
+
+			} catch (IOException e) {
+				System.out.println("Não foi possível criar os recursos necessários para o cliente corrente");
+				e.printStackTrace();
+				return -1;
+			}
+
+			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
+
+			return 0;
+
+		}
+
         /**
          * Faz com que o senderID siga o userID
          * 
@@ -806,7 +870,7 @@ public class SeiTchizServer {
 
 			// caso userID existe em users.txt
 			if (encontrado) {
-				File sendersFollowingFile = new File("files/userStuff/" + senderID + "/following.txt");
+				File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
 				Scanner sc;
 				try {
 					sc = new Scanner(sendersFollowingFile);
@@ -839,7 +903,7 @@ public class SeiTchizServer {
 				}
 
 				// adicionar senderID a followers.txt de userID
-				File userIDsFollowersFile = new File("files/userStuff/" + userID + "/followers.txt");
+				File userIDsFollowersFile = new File(userStuffPath + userID + "/followers.txt");
 				try {
 					FileWriter fw = new FileWriter(userIDsFollowersFile, true);
 					BufferedWriter bw = new BufferedWriter(fw);
@@ -893,7 +957,7 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
-			File followingUserFile = new File("files/userStuff/" + senderID + "/following.txt");
+			File followingUserFile = new File(userStuffPath + senderID + "/following.txt");
 			try (Scanner scfollowingUsers = new Scanner(followingUserFile)) {
 
 				boolean found = false;
@@ -937,10 +1001,10 @@ public class SeiTchizServer {
 		 */
 		private void unfollowAux(String userID, String senderID) {
 
-			File sendersFollowingFile = new File("files/userStuff/" + senderID + "/following.txt");
-			File sendersFollowingTEMPFile = new File("files/userStuff/" + senderID + "/followingTemp.txt");
-			File usersFollowersFile = new File("files/userStuff/" + userID + "/followers.txt");
-			File usersFollowersTEMPFile = new File("files/userStuff/" + userID + "/followersTemp.txt");
+			File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
+			File sendersFollowingTEMPFile = new File(userStuffPath + senderID + "/followingTemp.txt");
+			File usersFollowersFile = new File(userStuffPath + userID + "/followers.txt");
+			File usersFollowersTEMPFile = new File(userStuffPath + userID + "/followersTemp.txt");
 
 			try {
 				if (sendersFollowingTEMPFile.createNewFile()) {
@@ -1046,13 +1110,13 @@ public class SeiTchizServer {
 				System.exit(-1);
 			}
 	
-			File photoFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".jpg");
+			File photoFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".jpg");
 			
 			if(nomeFicheiro.endsWith(".png")) {
-				photoFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".png");
+				photoFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".png");
 			}
 	
-			File likesFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".txt");
+			File likesFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".txt");
 			FileWriter fwLikes = new FileWriter(likesFile, true);
 			BufferedWriter bwLikes = new BufferedWriter(fwLikes);
 			bwLikes.write("0");
@@ -1087,7 +1151,7 @@ public class SeiTchizServer {
 				hashMd.update(data);
 				byte[] hash = hashMd.digest();
 					// Guardar hash no ficheiro 
-				File hashFile = new File("files/userStuff/" + userName + "/photos/photo-" + globalCounter + ".hash");
+				File hashFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".hash");
 				FileOutputStream HashFos = null;
 				try {
 					HashFos = new FileOutputStream(hashFile);
@@ -1126,7 +1190,7 @@ public class SeiTchizServer {
 
 			// procurar no folder de users no do sender se o ficheiro followers.txt esta
 			// vazio
-			File sendersFollowersFile = new File("files/userStuff/" + senderID + "/followers.txt");
+			File sendersFollowersFile = new File(userStuffPath + senderID + "/followers.txt");
 			if (sendersFollowersFile.length() == 0) {
 				// caso esteja vazio devolver esta string especifica
 				return "";
@@ -1214,7 +1278,7 @@ public class SeiTchizServer {
 
 					// Adicionar o nome do grupo ao ficheiro owner.txt do senderID
 					try {
-						File fUserOwner = new File("files/userStuff/" + senderID + "/owner.txt");
+						File fUserOwner = new File(userStuffPath + senderID + "/owner.txt");
 						FileWriter fwUserOwner = new FileWriter(fUserOwner, true);
 						BufferedWriter bwUserOwner = new BufferedWriter(fwUserOwner);
 						bwUserOwner.write(groupID);
@@ -1228,7 +1292,7 @@ public class SeiTchizServer {
 					// Adicionar o dono do grupo-nome do grupo ao ficheiro participant.txt do
 					// senderID
 					try {
-						File fUserParticipant = new File("files/userStuff/" + senderID + "/participant.txt");
+						File fUserParticipant = new File(userStuffPath + senderID + "/participant.txt");
 						FileWriter fwUserParticipant = new FileWriter(fUserParticipant, true);
 						BufferedWriter bwUserParticipant = new BufferedWriter(fwUserParticipant);
 						bwUserParticipant.write(senderID + "-" + groupID);
@@ -1263,7 +1327,7 @@ public class SeiTchizServer {
 			File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
 			File counterFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.txt");
 			File groupMembersFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.txt");
-			File participantFile = new File("files/userStuff/" + userID + "/participant.txt");
+			File participantFile = new File(userStuffPath + userID + "/participant.txt");
 
 			if (!groupFolder.exists() || !participantFile.exists()) {
 				// se senderID nao tiver o folder com nome groupID
@@ -1348,7 +1412,7 @@ public class SeiTchizServer {
 			// Remove o senderID-groupID do ficheiro participant.txt no diretorio userID
 
 			File groupMembersFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.txt");
-			File participantFile = new File("files/userStuff/" + userID + "/participant.txt");
+			File participantFile = new File(userStuffPath + userID + "/participant.txt");
 
 			// Verifica se ha um grupo com nome senderID-groupID e se o userID existe
 			if (!groupMembersFile.exists() || !participantFile.exists() || userID.contentEquals(senderID)) {
@@ -1476,8 +1540,8 @@ public class SeiTchizServer {
 
 			StringBuilder grupos = new StringBuilder();
 
-            File owner = new File("files/userStuff/" + userID + "/owner.txt");
-            File participant = new File("files/userStuff/" + userID + "/participant.txt");
+            File owner = new File(userStuffPath + userID + "/owner.txt");
+            File participant = new File(userStuffPath + userID + "/participant.txt");
             
 
 			// 1.
@@ -1520,8 +1584,8 @@ public class SeiTchizServer {
          */
 		private String ginfo(String senderID, String groupID) {
             StringBuilder ownerPaticipants = new StringBuilder();
-            File owner = new File("files/userStuff/" + senderID + "/owner.txt");
-            File participant = new File("files/userStuff/" + senderID+ "/participant.txt");
+            File owner = new File(userStuffPath + senderID + "/owner.txt");
+            File participant = new File(userStuffPath + senderID+ "/participant.txt");
             File groupParticipants = null;
             String fileName = null;
 
@@ -1589,7 +1653,7 @@ public class SeiTchizServer {
 		 */
 		private int msg(String groupID, String senderID, String mensagem) {
 
-			File senderParticipantFile = new File("files/userStuff/" + senderID + "/participant.txt");
+			File senderParticipantFile = new File(userStuffPath + senderID + "/participant.txt");
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
 
 				while (scSenderParticipant.hasNextLine()) {
@@ -1735,7 +1799,7 @@ public class SeiTchizServer {
 		 */
 		private int canCollectOrHistory(String groupID, String senderID) {
 
-			File senderParticipantFile = new File("files/userStuff/" + senderID + "/participant.txt");
+			File senderParticipantFile = new File(userStuffPath + senderID + "/participant.txt");
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
 
 				while (scSenderParticipant.hasNextLine()) {
@@ -1771,7 +1835,7 @@ public class SeiTchizServer {
 			String parUserGroup = "";
 
 			// 1.aceder ao folder do grupo
-			File senderParticipantFile = new File("files/userStuff/" + senderID + "/participant.txt");
+			File senderParticipantFile = new File(userStuffPath + senderID + "/participant.txt");
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
 
 				while (scSenderParticipant.hasNextLine()) {
@@ -1930,7 +1994,7 @@ public class SeiTchizServer {
 			String parUserGroup = "";
 
 			// 1.aceder ao folder do grupo
-			File senderParticipantFile = new File("files/userStuff/" + senderID + "/participant.txt");
+			File senderParticipantFile = new File(userStuffPath + senderID + "/participant.txt");
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
 
 				while (scSenderParticipant.hasNextLine()) {
@@ -2055,7 +2119,7 @@ public class SeiTchizServer {
 			ArrayList<String> arrayComTudo = new ArrayList<>();
 			
 			//ter todos os users que o senderID segue num arraylist
-			File currentUserFollowingFile = new File("files/userStuff/" + senderID + "/following.txt");
+			File currentUserFollowingFile = new File(userStuffPath + senderID + "/following.txt");
 			ArrayList<String> following = new ArrayList<>();
 			try (Scanner scCurrentUserFollowing = new Scanner(currentUserFollowingFile)) {
 				while (scCurrentUserFollowing.hasNextLine()) {
@@ -2076,7 +2140,7 @@ public class SeiTchizServer {
 				for(int i = 0; i < following.size(); i++) {
 
 					//obter photos do user following.get(i)
-					File currentUserPhotoFolder = new File("files/userStuff/" + following.get(i) + "/photos");
+					File currentUserPhotoFolder = new File(userStuffPath + following.get(i) + "/photos");
 					FileFilter filterPhotos = new FileFilter() {
 						public boolean accept(File f) {
 							//aceitam se so fotos nos formatos jpg e png
@@ -2097,7 +2161,7 @@ public class SeiTchizServer {
 							arrayComTudo.add(aux[0]);
 
 							//add numero de likes
-							File likeFile = new File("files/userStuff/" + following.get(i) + "/photos/" + aux[0] + ".txt");
+							File likeFile = new File(userStuffPath + following.get(i) + "/photos/" + aux[0] + ".txt");
 							try(Scanner scLike = new Scanner(likeFile);) {
 								if(scLike.hasNextLine()) {
 									arrayComTudo.add(scLike.nextLine());
@@ -2108,7 +2172,7 @@ public class SeiTchizServer {
 							}
 							
 							//add photoPath
-							arrayComTudo.add("files/userStuff/" + following.get(i) + "/photos/" + photoFiles[j].getName());
+							arrayComTudo.add(userStuffPath + following.get(i) + "/photos/" + photoFiles[j].getName());
 						}
 					}
 				}
@@ -2173,7 +2237,7 @@ public class SeiTchizServer {
 			File userStuffFolder = new File("files/userStuff");
 			File[] allUserFiles = userStuffFolder.listFiles();
 			for(File userFile: allUserFiles) {
-				File likesFile = new File("files/userStuff/" + userFile.getName() + "/photos/" + photoID + ".txt");
+				File likesFile = new File(userStuffPath + userFile.getName() + "/photos/" + photoID + ".txt");
 				if(likesFile.exists()) {
 					//se encontrar incrementar o valor que la estiver por 1 e devolver 0
 					int nLikes = 0;
@@ -2199,29 +2263,6 @@ public class SeiTchizServer {
 			return -1;
 		}
 		
-		/**
-		 * Metodo que converte um long em array de bytes
-		 * 
-		 * @param x long a converter
-		 * @return array de bytes convertidos
-		 */
-		public byte[] longToBytes(long x) {
-			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-			buffer.putLong(x);
-			return buffer.array();
-		}
-		
-		/**
-		 * Metodo que converte um array de bytes em long
-		 * 
-		 * @param bytes array de bytes a converter
-		 * @return long convertido
-		 */
-		public long bytesToLong(byte[] bytes) {
-			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-			buffer.put(bytes);
-			buffer.flip();//need flip 
-			return buffer.getLong();
-		}
+
 	}
 }
