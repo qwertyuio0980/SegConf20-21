@@ -19,3 +19,4 @@ grant codeBase "file:SeiTchizServer.jar" {
     permission java.util.PropertyPermission "javax.net.ssl.KeyStore","write";
     permission java.util.PropertyPermission "javax.net.ssl.KeyStorePassword","write";
 };
+

@@ -147,7 +147,7 @@ comandos:
 **Criar chaves:
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
 
-keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/serverKeyStore 
+keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -keystore keystores/serverKeyStore 
 keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/1KS
 keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/2KS
 keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/3KS
@@ -181,13 +181,13 @@ keytool -genkeypair -alias <clientID + 'KS'> -storetype JCEKS -keystore <clientI
 **Fazer a parte da truststore**
 
 //Verificar o keystore
-keytool -list -storetype JCEKS -keystore keystores/serverKeyStore
+keytool -list -keystore keystores/serverKeyStore
 
 //Fazer export do certificado
-keytool -exportcert -alias serverKeyStore -file keystores/certServer.cer -storetype JCEKS -keystore keystores/serverKeyStore
+keytool -exportcert -alias serverKeyStore -file keystores/certServer.cer -keystore keystores/serverKeyStore
 
 //Fazer import do certificado
-keytool -importcert -alias serverKeyStore -file keystores/certServer.cer -storetype JCEKS -keystore truststore/client
+keytool -importcert -alias serverKeyStore -file keystores/certServer.cer -keystore truststore/client
 
 //verificar se o certificado tem o mesmo sha1 e é uma trustedCertEntry
-keytool -list -storetype JCEKS -keystore truststore/client
+keytool -list -keystore truststore/client

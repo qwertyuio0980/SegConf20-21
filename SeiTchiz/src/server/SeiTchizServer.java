@@ -53,7 +53,6 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
 
-
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.FilenameFilter;
@@ -76,6 +75,9 @@ public class SeiTchizServer {
 	private File keysFolder;
 
 	public static void main(String[] args) {
+				
+		System.setProperty("javax.net.ssl.KeyStore", "keystores" + File.separator + "serverKeyStore");
+		System.setProperty("javax.net.ssl.KeyStorePassword","passserver");
 
 		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
@@ -95,9 +97,6 @@ public class SeiTchizServer {
 	 * @param port String que representa o porto onde estara a socket
 	 */
 	public void startServer(String[] arguments) {
-		
-		System.setProperty("javax.net.ssl.KeyStore", "keystores/serverKeyStore");
-		System.setProperty("javax.net.ssl.KeyStorePassword","passserver");
 
 		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
 		SSLServerSocket ss = null;

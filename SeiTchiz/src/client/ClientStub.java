@@ -113,8 +113,6 @@ public class ClientStub {
 	 */
 	public void conectar(String ip, int port) {
 
-		System.setProperty("javax.net.ssl.trustStore", "truststore/client");
-
 		SocketFactory sf = SSLSocketFactory.getDefault();
 		try {
 			clientSocket = (SSLSocket) sf.createSocket(ip, port);
@@ -173,11 +171,15 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
+		
+		//apaga sysout
+		System.out.println("flag recebida:" + flag);
 
         // Enviar assinatura para o servidor de acordo com a flag recebida pelo mesmo
         int res = sendSigned(nonce, flag);
 
         if(res == 0) {
+
 			if(flag == 0) {
 				// Client corrente já registado previamente no servidor. Assinatura e nonce enviados foram validados
 				System.out.println("Login efetuado com sucesso.");
