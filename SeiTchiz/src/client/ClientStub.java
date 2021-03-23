@@ -25,18 +25,22 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
-import communication.Com;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
+import communication.ComClient;
 import security.Security;
 
 public class ClientStub {
 
-	private Socket clientSocket;
+	private SSLSocket clientSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
 	
 	private int defaultPort = 45678;
 
-	private Com com;
+	private ComClient com;
 	
 	private String truststore; 
 	private String keystore;
@@ -64,7 +68,7 @@ public class ClientStub {
 			System.exit(-1);
 		}
 
-		com = new Com(clientSocket, in, out);
+		com = new ComClient(clientSocket, in, out);
 
 		// Criar ficheiro onde ficarao guardadas as fotos recebidas
 		File wall = new File("wall");
@@ -108,8 +112,12 @@ public class ClientStub {
 	 * @requires ip != null
 	 */
 	public void conectar(String ip, int port) {
+
+		System.setProperty("javax.net.ssl.trustStore", "truststore/client");
+
+		SocketFactory sf = SSLSocketFactory.getDefault();
 		try {
-			this.clientSocket = new Socket(ip, port);
+			clientSocket = (SSLSocket) sf.createSocket(ip, port);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);

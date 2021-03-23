@@ -25,8 +25,6 @@ public class SeiTchiz {
 
 		// cria ligacao com socket
 		ClientStub cs = new ClientStub(args);
-		
-		//a partir daqui ja se fez a ligacao TLS (POR FAZER)
 
 		// efetuar login
 		cs.efetuarLogin();

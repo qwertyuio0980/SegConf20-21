@@ -47,18 +47,23 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
 import javax.print.event.PrintEvent;
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+
+
 
 import java.io.FileWriter;
 import java.io.Writer;
 import java.io.FilenameFilter;
 
-import communication.Com;
+import communication.ComServer;
 import security.Security;
 
 public class SeiTchizServer {
 
 	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
-
 	private int port;
 
 	// Files & paths
@@ -69,16 +74,6 @@ public class SeiTchizServer {
 	private File groupsFolder;
 	private File globalPhotoCounterFile;
 	private File keysFolder;
-	
-
-	private Socket socket;
-	private ObjectOutputStream outStream;
-	private ObjectInputStream inStream;
-	
-	
-
-
-	
 
 	public static void main(String[] args) {
 
@@ -100,11 +95,15 @@ public class SeiTchizServer {
 	 * @param port String que representa o porto onde estara a socket
 	 */
 	public void startServer(String[] arguments) {
+		
+		System.setProperty("javax.net.ssl.KeyStore", "keystores/serverKeyStore");
+		System.setProperty("javax.net.ssl.KeyStorePassword","passserver");
 
-		ServerSocket sSoc = null;
+		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
+		SSLServerSocket ss = null;
 
 		try {
-			sSoc = new ServerSocket(Integer.parseInt(arguments[0]));
+			ss = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(arguments[0]));
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
@@ -147,9 +146,7 @@ public class SeiTchizServer {
 
 		while (true) {
 			try {
-				Socket inSoc = sSoc.accept();
-				ServerThread newServerThread = new ServerThread(inSoc, arguments[1], arguments[2]);
-				newServerThread.start();
+				new ServerThread(ss.accept(), arguments[1], arguments[2]).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -160,31 +157,25 @@ public class SeiTchizServer {
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 
+		//Canais de comunicacao
+		private Socket socket;
+		private ObjectOutputStream outStream;
+		private ObjectInputStream inStream;
+
+
 		private Security sec;
 
 		// Server KeyStore & Keys
 		protected String serverKeyStore;
 		protected String serverAlias;
 		protected String serverKeyStorePassword;
-		protected String storeType = "JCEKS";
+		protected String storeType = "JKS";
 		
 		private final String serverStuffPath = "files/serverStuff/";
 		private final String userStuffPath = "files/userStuff/";
 
 		private final String usersFileDec = "files/serverStuff/users.txt"; 
 		private final String usersFileCif = "files/serverStuff/users.cif";
-		
-		// private final String followingFileDec = "files/userStuff//following.txt";
-		// private final String followingFileCif = "files/userStuff//following.cif";
-		
-	    // private final String followersFileDec = "files/userStuff//followers.txt";
-		// private final String followersFileCif = "files/userStuff//followers.cif";
-
-	    // private final String participantFileDec = "files/userStuff//participant.txt";
-		// private final String participantFileCif = "files/userStuff//participant.cif";
-
-	    // private final String ownerFileDec = "files/userStuff//owner.txt";
-		// private final String ownerFileCif = "files/userStuff//owner.cif";
 		
 
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
@@ -203,7 +194,7 @@ public class SeiTchizServer {
 			try {
 				outStream = new ObjectOutputStream(socket.getOutputStream());
 				inStream = new ObjectInputStream(socket.getInputStream());
-				Com com = new Com(socket, inStream, outStream);
+				ComServer com = new ComServer(socket, inStream, outStream);
 				
 				String clientID = null;
 				Long sentNonce = 0L;

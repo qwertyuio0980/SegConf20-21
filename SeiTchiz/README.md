@@ -5,7 +5,6 @@ Martim Silva
 Francisco Freire
 David Rodrigues
 
-
 ----------------------
 
 PARA FAZER OS JARS:
@@ -19,19 +18,8 @@ PARA FAZER OS JARS:
 8.Fazer Next denovo e em "Select the class of the application entry point" fazer browse
 e meter a classe que tem o main
 
-PARA CORRER SERVIDOR COM POLICIES E JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678
-
-PARA CORRER CLIENTE COM POLICIES E JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <IP>:<45678> <userID> <userPassword>
-
-
 ----------------------
-Grupo 35
-Martim Silva 51304
-Francisco Freire 52177
-David Rodrigues 53307
-----------------------
+
 Limita��es do Trabalho da Fase 1
 
 O unico argumento que deve ser passado obrigatoriamente para o servidor correr � 45678.
@@ -69,23 +57,28 @@ ADICIONAR MAIS LIMITACOES
 
 
 ----------------------
+
 Como compilar e executar o Trabalho da Fase 2
 
 PARA COMPILAR SERVIDOR COM POLICIES
-javac -d bin src/server/SeiTchizServer.java src/communication/Com.java src/security/Security.java
+javac -d bin src/server/SeiTchizServer.java src/communication/ComServer.java src/security/Security.java
 
 PARA COMPILAR CLIENTE COM POLICIES
-javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java src/security/Security.java
+javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/ComClient.java src/security/Security.java
 
 PARA CORRER SERVIDOR COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 <keystore> <keystore-password>
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 serverKeyStore passserver
 
+(debug servidor)
+java −Djavax.net.debug=ssl -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 serverKeyStore passserver
+
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 3KS passclient3 client3
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 4KS passclient4 client4
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost truststore.client 1KS passclient1 client1
 
+(debug cliente)
+java −Djavax.net.debug=ssl -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost truststore.client 1KS passclient1 client1
 
 PARA CORRER SERVIDOR COM POLICIES POR JAR
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 <keystore> <keystore-password>
@@ -95,7 +88,8 @@ java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar 
 
 ----------------------
 
-TODO:
+TODO
+
 1. Cada grupo mantido pelo servidor usará uma chave de grupo simétrica AES para cifrar e decifrar mensagens trocadas nesse grupo. A cifra será fim-a-fim, i.e., o servidor não terá acesso ao conteúdo das mensagens trocadas, significando que ambas as operações de cifrar e decifrar são efetuadas pelo cliente. Por exemplo, quando um utilizador envia uma mensagem para um grupo, esta será cifrada no cliente antes do seu envio. O servidor recebe a mensagem cifrada e armazena-a. Da mesma forma, quando um utilizador pede ao servidor as mensagens do grupo, este envia para a máquina cliente as mensagens cifradas (tal como estão armazenadas) e será o cliente que as decifra e as mostra ao utilizador.
     1.1. ClientStub fará a cifra do conteúdo das mensagens e enviará o array de bytes correspondente. O SeiTchizServer apenas guardará a mensagem. 
 
@@ -134,6 +128,7 @@ contexto do utilizador tem de estar fora do servidor
 quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta de keystores            
 
 **DÚVIDAS**
+
 1. Estrutura dos keystores
     1.1. Cada cliente terá sua própria keystore
     1.2. O servidor terá sua própria keystore
@@ -152,20 +147,20 @@ comandos:
 **Criar chaves:
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
 
-keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.serverKeyStore 
-keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.1KS
-keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.2KS
-keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.3KS
-keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.4KS
+keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/serverKeyStore 
+keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/1KS
+keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/2KS
+keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/3KS
+keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores/4KS
 
 **Verificar chaves:
 keytool -list -storetype JCEKS -keystore <clientID + 'KS'>
 
-keytool -list -storetype JCEKS -keystore keystores.serverKeyStore
-keytool -list -storetype JCEKS -keystore keystores.1KS
-keytool -list -storetype JCEKS -keystore keystores.2KS
-keytool -list -storetype JCEKS -keystore keystores.3KS
-keytool -list -storetype JCEKS -keystore keystores.4KS
+keytool -list -storetype JCEKS -keystore keystores/serverKeyStore
+keytool -list -storetype JCEKS -keystore keystores/1KS
+keytool -list -storetype JCEKS -keystore keystores/2KS
+keytool -list -storetype JCEKS -keystore keystores/3KS
+keytool -list -storetype JCEKS -keystore keystores/4KS
 
 NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYSTORE = NOME DO ALIAS
 **  (Server):      serverKeyStore   serverKeyStore      passserver
@@ -182,3 +177,17 @@ keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 
 //Chave assimétrica para cada cliente:
 keytool -genkeypair -alias <clientID + 'KS'> -storetype JCEKS -keystore <clientID + 'KS'>
+
+**Fazer a parte da truststore**
+
+//Verificar o keystore
+keytool -list -storetype JCEKS -keystore keystores/serverKeyStore
+
+//Fazer export do certificado
+keytool -exportcert -alias serverKeyStore -file keystores/certServer.cer -storetype JCEKS -keystore keystores/serverKeyStore
+
+//Fazer import do certificado
+keytool -importcert -alias serverKeyStore -file keystores/certServer.cer -storetype JCEKS -keystore truststore/client
+
+//verificar se o certificado tem o mesmo sha1 e é uma trustedCertEntry
+keytool -list -storetype JCEKS -keystore truststore/client
