@@ -69,17 +69,11 @@ public class SeiTchizServer {
 	private File groupsFolder;
 	private File globalPhotoCounterFile;
 	private File keysFolder;
-	
 
 	private Socket socket;
 	private ObjectOutputStream outStream;
 	private ObjectInputStream inStream;
 	
-	
-
-
-	
-
 	public static void main(String[] args) {
 
 		System.out.println("--------------servidor iniciado-----------");
@@ -142,6 +136,12 @@ public class SeiTchizServer {
 			System.exit(-1);
 		}
 
+		// Criar chave secreta para o servidor
+		if(generateSecKey("keystores/server.key")) {
+			System.out.println("Houve um erro na criação da chave simétrica do servidor");
+			System.exit(-1);
+		}
+
 		// guardar nos argumentos da thread o keystore e keystore-password e a nova key
 		// mandar chave unica de acesso aos ficheiros de servidor
 
@@ -156,6 +156,64 @@ public class SeiTchizServer {
 		}
 	}
 
+	/**
+	* Gera uma chave secreta, cifra a mesma com a chave pública do servidor e guarda a mesma
+	* num ficheiro server.key no keyStorePath passado
+	* @param keyStorePath caminho do ficheiro server.key
+	* @return true caso a chave tenha sido criada, cifrada e guardado com sucesso.
+	* False, caso contrário.
+	* @requires keyStorePath != null && keyStorePath != "";
+	*/
+	private boolean generateSecKey(String keyStorePath) {
+
+		Security sec = new Security();
+
+		// Criar chave simétrica
+		KeyGenerator kg = null;
+		try {
+			kg = KeyGenerator.getInstance("AES");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		kg.init(128);
+		// Chave simétrica
+		SecretKey key = kg.generateKey();
+
+		// Obter chave pública 
+		Certificate cert  = sec.getCert("serverKeyStore", "keystores/serverKeyStore", "passserver", "JKS");
+		PublicKey ku = cert.getPublicKey();
+
+		// Encriptar chave simétrica
+		Cipher c = null;
+		byte[] wrappedKey = null;
+		try {
+			c = Cipher.getInstance("RSA");
+			c.init(Cipher.WRAP_MODE, ku);
+			wrappedKey = c.wrap(key);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		// Guardar wrappedKey no ficheiro keyStorePath
+		File f = new File(keyStorePath);
+		FileOutputStream fos = null;
+		if(!f.exists())
+			try {
+				f.createNewFile();
+				fos = new FileOutputStream(keyStorePath);
+				fos.write(wrappedKey);
+				fos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+
+		return true;
+	}
+
 
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
@@ -163,10 +221,17 @@ public class SeiTchizServer {
 		private Security sec;
 
 		// Server KeyStore & Keys
-		protected String serverKeyStore;
-		protected String serverAlias;
-		protected String serverKeyStorePassword;
-		protected String storeType = "JCEKS";
+		// -- Chaves simétrica do servidor
+		private final String serverSecKey = "keystores/server.key";
+		private final String serverSecKeyAlg = "AES";
+		// --
+		// -- Chaves assimétricas do servidor
+		private String serverKeyStore;
+		private String serverAlias;
+		private String serverKeyStorePassword;
+		private String storeType = "JKS";
+		private String serverAssKeyAlg = "RSA";
+		// --
 		
 		private final String serverStuffPath = "files/serverStuff/";
 		private final String userStuffPath = "files/userStuff/";
@@ -646,9 +711,9 @@ public class SeiTchizServer {
 			System.out.println("thread do cliente fechada");
 			System.out.println("------------------------------------------");
 		}
-
+		
 		/**
-		 * Metodo que devolve um Long gerado aleatoriamente
+		* Metodo que devolve um Long gerado aleatoriamente
 		 * 
 		 * @return Long aleatorio
 		 */
@@ -657,7 +722,7 @@ public class SeiTchizServer {
 		}
 
 		/**
-		 * Metodo que verifica se um user ja estao na lista de ficheiros do
+		 * Metodo que verifica se um user ja está na lista de ficheiros do
 		 * servidor
 		 * 
 		 * @param clientID String que identifica o cliente que se pretende autenticar
@@ -673,10 +738,22 @@ public class SeiTchizServer {
 				return 1;
 			} else {
 				// Decriptar o ficheiro users.cif
-				// Obter chave privada para decifrar o conteúdo do ficheiro
+				// Obter chave privada para decifrar a chave secreta do servidor
 				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+				// Obter wrappedKey
+				FileInputStream fis = new FileInputStream(this.serverSecKey);
+				byte[] wrappedKey = null;
+				try {
+					wrappedKey = fis.readAllBytes();
+				} catch (IOException e) {
+					e.printStackTrace();
+					System.out.println("Erro ao ler conteúdo da chave simétrica do servidor");
+					System.exit(-1);
+				}
+				// Decifrar chave secreta do servidor
+				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
 				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-				sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k);
+				sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey);
 				// Procurar o clientID no aux.txt e devolve o resultado da busca
 				return userRegistered(clientID);
 			}
@@ -875,9 +952,12 @@ public class SeiTchizServer {
 			// followingFileDec = "files/userStuff/following.txt";
 			// followersFileDec = "files/userStuff/followers.txt";
 			
-			// Decriptar o ficheiro users.cif
-			// Obter chave privada para decifrar o conteúdo do ficheiro
+
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			
+			// Obter wrapped chave simétrica do servidor
+			// FileInputStream fis = new FileInputStream("")
 			
 			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
 			sec.decFile(this.usersFileCif, this.usersFileDec, k);

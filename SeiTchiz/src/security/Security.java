@@ -18,6 +18,7 @@ import java.security.cert.CertificateException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 
 /**
@@ -222,5 +223,32 @@ public class Security {
 
 		return 0;
 	}
-    
+
+	/**
+	 * Faz um unwrap da chave wrappedKey passada usando a chave key passada
+	 * @param wrappedKey wrapped key
+	 * @param key chave que será usada para fazer unwrap
+	 * @param wrappedKeyAlg algoritmo da wrappedKey
+	 * @return Key unwrapped key
+	 */
+	public Key unwrapKey(byte[] wrappedKey,String wrappedKeyAlg, Key key) {
+		Cipher c = null;
+		try {
+			c = Cipher.getInstance(key.getAlgorithm());
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+			e.printStackTrace();
+			return null;
+		}
+		Key unwrappedKey = null;
+		try {
+			c.init(Cipher.UNWRAP_MODE, key);
+			unwrappedKey = c.unwrap(wrappedKey, wrappedKeyAlg, Cipher.SECRET_KEY);
+
+		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return unwrappedKey;
+	}
+
 }

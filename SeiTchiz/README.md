@@ -150,30 +150,36 @@ quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta
 comandos:
 
 **Criar chaves:
-keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -storetype JCEKS -keystore <NOMEFICHEIROKEYSTORE>
+keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -keystore <NOMEFICHEIROKEYSTORE>
 
-keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.serverKeyStore 
-keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.1KS
-keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.2KS
-keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.3KS
-keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JCEKS -keystore keystores.4KS
+keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/serverKeyStore 
+*Password: passserver
+keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/1KS
+*Password: passclient1
+keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/2KS
+*Password: passclient2
+keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/3KS
+*Password: passclient3
+keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/4KS
+*Password: passclient4
 
 **Verificar chaves:
-keytool -list -storetype JCEKS -keystore <clientID + 'KS'>
+keytool -list-keystore <clientID + 'KS'>
 
-keytool -list -storetype JCEKS -keystore keystores.serverKeyStore
-keytool -list -storetype JCEKS -keystore keystores.1KS
-keytool -list -storetype JCEKS -keystore keystores.2KS
-keytool -list -storetype JCEKS -keystore keystores.3KS
-keytool -list -storetype JCEKS -keystore keystores.4KS
+keytool -list -keystore keystores.serverKeyStore
+keytool -list -keystore keystores.1KS
+keytool -list -keystore keystores.2KS
+keytool -list -keystore keystores.3KS
+keytool -list -keystore keystores.4KS
 
-NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYSTORE = NOME DO ALIAS
-**  (Server):      serverKeyStore   serverKeyStore      passserver
-** (Client1):          1KS             1KS              passclient1
-** (Client2):          2KS             2KS              passclient2
-** (Client3):          3KS             3KS              passclient3
-** (Client4):          4KS             4KS              passclient4
-                  <keystore>          <alias>            <password>
+------------------------------------------------------------------
+(Server):      serverKeyStore   serverKeyStore       passserver
+(Client1):          1KS             1KS              passclient1
+(Client2):          2KS             2KS              passclient2
+(Client3):          3KS             3KS              passclient3
+(Client4):          4KS             4KS              passclient4
+                <keystore>        <alias>            <password>
+------------------------------------------------------------------
 
 **Criar chaves em uma certa keystore:**
 
@@ -181,4 +187,4 @@ NAO HA MANEIRA DE BUSCAR O ALIAS NO JAVA POR ISSO TEMOS O NOME DO FICHEIRO KEYST
 keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 
 //Chave assimétrica para cada cliente:
-keytool -genkeypair -alias <clientID + 'KS'> -storetype JCEKS -keystore <clientID + 'KS'>
+keytool -genkeypair -alias <clientID + 'KS'> -keystore <clientID + 'KS'>
