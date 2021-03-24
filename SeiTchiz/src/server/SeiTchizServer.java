@@ -76,7 +76,7 @@ public class SeiTchizServer {
 
 	public static void main(String[] args) {
 				
-		System.setProperty("javax.net.ssl.KeyStore", "keystores" + File.separator + "serverKeyStore");
+		System.setProperty("javax.net.ssl.KeyStore", "/home/francisco/FCUL/courses/3.2/SC/SegConf20-21/SeiTchiz/keystores/server");
 		System.setProperty("javax.net.ssl.KeyStorePassword","passserver");
 
 		System.out.println("--------------servidor iniciado-----------");
@@ -145,7 +145,8 @@ public class SeiTchizServer {
 
 		while (true) {
 			try {
-				new ServerThread(ss.accept(), arguments[1], arguments[2]).start();
+				Socket s = ss.accept();
+				new ServerThread(s, arguments[1], arguments[2]).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

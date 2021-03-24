@@ -8,7 +8,7 @@ public class SeiTchiz {
 
 	public static void main(String[] args) {
 
-		System.setProperty("javax.net.ssl.trustStore", "truststore/client");
+		System.setProperty("javax.net.ssl.trustStore", "/home/francisco/FCUL/courses/3.2/SC/SegConf20-21/SeiTchiz/truststore/client");
 
 		String separador = "------------------------------------------";
 		int arglen = args.length;
