@@ -137,7 +137,7 @@ public class SeiTchizServer {
 		}
 
 		// Criar chave secreta para o servidor
-		if(generateSecKey("keystores/server.key")) {
+		if(!generateSecKey("keystores/server.key")) {
 			System.out.println("Houve um erro na criação da chave simétrica do servidor");
 			System.exit(-1);
 		}
@@ -171,7 +171,7 @@ public class SeiTchizServer {
 		// Criar chave simétrica
 		KeyGenerator kg = null;
 		try {
-			kg = KeyGenerator.getInstance("DESede");
+			kg = KeyGenerator.getInstance("AES");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			return false;
@@ -223,7 +223,7 @@ public class SeiTchizServer {
 		// Server KeyStore & Keys
 		// -- Chaves simétrica do servidor
 		private final String serverSecKey = "keystores/server.key";
-		private final String serverSecKeyAlg = "DESede";
+		private final String serverSecKeyAlg = "AES";
 		// --
 		// -- Chaves assimétricas do servidor
 		private String serverKeyStore;

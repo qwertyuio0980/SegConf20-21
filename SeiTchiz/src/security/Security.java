@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.Reader;
+import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -253,24 +256,16 @@ public class Security {
 	 * 
 	 */
 	public byte[] getWrappedKey(String serverSecKey) {
-			//FileInputStream fis = new FileInputStream(serverSecKey);
-			//ObjectInputStream ois = new ObjectInputStream(fis);
-
+			File f = new File(serverSecKey);
 			byte[] wrappedKey = null;
-			try(FileInputStream fis = new FileInputStream(serverSecKey);
-			ObjectInputStream ois = new ObjectInputStream(fis);) {
-				wrappedKey = (byte[]) ois.readObject();
+			try {
+				wrappedKey = Files.readAllBytes(f.toPath());
 			} catch (IOException e) {
 				e.printStackTrace();
-				System.out.println("Erro ao ler conteúdo da chave simétrica do servidor");
-				System.exit(-1);
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-				System.out.println("Erro ao ler conteúdo da chave simétrica do servidor");
 				System.exit(-1);
 			}
 
-			return wrappedKey;	
+			return wrappedKey;
 	}
 
 
