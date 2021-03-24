@@ -1044,6 +1044,21 @@ public class SeiTchizServer {
 				return resultado;
 			}
 
+			// Obter chave privada
+			// Obter chave wrapped
+			// Obter chave unwrapped 
+			// Fazer unwrap da chave 
+			// Decifrar ficheiro users.txt
+			// Chamar isRegistered (Este método já apaga o txt)
+			// Decifrar following
+			// procurar userID no folliwing
+			// caso não esteja inserir userID no following
+			// cifrar following
+			// apagar following.txt
+			// ...
+			// OBS: verificar se estão passando o caminho certo do following e followers
+			// 	following é do senderID e followers é do userID
+
 			// procurar da lista de users.txt se o userID pretendido existe
 			try {
 				Scanner scanner = new Scanner(usersFile);
