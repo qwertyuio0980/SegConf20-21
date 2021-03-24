@@ -205,6 +205,7 @@ public class SeiTchizServer {
 				f.createNewFile();
 				fos = new FileOutputStream(keyStorePath);
 				fos.write(wrappedKey);
+				fos.flush();
 				fos.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -728,7 +729,7 @@ public class SeiTchizServer {
 				// Obter chave privada para decifrar a chave secreta do servidor
 				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 				// Obter wrappedKey
-				 byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
+				byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
 				
 				// Decifrar chave secreta do servidor
 				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
@@ -1015,7 +1016,7 @@ public class SeiTchizServer {
 				}
 
 				//dar overwrite ao ficheiro followers.cif com o conteudo de followers.txt e apagar followers.txt
-				sec.cifFile(this.userStuffPath + senderID + "/followers.txt", this.userStuffPath + senderID + "/followers.cif", unwrappedKey);
+				sec.cifFile(this.userStuffPath + userID + "/followers.txt", this.userStuffPath + userID + "/followers.cif", unwrappedKey);
 
 				System.out.println("Cifrou following");
 

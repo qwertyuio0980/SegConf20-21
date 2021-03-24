@@ -79,7 +79,7 @@ public class SeiTchiz {
 				}
 
 				// envia-se o userID que se procura e o userID que fez o pedido
-				resultado = cs.follow(option[1], args[1]);
+				resultado = cs.follow(option[1], args[4]);
 
 				if (resultado == 0) {
 					System.out.println(separador);
@@ -109,7 +109,7 @@ public class SeiTchiz {
 				}
 
 				// envia-se o userID que se procura e o userID que fez o pedido
-				resultado = cs.unfollow(option[1], args[1]);
+				resultado = cs.unfollow(option[1], args[4]);
 
 				if (resultado == 0) {
 					System.out.println(separador);
@@ -137,7 +137,7 @@ public class SeiTchiz {
 				}
 
 				// envia-se o senderID que quer saber quais os seus seguidores
-				followersList = cs.viewfollowers(args[1]);
+				followersList = cs.viewfollowers(args[4]);
 
 				if (followersList.isEmpty()) {
 					System.out.println(separador);
@@ -184,7 +184,7 @@ public class SeiTchiz {
 				}
 
 				// envia-se o senderID e o numero de fotos
-				photoIDLikesPair = cs.wall(args[1], Integer.parseInt(option[1]));
+				photoIDLikesPair = cs.wall(args[4], Integer.parseInt(option[1]));
 
 				if(photoIDLikesPair.length == 1 && photoIDLikesPair[0].contentEquals("1")) {
 					System.out.println(separador);
@@ -242,7 +242,7 @@ public class SeiTchiz {
 				}
 
 				// envia-se o userID que se procura e o userID que fez o pedido
-				resultado = cs.newgroup(option[1], args[1]);
+				resultado = cs.newgroup(option[1], args[4]);
 
 				if (resultado == 0) {
 					System.out.println(separador);
@@ -271,7 +271,7 @@ public class SeiTchiz {
 
 				// envia-se o userID que se pretende adicionar ao grupo, o grupoID e o senderID
 				// que fez o pedido
-				resultado = cs.addu(option[1], option[2], args[1]);
+				resultado = cs.addu(option[1], option[2], args[4]);
 
 				if (resultado == 0) {
 					System.out.println(separador);
@@ -304,7 +304,7 @@ public class SeiTchiz {
 
 				// envia-se o userID que se pretende remover do grupo, o grupoID e o senderID
 				// que fez o pedido
-				resultado = cs.removeu(option[1], option[2], args[1]);
+				resultado = cs.removeu(option[1], option[2], args[4]);
 
 				if (resultado == 0) {
 					System.out.println(separador);
@@ -331,7 +331,7 @@ public class SeiTchiz {
 				if (option.length == 1) {
 
 					// envia-se o senderID
-					String[] listaGinfo = cs.ginfo(args[1]);
+					String[] listaGinfo = cs.ginfo(args[4]);
 					boolean ownerFirst = true;
 					boolean participantFirst = true;
 					if (listaGinfo == null) {
@@ -343,14 +343,14 @@ public class SeiTchiz {
 							String[] aux = listaGinfo[i].split("-");
 							if (aux.length == 1) {
 								if (ownerFirst) {
-									System.out.println("Grupos dos quais o user " + args[1] + " e dono:");
+									System.out.println("Grupos dos quais o user " + args[4] + " e dono:");
 									ownerFirst = false;
 								}
 								System.out.println(" - " + aux[0]);
 							} else {
 								if (participantFirst) {
 									System.out.println(
-											"Grupos dos quais o user" + args[1] + " participa, antecedidos dos seus respectivos donos:");
+											"Grupos dos quais o user" + args[4] + " participa, antecedidos dos seus respectivos donos:");
 									participantFirst = false;
 								}
 								System.out.println(aux[0] + " - " + aux[1]);
@@ -361,7 +361,7 @@ public class SeiTchiz {
 				} else {
 					// envia-se o senderID e o groupID
 					System.out.println(separador);
-					String[] listaGinfo = cs.ginfo(args[1], option[1]);
+					String[] listaGinfo = cs.ginfo(args[4], option[1]);
 					if(listaGinfo != null) {
 						System.out.println("Grupo: " + option[1]);
 						System.out.println("Dono: " + listaGinfo[0]);
@@ -413,7 +413,7 @@ public class SeiTchiz {
 				mensagem = sbMensagem.toString();
 
 				// envia-se o groupID, o utilizador que fez o pedido e a mensagem
-				resultado = cs.msg(option[1], args[1], mensagem);
+				resultado = cs.msg(option[1], args[4], mensagem);
 
 				if (resultado == 0) {
 					System.out.println(separador);
@@ -442,13 +442,13 @@ public class SeiTchiz {
 				}
 
 				// envia-se o groupID e o senderID
-				resultado = cs.canCollectOrHistory(option[1], args[1]);
+				resultado = cs.canCollectOrHistory(option[1], args[4]);
 				// resultado aqui apenas diz se collect pode ser feito ou se por alguma razao
 				// nao ira devolver mensagem nenhuma
 
 				if (resultado == 0) {
 					// envia-se o groupID e o senderID
-					listaMensagens = cs.collect(option[1], args[1]);
+					listaMensagens = cs.collect(option[1], args[4]);
 
 					if (listaMensagens.length == 1 && listaMensagens[0].contentEquals("-empty")) {
 						System.out.println(separador);
@@ -493,13 +493,13 @@ public class SeiTchiz {
 				}
 
 				// envia-se o groupID e o senderID
-				resultado = cs.canCollectOrHistory(option[1], args[1]);
+				resultado = cs.canCollectOrHistory(option[1], args[4]);
 				// resultado aqui apenas diz se history pode ser feito ou se por alguma razao
 				// nao ira devolver mensagem nenhuma
 
 				if (resultado == 0) {
 					// envia-se o groupID e o senderID
-					listaMensagens = cs.history(option[1], args[1]);
+					listaMensagens = cs.history(option[1], args[4]);
 
 					if (listaMensagens.length == 1 && listaMensagens[0].contentEquals("-empty")) {
 						System.out.println(separador);

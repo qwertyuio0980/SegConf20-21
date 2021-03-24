@@ -244,7 +244,6 @@ public class Security {
 		try {
 			c.init(Cipher.UNWRAP_MODE, key);
 			unwrappedKey = c.unwrap(wrappedKey, wrappedKeyAlg, Cipher.SECRET_KEY);
-
 		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			return null;
