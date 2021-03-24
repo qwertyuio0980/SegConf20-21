@@ -171,7 +171,7 @@ public class SeiTchizServer {
 		// Criar chave simétrica
 		KeyGenerator kg = null;
 		try {
-			kg = KeyGenerator.getInstance("AES");
+			kg = KeyGenerator.getInstance("DESede");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			return false;
@@ -223,7 +223,7 @@ public class SeiTchizServer {
 		// Server KeyStore & Keys
 		// -- Chaves simétrica do servidor
 		private final String serverSecKey = "keystores/server.key";
-		private final String serverSecKeyAlg = "AES";
+		private final String serverSecKeyAlg = "DESede";
 		// --
 		// -- Chaves assimétricas do servidor
 		private String serverKeyStore;
@@ -238,19 +238,6 @@ public class SeiTchizServer {
 
 		private final String usersFileDec = "files/serverStuff/users.txt"; 
 		private final String usersFileCif = "files/serverStuff/users.cif";
-		
-		// private final String followingFileDec = "files/userStuff//following.txt";
-		// private final String followingFileCif = "files/userStuff//following.cif";
-		
-	    // private final String followersFileDec = "files/userStuff//followers.txt";
-		// private final String followersFileCif = "files/userStuff//followers.cif";
-
-	    // private final String participantFileDec = "files/userStuff//participant.txt";
-		// private final String participantFileCif = "files/userStuff//participant.cif";
-
-	    // private final String ownerFileDec = "files/userStuff//owner.txt";
-		// private final String ownerFileCif = "files/userStuff//owner.cif";
-		
 
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
 			this.serverKeyStore = "keystores/" + serverKeyStore;
@@ -741,15 +728,8 @@ public class SeiTchizServer {
 				// Obter chave privada para decifrar a chave secreta do servidor
 				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 				// Obter wrappedKey
-				FileInputStream fis = new FileInputStream(this.serverSecKey);
-				byte[] wrappedKey = null;
-				try {
-					wrappedKey = fis.readAllBytes();
-				} catch (IOException e) {
-					e.printStackTrace();
-					System.out.println("Erro ao ler conteúdo da chave simétrica do servidor");
-					System.exit(-1);
-				}
+				 byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
+				
 				// Decifrar chave secreta do servidor
 				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
 				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
@@ -850,11 +830,16 @@ public class SeiTchizServer {
 			}
 
 			System.out.println();
-			// Obter chave privada para decifrar o conteúdo do ficheiro contendo os registos dos clientes
+
+			// Obter chave simétrica wrapped
+			byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
+			// Obter chave privada para fazer unwrap da chave simétrica
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			// Fazer unwrap
+			Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
 
 			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k) == -1) {
+			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey) == -1) {
 				return -1;
 			}
 
@@ -862,7 +847,7 @@ public class SeiTchizServer {
 			Writer wr = null;
 			try {
 				wr = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
-				wr.append(clientID + "," + certPath);
+				wr.append(clientID + "," + certPath + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 				try {
@@ -873,10 +858,6 @@ public class SeiTchizServer {
 				return -1;
 			}
 
-			// Obter chave pública para cifrar o ficheiro users.txt
-			Certificate cer  = sec.getCert(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.storeType);
-			PublicKey pk = cer.getPublicKey();
-
 			// Fazer closes
 			try {
 				wr.close();
@@ -885,7 +866,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar o ficheiro users.txt como users.cif com a chave pública do servidor
-			return sec.cifFilePK("files/serverStuff/users.txt", "files/serverStuff/users.cif", pk);
+			return sec.cifFile("files/serverStuff/users.txt", "files/serverStuff/users.cif", unwrappedKey);
 		}
 
 		/**
@@ -947,32 +928,23 @@ public class SeiTchizServer {
 				return resultado;
 			}
 			
-			// Decifrar users.cif e following.cif e followers.cif
-			// usersFileDec = "files/serverStuff/users.txt"; 
-			// followingFileDec = "files/userStuff/following.txt";
-			// followersFileDec = "files/userStuff/followers.txt";
-			
-
 			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 			
-			// Obter wrapped chave simétrica do servidor
-			// FileInputStream fis = new FileInputStream("")
-			
-			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-			sec.decFile(this.usersFileCif, this.usersFileDec, k);
+			//metodo do sec vai aqui
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
 
-			// Procurar o clientID no aux.txt e devolve o resultado da busca
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			sec.decFile(this.usersFileCif, this.usersFileDec, unwrappedKey);
+
+			// Procurar o clientID no users.txt e devolve o resultado da busca
 			encontrado = userRegistered(userID);
 
 			// caso userID existe em users.txt
 			if (encontrado == 0) {
 
-				// Obter public key para cifrar ficheiros que serão decifrados a seguir:
-				PublicKey pk = sec.getCert(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.storeType).getPublicKey();
-
 				// Decifrar ficheiro following.cif e colocar conteúdo no ficheiro following.txt
-				sec.decFile(this.userStuffPath + senderID + "/following.cif", this.userStuffPath + senderID + "/following.txt", k);
+				sec.decFile(this.userStuffPath + senderID + "/following.cif", this.userStuffPath + senderID + "/following.txt", unwrappedKey);
 
 				System.out.println("Decifrou following");
 
@@ -985,13 +957,15 @@ public class SeiTchizServer {
 						// caso userID ja se encontre no ficheiro de following de senderID devolver -1
 						if (line.contentEquals(userID)) {
 							sc.close();
-							//dar overwrite ao ficheiro following.cif com o conteudo de following.txt e apagar following.txt
-							sec.cifFilePK(this.userStuffPath + senderID + "/following.txt", this.userStuffPath + senderID + "/following.cif", pk);
+							// Deletar ficheiro following.txt
+							sendersFollowingFile.delete();
 							return resultado;
 						}
 					}
 					sc.close();
 				} catch (FileNotFoundException e) {
+					// Deletar ficheiro decifrado
+					sendersFollowingFile.delete();
 					e.printStackTrace();
 				}
 
@@ -1007,16 +981,18 @@ public class SeiTchizServer {
 					bw.close();
 					fw.close();
 				} catch (IOException e) {
+					// Deletar ficheiro decifrado
+					sendersFollowingFile.delete();
 					e.printStackTrace();
 				}
 
 				//dar overwrite ao ficheiro following.cif com o conteudo de following.txt e apagar following.txt
-				sec.cifFilePK(this.userStuffPath + senderID + "/following.txt", this.userStuffPath + senderID + "/following.cif", pk);
+				sec.cifFile(this.userStuffPath + senderID + "/following.txt", this.userStuffPath + senderID + "/following.cif", unwrappedKey);
 
 				System.out.println("Cifrou following");
 
 				// Decifrar ficheiro followers.cif e colocar conteúdo no ficheiro followers.txt
-				sec.decFile(this.userStuffPath + userID + "/followers.cif", this.userStuffPath + userID + "/followers.txt", k);
+				sec.decFile(this.userStuffPath + userID + "/followers.cif", this.userStuffPath + userID + "/followers.txt", unwrappedKey);
 
 				System.out.println("Decifrou followers");
 
@@ -1033,11 +1009,13 @@ public class SeiTchizServer {
 					bw.close();
 					fw.close();
 				} catch (IOException e) {
+					// Deletar ficheiro decifrado
+					userIDsFollowersFile.delete();
 					e.printStackTrace();
 				}
 
 				//dar overwrite ao ficheiro followers.cif com o conteudo de followers.txt e apagar followers.txt
-				sec.cifFilePK(this.userStuffPath + senderID + "/followers.txt", this.userStuffPath + senderID + "/followers.cif", pk);
+				sec.cifFile(this.userStuffPath + senderID + "/followers.txt", this.userStuffPath + senderID + "/followers.cif", unwrappedKey);
 
 				System.out.println("Cifrou following");
 

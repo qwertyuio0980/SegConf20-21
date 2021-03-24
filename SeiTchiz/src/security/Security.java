@@ -2,15 +2,14 @@ package security;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -18,7 +17,6 @@ import java.security.cert.CertificateException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 
 /**
@@ -173,7 +171,7 @@ public class Security {
 	 * @return 0 caso o conteúdo do ficheiro inputFile tenha sido cifrado e colocado no outputFile com sucesso
 	 * -1 caso contrário 
 	 */
-	public int cifFilePK(String inputFile, String outputFile, PublicKey key) {
+	public int cifFile(String inputFile, String outputFile, Key key) {
 
 		File inputF = new File(inputFile);
 		
@@ -250,5 +248,31 @@ public class Security {
 		}
 		return unwrappedKey;
 	}
+
+	/**
+	 * 
+	 */
+	public byte[] getWrappedKey(String serverSecKey) {
+			//FileInputStream fis = new FileInputStream(serverSecKey);
+			//ObjectInputStream ois = new ObjectInputStream(fis);
+
+			byte[] wrappedKey = null;
+			try(FileInputStream fis = new FileInputStream(serverSecKey);
+			ObjectInputStream ois = new ObjectInputStream(fis);) {
+				wrappedKey = (byte[]) ois.readObject();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.out.println("Erro ao ler conteúdo da chave simétrica do servidor");
+				System.exit(-1);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				System.out.println("Erro ao ler conteúdo da chave simétrica do servidor");
+				System.exit(-1);
+			}
+
+			return wrappedKey;	
+	}
+
+
 
 }
