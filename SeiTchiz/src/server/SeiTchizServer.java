@@ -18,10 +18,18 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.io.FilenameFilter;
 
-import communication.Com;
+
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+
+import communication.ComServer;
+import security.Security;
 
 public class SeiTchizServer {
 
+	// Files & paths
+	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
 	public int port;
 	public File filesFolder;
 	public File serverStuffFolder;
@@ -31,6 +39,10 @@ public class SeiTchizServer {
 	public File globalPhotoCounterFile;
 
 	public static void main(String[] args) {
+
+		System.setProperty("javax.net.ssl.keyStore", "keystores/server");
+		System.setProperty("javax.net.ssl.keyStorePassword", "passserver");
+
 		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
 		if (args.length == 1 && args[0].contentEquals("45678")) {
@@ -49,10 +61,10 @@ public class SeiTchizServer {
 	 */
 	public void startServer(String port) {
 
-		ServerSocket sSoc = null;
-
+		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
+		SSLServerSocket sSoc = null;
 		try {
-			sSoc = new ServerSocket(Integer.parseInt(port));
+			sSoc = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(port));
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
@@ -216,7 +228,7 @@ public class SeiTchizServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 				
-				Com com = new Com(socket, inStream, outStream);
+				ComServer com = new ComServer(socket, inStream, outStream);
 				
 				String userID = null;
 				String passwd = null;
