@@ -1,15 +1,29 @@
 package server;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.print.event.PrintEvent;
@@ -31,26 +45,43 @@ public class SeiTchizServer {
 	// Files & paths
 	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
 	public int port;
-	public File filesFolder;
-	public File serverStuffFolder;
-	public File userStuffFolder;
-	public File usersFile;
-	public File groupsFolder;
-	public File globalPhotoCounterFile;
+	private File filesFolder;
+	private File serverStuffFolder;
+	private File userStuffFolder;
+	private File usersFile;
+	private File groupsFolder;
+	private File globalPhotoCounterFile;
+	private File keysFolder;
+
+	public static final String separador = "------------------------------------------";
 
 	public static void main(String[] args) {
 
 		System.setProperty("javax.net.ssl.keyStore", "keystores/server");
 		System.setProperty("javax.net.ssl.keyStorePassword", "passserver");
 
-		System.out.println("--------------servidor iniciado-----------");
+		// O programa serÃ¡ corrido deste jeito:
+		// 					[0]			[1]         [2]         
+		// SeiTchizServer <port> <keystore> <keystore-password>
+		// <port> = "45678"
+		// <keystore> = "keystores/<keystorename>"
+		
 		SeiTchizServer server = new SeiTchizServer();
-		if (args.length == 1 && args[0].contentEquals("45678")) {
-			server.startServer(args[0]);
+		if (args.length == 3 && args[0].equals("45678")) {
+			System.out.println(separador);
+			System.out.println("servidor iniciado");
+			System.out.println(separador);
+
+			server.startServer(args);
 		} else {
-			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\"");
+			System.out.println(separador);
+			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\" e tem de ter 3 argumentos" +
+			"<port> <keystore> <keystore-password>");
+			System.out.println(separador);
+			System.exit(-1);
 		}
 	}
+
 
 	/**
 	 * Metodo que cria a socket de ligacao do lado do servidor e
@@ -59,19 +90,17 @@ public class SeiTchizServer {
 	 * 
 	 * @param port String que representa o porto onde estara a socket
 	 */
-	public void startServer(String port) {
+	public void startServer(String[] arguments) {
 
 		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
 		SSLServerSocket sSoc = null;
 		try {
-			sSoc = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(port));
+			sSoc = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(arguments[0]));
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
 		}
 
-		// FileWriter fwGPC;
-		// BufferedWriter bwGPC;
 		Writer globalPhotoCounterFile;
 
 		// criacao dos folders e files vazios por default
@@ -86,138 +115,73 @@ public class SeiTchizServer {
 			userStuffFolder = new File("files/userStuff");
 			userStuffFolder.mkdir();
 
-			usersFile = new File("files/serverStuff/users.txt");
+			usersFile = new File("files/serverStuff/users.cif");
 			usersFile.createNewFile();
 
-			// globalPhotoCounterFile = new File("files/serverStuff/globalPhotoCounter.txt");
-			// globalPhotoCounterFile.createNewFile();
-			// fwGPC = new FileWriter(globalPhotoCounterFile, false);
-			// bwGPC = new BufferedWriter(fwGPC);
-			// bwGPC.write("0");
-			// bwGPC.close();
-
 			globalPhotoCounterFile = new BufferedWriter(
-					new FileWriter("files/serverStuff/globalPhotoCounter.txt", false));
+					new FileWriter(GLOBALCOUNTERFILE, false));
 			globalPhotoCounterFile.write("0");
 			globalPhotoCounterFile.close();
 			
 			groupsFolder = new File("files/groups");
 			groupsFolder.mkdirs();
 			
-			System.out.println("ficheiros de esqueleto do servidor criados");
-			System.out.println("------------------------------------------");
+			System.out.println("ficheiros esqueleto do server criados");
+			System.out.println(separador);
 		} catch (IOException e) {
 			System.out.println("Houve um erro na criacao de algum dos folders ou ficheiros de esqueleto");
+			System.out.println(separador);
 			System.exit(-1);
 		}
 		
 		while (true) {
 			try {
 				Socket inSoc = sSoc.accept();
-				ServerThread newServerThread = new ServerThread(inSoc);
+				ServerThread newServerThread = new ServerThread(inSoc, arguments[1], arguments[2]);
 				newServerThread.start();
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.out.println("Nao foi possivel criar uma nova thread");
 			}
 		}
 
 		// sSoc.close();
 	}
 
-	/**
-	 * Metodo que verifica se um par user/passwd ja estao na lista de ficheiros do
-	 * servidor
-	 * 
-	 * @param clientID String que identifica o cliente que se pretende autenticar
-	 * @param passwd String que representa a password do cliente
-	 * @return -1 se o par nao corresponde ao que esta no ficheiro do servidor ou
-	 *         houve algum erro que impossibilitou a autenticacao 0 se autenticacao
-	 *         foi bem sucedida e 1 se "conta" nao existia antes e foi agora criada
-	 *         e autenticada
-	 */
-	public int isAuthenticated(String clientID, String passwd) {
-		String line;
-		String[] currentUserPasswd;
-		try (Scanner scanner = new Scanner(usersFile)) {
-			while (scanner.hasNextLine()) {
-				line = scanner.nextLine();
-				currentUserPasswd = line.split(":");
-				if (clientID.equals(currentUserPasswd[0])) {
-					// o usuario ja existe na lista de users
-					if (passwd.equals(currentUserPasswd[2])) {
-						// o par user/passwd checks out
-						return 0;
-					}
-					return -1;
-				}
-			}
-
-		} catch (FileNotFoundException e) {
-			System.out.println("lista de users/passwords nao existe");
-			e.printStackTrace();
-		}
-
-		// toda a lista foi percorrida e o user nao foi encontrado
-		// por isso trata-se de um novo user
-		return 1;
-	}
-
-	/**
-	 * Metodo que adiciona um par user, username e password Ã¡ lista do servidor
-	 * e cria todos os ficheiros base que cada cliente tera
-	 * 
-	 * @param clientID String que representa o ID do cliente para o qual se esta 
-	 * a adicionar os ficheiros base do mesmo
-	 * @param userName String que representa o nome pessoal do cliente
-	 * @param passwd String que representa a password do cliente
-	 * @return 0 se coloca com sucesso -1 caso contrario
-	 */
-	public int addUserPasswd(String clientID, String userName, String passwd) {
-
-		try {
-			Writer output = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
-			output.append(clientID + ":" + userName + ":" + passwd + "\n");
-			output.close();
-
-			File userPage = new File("files/userStuff/" + clientID);
-			userPage.mkdir();
-
-			Writer userFollowers = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/followers.txt", true));
-			userFollowers.close();
-
-			Writer userFollowing = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/following.txt", true));
-			userFollowing.close();
-
-			Writer userParticipant = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/participant.txt", true));
-			userParticipant.close();
-
-			Writer userOwner = new BufferedWriter(
-					new FileWriter("files/userStuff/" + clientID + "/owner.txt", true));
-			userOwner.close();
-
-			File photosFolder = new File("files/userStuff/" + clientID + "/photos");
-			photosFolder.mkdir();
-
-			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
-			return 0;
-		} catch (IOException e) {
-			System.out.println("Nao foi possivel autenticar este user");
-			e.printStackTrace();
-		}
-		return -1;
-	}
-
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
 
-		private Socket socket = null;
+		//Canais de comunicacao
+		private Socket socket;
+		private ObjectOutputStream outStream;
+		private ObjectInputStream inStream;
 
-		ServerThread(Socket inSoc) {
+		private Security sec;
+
+		// Server KeyStore & Keys
+		protected String serverKeyStore;
+		protected String serverKeyStorePassword;
+		protected String serverAlias;
+		protected String storeType = "JKS";
+		
+		//File e Folder Paths
+		private final String serverStuffPath = "files/serverStuff/";
+		private final String userStuffPath = "files/userStuff/";
+		private final String usersFileDec = "files/serverStuff/users.txt"; 
+		private final String usersFileCif = "files/serverStuff/users.cif";
+
+		ServerThread(Socket inSoc, String serverKS, String serverKSPassword) {
+			this.serverKeyStore = "keystores/" + serverKS;
+			System.out.println("serverKeyStore: " + this.serverKeyStore);
+			
+			this.serverAlias = serverKS;
+			System.out.println("serverAlias: " + this.serverAlias);
+			
+			this.serverKeyStorePassword = serverKSPassword;
+			System.out.println("serverKeyStorePassword: " + this.serverKeyStorePassword);
+			
 			socket = inSoc;
-			System.out.println("Thread a correr no server para cada um cliente");
+			this.sec = new Security();
+			System.out.println("---Thread nova a correr no server---");
 		}
 
 		/**
@@ -230,39 +194,129 @@ public class SeiTchizServer {
 				
 				ComServer com = new ComServer(socket, inStream, outStream);
 				
-				String userID = null;
-				String passwd = null;
+				String clientID = null;
+				Long sentNonce = 0L;
+				Long receivedNonce = 0L;
+				int newUserFlag = 1;//por default trata-se de um novo user
+				int resultadoLogin = -1;//por default o login nao e bem sucedido
 
 				// autenticacao
 				try {
-					userID = (String) inStream.readObject();
-					passwd = (String) inStream.readObject();
+					//ler clientID
+					clientID = (String) inStream.readObject();
 
-					System.out.println("UserID e password recebidos");
+					//criar o nonce e enviar ao cliente
+					sentNonce = generateRandomLong();
+					outStream.writeObject(sentNonce);
 
-					int isAuth = isAuthenticated(userID, passwd);
-					if (isAuth == -1) {
-						outStream.writeObject(-1);
-						System.out.println("SignIn do utilizador nao ocorreu. UserID/Password errados");
-					} else if (isAuth == 0) {
-						outStream.writeObject(0);
-						System.out.println("SignIn do utilizador ocorreu. UserID/Password certos");
+					//ver se clientID ja esta em users.txt
+					newUserFlag = isAuthenticated(clientID);
+					
+					if (newUserFlag == 1) {
+						//caso user ser novo enviar flag com 1
+						outStream.writeObject(newUserFlag);
+						
+						//1.receber nonce
+						receivedNonce = (Long) inStream.readObject();
+
+						//2.receber assinatura do nonce com chave privada do client
+						byte signatureBytes[] = (byte[]) inStream.readObject();
+						
+						//3.receber o certificado
+						byte certificadoBytes[] = (byte[]) inStream.readObject();
+						CertificateFactory cFac = CertificateFactory.getInstance("X509");
+						Certificate certificadoConteudo = cFac.generateCertificate(new ByteArrayInputStream(certificadoBytes));
+						File certFile = new File("PubKeys/" + clientID + ".cer");//ficheiro cer do novo cliente colocado em PubKeys
+						certFile.createNewFile();
+						FileOutputStream fosCert = new FileOutputStream(certFile);
+						fosCert.write(certificadoConteudo.getEncoded());
+
+						//4.verificar essa assinatura com o certificado que o cliente mandou e que sentNonce e igual a receivedNonce
+						PublicKey pk = certificadoConteudo.getPublicKey();
+						Signature s = null;
+						try {
+							s = Signature.getInstance("MD5withRSA");
+						} catch (NoSuchAlgorithmException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						try {
+							s.initVerify(pk);
+						} catch (InvalidKeyException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						s.update(longToBytes(receivedNonce));
+						if(s.verify(signatureBytes) && sentNonce.equals(receivedNonce)) {
+							//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
+							int res = addUserCertPath(clientID, certFile.getPath());
+							if(res == 0) {
+								//mandar um boolean a dizer que correu bem o login
+								resultadoLogin = 0;
+							} else {
+								//mandar um boolean a dizer que correu mal o login e apagar ficheiro cert
+								certFile.delete();
+								resultadoLogin = -1;
+							}
+						} else {
+							//mandar um boolean a dizer que correu mal o login e apagar ficheiro cert
+							certFile.delete();
+							resultadoLogin = -1;
+						}
 					} else {
-						outStream.writeObject(1);
-						System.out.println("SignUp do utilizador ocorreu pela primeira vez. \n"
-								+ "A espera do nome do utilizador para finalizar o SignUp");
-						String userName = (String) inStream.readObject();
-						addUserPasswd(userID, userName, passwd);
-					}
-					System.out.println("------------------------------------------");
+						//caso user ser antigo enviar flag com 0
+						outStream.writeObject(newUserFlag);
 
+						//1.receber nonce
+						receivedNonce = (Long) inStream.readObject();
+
+						//2.receber assinatura do nonce
+						byte signatureBytes[] = (byte[]) inStream.readObject();
+						
+						File certFile = new File("PubKeys/" + clientID + ".cer");
+						FileInputStream fis = new FileInputStream(certFile);
+						CertificateFactory cFac = CertificateFactory.getInstance("X509");
+						Certificate certificado = cFac.generateCertificate(fis);
+						
+						//3.verificar o nonce com a chave publica do cliente e as signatures tambem
+						PublicKey pk = certificado.getPublicKey();
+						Signature s = null;
+						try {
+							s = Signature.getInstance("MD5withRSA");
+						} catch (NoSuchAlgorithmException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						try {
+							s.initVerify(pk);
+						} catch (InvalidKeyException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						s.update(longToBytes(receivedNonce));
+						if(s.verify(signatureBytes) && sentNonce.equals(receivedNonce)) {
+							//adicionar novo elemento ao users.txt(TEM DE SER users.cif MAIS TARDE)
+							int res = addUserCertPath(clientID, certFile.toString());
+							if(res == 0) {
+								resultadoLogin = 0;
+							} 
+						} 
+					}
+				outStream.writeObject(resultadoLogin);
 				} catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
+				} catch (CertificateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SignatureException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
-				// executar a operacao pedida pelo cliente
-				boolean stop = false;
+				
+				// ciclo principal do servidor
 				String op = null;
+				boolean stop = false;
 				while (!stop) {
 					// receber operacao pedida
 					try {
@@ -348,12 +402,12 @@ public class SeiTchizServer {
 						}
 
 						try {
-							com.receiveFilePost(userID);
+							com.receiveFilePost(clientID);
 							com.send(true);
 						} catch (ClassNotFoundException e2) {
 							com.send(false);	
 							e2.printStackTrace();
-							System.out.println("Ocorreu um erro enquanto o utilizador " + userID + " tentava postar uma fotografia.");
+							System.out.println("Ocorreu um erro enquanto o utilizador " + clientID + " tentava postar uma fotografia.");
 						}
 						break;
 
@@ -581,6 +635,218 @@ public class SeiTchizServer {
 			System.out.println("thread do cliente fechada");
 			System.out.println("------------------------------------------");
 		}
+		
+		/**
+		 * Metodo que devolve um Long gerado aleatoriamente
+		 * 
+		 * @return Long aleatorio
+		 */
+		private Long generateRandomLong() {
+			return new Random().nextLong();
+		}
+		
+		/**
+		* Metodo que converte um long em array de bytes
+		* 
+		* @param x long a converter
+		* @return array de bytes convertidos
+		*/
+		private byte[] longToBytes(long x) {
+			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+			buffer.putLong(x);
+			return buffer.array();
+		}
+		
+		/**
+		* Metodo que converte um array de bytes em long
+		* 
+		* @param bytes array de bytes a converter
+		* @return long convertido
+		*/
+		private long bytesToLong(byte[] bytes) {
+			ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+			buffer.put(bytes);
+			buffer.flip();//need flip 
+			return buffer.getLong();
+		}
+		
+	    /**
+		 * Procura clientID passado no ficheiro que regista os clientes do sistema
+		 * 
+		 * @param clientID cliente a ser procurado nos registos
+		 * @return 0 caso o cliente está registado, 1 caso contrário
+		 * @requires clientID != null && clientID != ""
+		 */
+		private int userRegistered(String clientID) {
+
+			File usersF = new File("files/serverStuff/users.txt");
+			if(!usersF.exists()) {
+				return 1;
+			}
+
+			String line;
+			String[] currentUserPublicKey;
+			try (Scanner scanner = new Scanner(usersF)) {
+				while (scanner.hasNextLine()) {
+					line = scanner.nextLine();
+					currentUserPublicKey = line.split(",");
+					if (clientID.equals(currentUserPublicKey[0])) {
+						// o usuario ja existe na lista de users
+						// Deletar o ficheiro contendo os users
+						if(!usersF.delete()) {
+							System.out.println("Erro ao deletar o ficheiro users.txt");
+							return 1;
+						}
+						return 0;
+					}
+				}
+			} catch (FileNotFoundException e) {
+				System.out.println("lista de users/public keys nao existe");
+				e.printStackTrace();
+			}
+
+			// toda a lista foi percorrida e o user nao foi encontrado
+			return 1;
+		
+		}
+		
+		/**
+		 * Metodo que verifica se um user ja estao na lista de ficheiros do
+		 * servidor
+		 * 
+		 * @param clientID String que identifica o cliente que se pretende autenticar
+		 * @return 0 se autenticacao foi bem sucedida e 1 se registo do clientID não existe no servidor
+		 */
+		public int isAuthenticated(String clientID) {
+
+			// Verificar se o ficheiro users.cif está vazio
+			// Caso esteja apenas ciframos a nova entrada do cliente novo e colocamos
+			// no novo ficheiro users.cif
+			File usersF = new File(usersFileDec);
+			if(usersF.length() == 0) {
+				return 1;
+			} else {
+				// Decriptar o ficheiro users.cif
+				// Obter chave privada para decifrar o conteúdo do ficheiro
+				Key k = sec.getKey("myServer", "keystores/server", "passserver", "passserver", "JKS");
+				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
+				sec.decFile(usersFileCif, usersFileDec, k);
+				// Procurar o clientID no aux.txt e devolve o resultado da busca
+				return userRegistered(clientID);
+			}
+		}
+		
+		/**
+		 * Cria os recursos necessários para o clienteID
+		 * @param clientID cliente aos quais os recursos pertencerão
+		 * @return 0 caso sejam criados todos os recursos com sucesso, -1 caso contrário
+		 * @requires clientID != null && clientID != "" 
+		 */
+		private int createClientResources(String clientID) {
+
+			try {
+				File userPage = new File(userStuffPath + clientID);
+				userPage.mkdir();
+
+				File photosFolder = new File(userStuffPath + clientID + "/photos");
+				photosFolder.mkdir();
+
+				Writer userFollowers = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/followers.cif", true));
+				userFollowers.close();
+
+				Writer userFollowing = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/following.cif", true));
+				userFollowing.close();
+
+				Writer userParticipant = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/participant.cif", true));
+				userParticipant.close();
+
+				Writer userOwner = new BufferedWriter(
+						new FileWriter(userStuffPath + clientID + "/owner.cif", true));
+				userOwner.close();
+
+			} catch (IOException e) {
+				System.out.println("Não foi possível criar os recursos necessários para o cliente corrente");
+				e.printStackTrace();
+				return -1;
+			}
+
+			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
+
+			return 0;
+
+		}
+		
+		/**
+		 * Adiciona uma linha no formato <clientID,password> aos registos de clientes no servidor
+		 * e cria os devidos recursos referentes ao novo cliente
+		 * @param clientID String representando o cliente a ser adicionado aos registos
+		 * @param certPath String representa o caminho para o ficheiro contendo o certificado do clientID
+		 * @return 0 se registo foi feito com sucesso, -1 caso contrario
+		 */
+		public int addUserCertPath(String clientID, String certPath) {
+
+			// Criar recursos para o novo cliente
+			int resourcesCreated = createClientResources(clientID);
+			// Verificar se os recursos foram criados com sucesso
+			if(resourcesCreated == -1) {
+				return -1;
+			}
+
+			if(this.serverKeyStore == null) {
+				System.out.println("serverKeyStore null");
+			}
+			if(this.serverKeyStorePassword == null) {
+				System.out.println("serverKeyStorePassword null");
+			}
+			if(this.storeType == null) {
+				System.out.println("storeType null");
+			}
+
+			System.out.println();
+			// Obter chave privada para decifrar o conteúdo do ficheiro contendo os registos dos clientes
+			Key k = sec.getKey("myServer", "keystores/server", "passserver", "passserver", "JKS");
+
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
+			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k) == -1) {
+				return -1;
+			}
+
+			// colocar a entrada <clientID,certPath> no ficheiro users.txt
+			Writer wr = null;
+			try {
+				wr = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
+				wr.append(clientID + "," + certPath);
+			} catch (IOException e) {
+				e.printStackTrace();
+				try {
+					wr.close();
+				} catch (IOException | NullPointerException e1) {
+					e1.printStackTrace();
+				}
+				return -1;
+			}
+
+			// Obter chave pública para cifrar o ficheiro users.txt
+			Certificate cer  = sec.getCert(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.storeType);
+			PublicKey pk = cer.getPublicKey();
+
+			// Fazer closes
+			try {
+				wr.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			// Cifrar o ficheiro users.txt como users.cif com a chave pública do servidor
+			return sec.cifFilePK("files/serverStuff/users.txt", "files/serverStuff/users.cif", pk);
+		}
+		
+		
+		
+		//---------------------Metodos de comandos-------------------
 
         /**
          * Faz com que o senderID siga o userID

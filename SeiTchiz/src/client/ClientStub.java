@@ -2,6 +2,7 @@ package client;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
@@ -191,7 +192,7 @@ public class ClientStub {
         }
     }
 
-		/**
+	/**
      * Envia nonce assinado para o servidor
      * Caso a flag seja igual a 0 (Client corrente jÃ¡ registado no servidor) envia o nonce e o mesmo assinado para ser verificado
      * pelo servidor 
@@ -869,6 +870,20 @@ public class ClientStub {
 		}
 
 		return resultado;
+	}
+
+	/**
+	 * Fecha a conexao com o servidor
+	 */
+	protected void closeConnection() {
+		try {
+			this.out.close();
+			this.in.close();
+			this.clientSocket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

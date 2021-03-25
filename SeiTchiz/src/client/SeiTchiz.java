@@ -10,15 +10,16 @@ public class SeiTchiz {
 
 		System.setProperty("javax.net.ssl.trustStore", "truststore/ts_client");
 
-		String separador = "------------------------------------------";
-		int arglen = args.length;
-
 		// O programa será corrido deste jeito:
 		// 					[0]			[1]         [2]           [3]   			[4]
 		// SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
 		// <truststore> = "truststore/<truststorename>"
 		// <keystore> = "keystores/<keystorename>"
-		
+
+
+		String separador = "------------------------------------------";
+		int arglen = args.length;
+
 		// numero de argumentos passados errado
 		if (arglen != 5 || args[4].contains(":") || args[4].contains("/") || 
 		args[4].contains("-") || args[4].contains(" ") || args[4].contains(",") || args[3].length() < 7) {
@@ -31,6 +32,10 @@ public class SeiTchiz {
 			System.exit(-1);
 		}
 
+		System.out.println(separador);
+		System.out.println("cliente iniciado");
+		System.out.println(separador);
+
 		// cria ligacao com socket
 		ClientStub cs = new ClientStub(args);
 
@@ -41,8 +46,8 @@ public class SeiTchiz {
 
 		System.out.print("------problema autenticacao passado------");
 
-		boolean stop = false;
 		// ciclo principal do cliente
+		boolean stop = false;
 		while (!stop) {
 
 			// mostrar menu com opcoes

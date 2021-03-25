@@ -63,10 +63,10 @@ ADICIONAR MAIS LIMITACOES
 ----------------------
 Como compilar e executar o Trabalho da Fase 2
 
----PARA COMPILAR SERVIDOR COM POLICIES---
+---PARA COMPILAR SERVIDOR---
 javac -d bin src/server/SeiTchizServer.java src/communication/ComServer.java src/security/Security.java
 
----PARA COMPILAR CLIENTE COM POLICIES---
+---PARA COMPILAR CLIENTE---
 javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/ComClient.java src/security/Security.java
 
 ---PARA CORRER SERVIDOR COM POLICIES---
