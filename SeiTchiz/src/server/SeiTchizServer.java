@@ -99,7 +99,6 @@ public class SeiTchizServer {
 		SSLServerSocket ss = null;
 		try {
 			ss = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(arguments[0]));
-			System.out.println("socket criada");
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
@@ -698,14 +697,14 @@ public class SeiTchizServer {
 		/**
 		 * Procura clientID passado no ficheiro que regista os clientes do sistema
 			* @param clientID cliente a ser procurado nos registos
-			* @return 0 caso o cliente está registado, 1 caso contrário, ou -1 caso o ficheiro contendo os registos não exista
+			* @return 0 caso o cliente está registado, 1 caso contrário
 			* @requires clientID != null && clientID != ""
 			*/
 		private int userRegistered(String clientID) {
 
 			File usersF = new File("files/serverStuff/users.txt");
 			if(!usersF.exists()) {
-				return -1;
+				return 1;
 			}
 
 			String line;
@@ -719,7 +718,7 @@ public class SeiTchizServer {
 						// Deletar o ficheiro contendo os users
 						if(!usersF.delete()) {
 							System.out.println("Erro ao deletar o ficheiro users.txt");
-							return -1;
+							return 1;
 						}
 						return 0;
 					}
@@ -762,7 +761,7 @@ public class SeiTchizServer {
 
 			System.out.println();
 			// Obter chave privada para decifrar o conteúdo do ficheiro contendo os registos dos clientes
-			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			Key k = sec.getKey("myServer", "keystores/server", "passserver", "passserver", "JKS");
 
 			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
 			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k) == -1) {

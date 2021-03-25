@@ -68,11 +68,13 @@ javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communicati
 
 PARA CORRER SERVIDOR COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server/SeiTchizServer 45678 <keystore> <keystore-password>
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server/SeiTchizServer 45678 serverKeyStore passserver
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server/SeiTchizServer 45678 keystores/server passserver
+java -cp bin -Dhttps.protocols="TLSv1.2" -Djava.security.manager -Djava.security.policy==server.policy server/SeiTchizServer 45678 keystores/server passserver
+-Djavax.net.debug=all
 
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client/SeiTchiz localhost truststore/client 1KS passclient1 client1
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client/SeiTchiz localhost truststore/ts_client 1KS passclient1 client1
 
 PARA CORRER SERVIDOR COM POLICIES POR JAR
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 <keystore> <keystore-password>
