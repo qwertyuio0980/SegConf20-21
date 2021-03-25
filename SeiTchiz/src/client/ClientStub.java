@@ -144,6 +144,7 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
         }
+		System.out.println("---mandado clientID---");
 
         // Receber resposta do servidor, um (nonce) e int (flag de registo no servidor)
         Long nonce = 0L;
@@ -158,6 +159,8 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
+
+		System.out.println("---recebido nonce---");
 
         int flag = 1;
         try {

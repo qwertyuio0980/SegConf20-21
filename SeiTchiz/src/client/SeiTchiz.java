@@ -8,7 +8,7 @@ public class SeiTchiz {
 
 	public static void main(String[] args) {
 
-		System.setProperty("javax.net.ssl.trustStore", "/home/francisco/FCUL/courses/3.2/SC/SegConf20-21/SeiTchiz/truststore/client");
+		System.setProperty("javax.net.ssl.trustStore", "truststore/ts_client");
 
 		String separador = "------------------------------------------";
 		int arglen = args.length;
@@ -27,6 +27,8 @@ public class SeiTchiz {
 
 		// cria ligacao com socket
 		ClientStub cs = new ClientStub(args);
+
+		System.out.println("------problema TLS resolvido------");
 
 		// efetuar login
 		cs.efetuarLogin();

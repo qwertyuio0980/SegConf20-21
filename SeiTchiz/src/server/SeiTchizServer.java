@@ -62,10 +62,8 @@ import security.Security;
 
 public class SeiTchizServer {
 
-	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
-	private int port;
-
 	// Files & paths
+	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
 	private File filesFolder;
 	private File serverStuffFolder;
 	private File userStuffFolder;
@@ -76,8 +74,8 @@ public class SeiTchizServer {
 
 	public static void main(String[] args) {
 				
-		System.setProperty("javax.net.ssl.KeyStore", "/home/francisco/FCUL/courses/3.2/SC/SegConf20-21/SeiTchiz/keystores/server");
-		System.setProperty("javax.net.ssl.KeyStorePassword","passserver");
+		System.setProperty("javax.net.ssl.keyStore", "keystores/server");
+		System.setProperty("javax.net.ssl.keyStorePassword", "passserver");
 
 		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
@@ -97,12 +95,11 @@ public class SeiTchizServer {
 	 * @param port String que representa o porto onde estara a socket
 	 */
 	public void startServer(String[] arguments) {
-
 		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
 		SSLServerSocket ss = null;
-
 		try {
 			ss = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(arguments[0]));
+			System.out.println("socket criada");
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
@@ -112,7 +109,6 @@ public class SeiTchizServer {
 
 		// criacao dos folders e files vazios por default
 		try {
-
 			filesFolder = new File("files");
 			filesFolder.mkdir();
 
@@ -171,19 +167,20 @@ public class SeiTchizServer {
 		protected String serverKeyStorePassword;
 		protected String storeType = "JKS";
 		
+		//File Paths
 		private final String serverStuffPath = "files/serverStuff/";
 		private final String userStuffPath = "files/userStuff/";
-
 		private final String usersFileDec = "files/serverStuff/users.txt"; 
 		private final String usersFileCif = "files/serverStuff/users.cif";
 		
-
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
-			this.serverKeyStore = "keystores/" + serverKeyStore;
-			this.serverAlias = serverKeyStore;
+
+			this.serverKeyStore = serverKeyStore;
+			this.serverAlias = serverKeyStore.split("/")[1];
 			this.serverKeyStorePassword = serverKeyStorePassword;
 			socket = inSoc;
 			this.sec = new Security();
+
 			System.out.println("Thread a correr no server para cada um cliente");
 		}
 
@@ -211,7 +208,7 @@ public class SeiTchizServer {
 					sentNonce = generateRandomLong();
 					outStream.writeObject(sentNonce);
 
-					//ver se clientID ja esta em users.txt (AINDA NAO ESTA FEITO DE MANEIRA CIFRADA)
+					//ver se clientID ja esta em users.txt
 					newUserFlag = isAuthenticated(clientID);
 					
 					if (newUserFlag == 1) {
@@ -665,7 +662,7 @@ public class SeiTchizServer {
 			} else {
 				// Decriptar o ficheiro users.cif
 				// Obter chave privada para decifrar o conteúdo do ficheiro
-				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+				Key k = sec.getKey("myServer", "keystores/server", "passserver", "passserver", "JKS");
 				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
 				sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k);
 				// Procurar o clientID no aux.txt e devolve o resultado da busca

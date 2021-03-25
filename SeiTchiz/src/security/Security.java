@@ -35,6 +35,7 @@ public class Security {
 	 * @return Chave requerida ou null caso a mesma não exista
 	 */
 	public Key getKey(String alias, String keyStore, String passwordKS, String passwordK, String storeType) {
+		
 		// Obter keystore que guarda a chave requerida
 		FileInputStream kfile = null;
 		KeyStore kstore = null;
@@ -60,6 +61,9 @@ public class Security {
 		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			System.exit(-1);
+		}
+		if(key == null) {
+			System.out.println("Key é null");
 		}
 
 		return key;
