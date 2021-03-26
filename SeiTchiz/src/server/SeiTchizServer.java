@@ -1037,7 +1037,7 @@ public class SeiTchizServer {
 		private int unfollow(String userID, String senderID) {
 
 			int resultado = -1; // TODO: Nao e necessario criar esta var
-			boolean encontrado = false;
+			int encontrado = -1;
 
 			// TODO: Tornar a verificacao da existencia do user uma funcao aux
 			// userID nao pode ter ":" nem pode ser igual ao senderID
@@ -1045,13 +1045,6 @@ public class SeiTchizServer {
 				return resultado;
 			}
 
-			// Obter chave privada
-			// Obter chave wrapped
-			// Obter chave unwrapped 
-			// Fazer unwrap da chave 
-			// Decifrar ficheiro users.txt
-			// Chamar isRegistered (Este método já apaga o txt)
-			// Decifrar following
 			// procurar userID no folliwing
 			// caso não esteja inserir userID no following
 			// cifrar following
@@ -1061,26 +1054,29 @@ public class SeiTchizServer {
 			// 	following é do senderID e followers é do userID
 
 			// procurar da lista de users.txt se o userID pretendido existe
-			try {
-				Scanner scanner = new Scanner(usersFile);
-				while (scanner.hasNextLine() && !encontrado) {
-					String line = scanner.nextLine();
-					String[] lineSplit = line.split(":");
-					if (lineSplit[0].contentEquals(userID)) {
-						encontrado = true;
-					}
-				}
-				scanner.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 
-			File followingUserFile = new File(userStuffPath + senderID + "/following.txt");
+			//metodo do sec vai aqui
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			sec.decFile(this.usersFileCif, this.usersFileDec, unwrappedKey);
+
+			// Procurar o clientID no users.txt e devolve o resultado da busca
+			encontrado = userRegistered(userID);
+
+			// Decifrar following
+			sec.decFile(this.userStuffPath + senderID + "/following.cif", this.userStuffPath + senderID + "/following.txt", unwrappedKey);
+
+			File followingUserFile = new File(this.userStuffPath + senderID + "/following.txt");
 			try (Scanner scfollowingUsers = new Scanner(followingUserFile)) {
 
 				boolean found = false;
 				while (scfollowingUsers.hasNextLine()) {
 					String lineFollowingUsers = scfollowingUsers.nextLine();
+					// TODO:remove sysout
+					System.out.println(lineFollowingUsers);
 					if (lineFollowingUsers.contentEquals(userID)) {
 						found = true;
 					}
@@ -1096,11 +1092,14 @@ public class SeiTchizServer {
 			}
 
 			// caso userID existe em users.txt
-			// Criar um novo ficheiro temp e copiar toda a informacao do ficheiro following
-			if (encontrado) {
-				unfollowAux(userID, senderID);
+			// Criar um novo ficheiro temp e copiar toda a informação do ficheiro following
+			if (encontrado == 0) {
+				unfollowAux(userID, senderID, unwrappedKey);
 				return 0;
 			}
+
+			// Deletar ficheiro following caso userID não esteja no ficheiro
+			followingUserFile.delete();
 
 			// caso se percorram todos os userIDs e nao se encontre userID entao o cliente
 			// nao o estava a seguir e devolve-se -1
@@ -1116,8 +1115,9 @@ public class SeiTchizServer {
 		 * 
 		 * @param userID Usuario deixado de seguir por senderID
 		 * @param senderID Usuario que deixara de seguir userID
+		 * @param key Chave que será usada para cifrar e decifrar ficheiros
 		 */
-		private void unfollowAux(String userID, String senderID) {
+		private void unfollowAux(String userID, String senderID, Key key) {
 
 			File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
 			File sendersFollowingTEMPFile = new File(userStuffPath + senderID + "/followingTemp.txt");
@@ -1166,7 +1166,23 @@ public class SeiTchizServer {
 				// nada acontece aqui
 			}
 
+			// Cifrar ficheiro following.txt
+			if(sec.cifFile(sendersFollowingTEMPFile.getPath(), userStuffPath + senderID + "/following.cif", key) == -1) {
+				System.out.println("Erro ao cifrar ficheiro following.txt");
+				sendersFollowingTEMPFile.delete();
+				System.exit(-1);
+			}
+			// Deletar ficheiro following.txt
+			sendersFollowingTEMPFile.delete();
+
 			// ----retirar senderID de followers de userID----
+
+			// Decifrar ficheiro followers.cif de userID
+			if(sec.decFile(userStuffPath + userID + "/followers.cif", userStuffPath + userID + "/followers.txt", key) == -1) {
+				System.out.println("Erro ao decifrar ficheiro following.txt");
+				System.exit(-1);
+			}
+
 			// 1.passar todo o conteudo de followers menos o senderID pretendido para um
 			// ficheiro auxiliar
 			try (Scanner scUsersFollowers = new Scanner(usersFollowersFile);
@@ -1192,10 +1208,19 @@ public class SeiTchizServer {
 				// nada acontece aqui
 			}
 
-			// 3.renomear o ficheiro temporario como followers.txt
+			// 3.renomear o ficheiro temporário como followers.txt
 			if (usersFollowersTEMPFile.renameTo(usersFollowersFile)) {
 				// nada acontece aqui
 			}
+
+			// Cifrar ficheiro temporário
+			if(sec.cifFile(usersFollowersTEMPFile.getPath(), userStuffPath + userID + "/followers.cif", key) == -1) {
+				System.out.println("Erro ao cifrar ficheiro followers.txt");
+				usersFollowersTEMPFile.delete();
+				System.exit(-1);
+			}
+			// Deletar ficheiro temporário
+			usersFollowersTEMPFile.delete();
 
 		}
 
@@ -1306,6 +1331,16 @@ public class SeiTchizServer {
 		 */
 		private String viewfollowers(String senderID) {
 
+
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			
+			//metodo do sec vai aqui
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			sec.decFile(userStuffPath + senderID + "/followers.cif", userStuffPath + senderID + "/followers.txt", unwrappedKey);
+
 			// procurar no folder de users no do sender se o ficheiro followers.txt esta
 			// vazio
 			File sendersFollowersFile = new File(userStuffPath + senderID + "/followers.txt");
@@ -1327,6 +1362,10 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
+			//verificar se followers.txt foi apagado com sucesso.
+			if(!sendersFollowersFile.delete()){
+				System.out.println("erro ao apagar followers.txt");
+			}
 			// devolver string que contem todos os followers de senderID separados por \n
 			return sb.toString();
 		}

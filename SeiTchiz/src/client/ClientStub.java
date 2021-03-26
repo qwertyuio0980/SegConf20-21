@@ -402,7 +402,7 @@ public class ClientStub {
 	 * Metodo que faz a ligacao com o servidor e lhe pede quais os
 	 * seguidores do cliente
 	 * 
-	 * @param senderID String que representa o ID do clinte que fez 
+	 * @param senderID String que representa o ID do cliente que fez 
 	 * o pedido viewfollowers
 	 * @return String que tem todos os followers do cliente ou esta vazia
 	 * se este nao tem followers
