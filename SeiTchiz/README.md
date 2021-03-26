@@ -70,9 +70,9 @@ javac -d bin src/server/SeiTchizServer.java src/communication/ComServer.java src
 javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/ComClient.java src/security/Security.java
 
 ---PARA CORRER SERVIDOR COM POLICIES---
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 server passserver
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 keystores/server passserver
 ---PARA CORRER SERVIDOR SEM POLICIES---
-java -cp bin server/SeiTchizServer 45678 server passserver
+java -cp bin server/SeiTchizServer 45678 keystores/server passserver
 
 ---PARA CORRER CLIENTE COM POLICIES---
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1

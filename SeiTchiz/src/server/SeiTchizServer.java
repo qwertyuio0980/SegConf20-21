@@ -32,7 +32,11 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.io.FilenameFilter;
 
-
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -45,13 +49,20 @@ public class SeiTchizServer {
 	// Files & paths
 	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
 	public int port;
+	// Files
 	private File filesFolder;
 	private File serverStuffFolder;
 	private File userStuffFolder;
 	private File usersFile;
 	private File groupsFolder;
 	private File globalPhotoCounterFile;
+	// Keys & keystores
+	private final String secKeyPath = "keys/server.key";
+	private final String storeType = "JKS";
 	private File keysFolder;
+	private String serverKSPath;
+	private String serverKSPassword;
+	private String serverKSAlias;
 
 	public static final String separador = "------------------------------------------";
 
@@ -92,6 +103,15 @@ public class SeiTchizServer {
 	 */
 	public void startServer(String[] arguments) {
 
+		// Iniciar variÃ¡veis globais relacionadas com a keystore
+		serverKSPath = arguments[1];
+		System.out.println("Server:... " + serverKSPath);
+		serverKSPassword = arguments[2];
+		System.out.println("Server:..." + serverKSPassword);
+		serverKSAlias = arguments[1].split("/")[1];
+		System.out.println("Server:..." + serverKSAlias);
+
+
 		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
 		SSLServerSocket sSoc = null;
 		try {
@@ -100,6 +120,8 @@ public class SeiTchizServer {
 			System.err.println(e.getMessage());
 			System.exit(-1);
 		}
+
+		// Criar chave simÃ©trica do servidor
 
 		Writer globalPhotoCounterFile;
 
@@ -114,6 +136,9 @@ public class SeiTchizServer {
 
 			userStuffFolder = new File("files/userStuff");
 			userStuffFolder.mkdir();
+
+			keysFolder = new File("keys");
+			keysFolder.mkdir();
 
 			usersFile = new File("files/serverStuff/users.cif");
 			usersFile.createNewFile();
@@ -133,11 +158,17 @@ public class SeiTchizServer {
 			System.out.println(separador);
 			System.exit(-1);
 		}
+
+		// Criar chave simÃ©trica do servidor
+		if(!generateSecKey(secKeyPath)) {
+			System.out.println("Houve um erro na criaÃ§Ã£o da chave simÃ©trica do servidor");
+			System.exit(-1);
+		}
 		
 		while (true) {
 			try {
 				Socket inSoc = sSoc.accept();
-				ServerThread newServerThread = new ServerThread(inSoc, arguments[1], arguments[2]);
+				ServerThread newServerThread = new ServerThread(inSoc, serverKSPath, serverKSPassword, secKeyPath, storeType);
 				newServerThread.start();
 			} catch (IOException e) {
 				System.out.println("Nao foi possivel criar uma nova thread");
@@ -145,6 +176,65 @@ public class SeiTchizServer {
 		}
 
 		// sSoc.close();
+	}
+
+	/**
+	* Gera uma chave secreta, cifra a mesma com a chave pÃºblica do servidor e guarda a mesma
+	* num ficheiro server.key no keyStorePath passado
+	* @param keyStorePath caminho do ficheiro server.key
+	* @return true caso a chave tenha sido criada, cifrada e guardado com sucesso.
+	* False, caso contrÃ¡rio.
+	* @requires keyStorePath != null && keyStorePath != "";
+	*/
+	private boolean generateSecKey(String keyStorePath) {
+
+		Security sec = new Security();
+
+		// Criar chave simÃ©trica
+		KeyGenerator kg = null;
+		try {
+			kg = KeyGenerator.getInstance("AES");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		kg.init(128);
+		// Chave simÃ©trica
+		SecretKey key = kg.generateKey();
+
+		// Obter chave pÃºblica 
+		Certificate cert  = sec.getCert(serverKSAlias, serverKSPath, serverKSPassword, storeType);
+		PublicKey ku = cert.getPublicKey();
+
+		// Encriptar chave simÃ©trica
+		Cipher c = null;
+		byte[] wrappedKey = null;
+		try {
+			c = Cipher.getInstance("RSA");
+			c.init(Cipher.WRAP_MODE, ku);
+			wrappedKey = c.wrap(key);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		// Guardar wrappedKey no ficheiro keyStorePath
+		File f = new File(keyStorePath);
+		FileOutputStream fos = null;
+		if(!f.exists())
+			try {
+				f.createNewFile();
+				fos = new FileOutputStream(keyStorePath);
+				fos.write(wrappedKey);
+				fos.flush();
+				fos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+
+		return true;
 	}
 
 	// Threads utilizadas para comunicacao com os clientes
@@ -158,10 +248,12 @@ public class SeiTchizServer {
 		private Security sec;
 
 		// Server KeyStore & Keys
-		protected String serverKeyStore;
-		protected String serverKeyStorePassword;
+		protected String serverKS;
+		protected String serverKSPassword;
 		protected String serverAlias;
-		protected String storeType = "JKS";
+		protected String storeType;
+		protected String serverSKPath;
+		protected String secKeyAlg = "AES";
 		
 		//File e Folder Paths
 		private final String serverStuffPath = "files/serverStuff/";
@@ -169,15 +261,21 @@ public class SeiTchizServer {
 		private final String usersFileDec = "files/serverStuff/users.txt"; 
 		private final String usersFileCif = "files/serverStuff/users.cif";
 
-		ServerThread(Socket inSoc, String serverKS, String serverKSPassword) {
-			this.serverKeyStore = "keystores/" + serverKS;
-			System.out.println("serverKeyStore: " + this.serverKeyStore);
+		ServerThread(Socket inSoc, String serverKS, String serverKSPassword, String serverSKPath, String storeType) {
+			this.serverKS = serverKS;
+			System.out.println("ThreadServer:... serverKS: " + this.serverKS);
 			
-			this.serverAlias = serverKS;
-			System.out.println("serverAlias: " + this.serverAlias);
+			this.serverAlias = serverKS.split("/")[1];
+			System.out.println("ThreadServer:... serverAlias: " + this.serverAlias);
 			
-			this.serverKeyStorePassword = serverKSPassword;
-			System.out.println("serverKeyStorePassword: " + this.serverKeyStorePassword);
+			this.serverKSPassword = serverKSPassword;
+			System.out.println("ThreadServer:... serverKSPassword: " + this.serverKSPassword);
+
+			this.serverSKPath = serverSKPath;
+			System.out.println("ThreadServer:... serverSKPath: " + this.serverSKPath);
+
+			this.storeType = storeType;
+			System.out.println("ThreadServer:... storeType: " + this.storeType);
 			
 			socket = inSoc;
 			this.sec = new Security();
@@ -189,8 +287,11 @@ public class SeiTchizServer {
 		 */
 		public void run() throws NullPointerException {
 			try {
+				System.out.println("Dentro da serverThread");
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+				System.out.println("Dentro da serverThread");
+
 				
 				ComServer com = new ComServer(socket, inStream, outStream);
 				
@@ -670,18 +771,17 @@ public class SeiTchizServer {
 			return buffer.getLong();
 		}
 		
-	    /**
-		 * Procura clientID passado no ficheiro que regista os clientes do sistema
-		 * 
-		 * @param clientID cliente a ser procurado nos registos
-		 * @return 0 caso o cliente está registado, 1 caso contrário
-		 * @requires clientID != null && clientID != ""
-		 */
+		/**
+		* Procura clientID passado no ficheiro que regista os clientes do sistema
+		* @param clientID cliente a ser procurado nos registos
+		* @return 0 caso o cliente estÃ¡ registado, 1 caso contrÃ¡rio, ou -1 caso o ficheiro contendo os registos nÃ£o exista
+		* @requires clientID != null && clientID != ""
+		*/
 		private int userRegistered(String clientID) {
 
 			File usersF = new File("files/serverStuff/users.txt");
 			if(!usersF.exists()) {
-				return 1;
+				return -1;
 			}
 
 			String line;
@@ -695,7 +795,7 @@ public class SeiTchizServer {
 						// Deletar o ficheiro contendo os users
 						if(!usersF.delete()) {
 							System.out.println("Erro ao deletar o ficheiro users.txt");
-							return 1;
+							return -1;
 						}
 						return 0;
 					}
@@ -707,39 +807,43 @@ public class SeiTchizServer {
 
 			// toda a lista foi percorrida e o user nao foi encontrado
 			return 1;
-		
 		}
-		
+					
 		/**
-		 * Metodo que verifica se um user ja estao na lista de ficheiros do
+		 * Metodo que verifica se um user ja estÃ¡ na lista de ficheiros do
 		 * servidor
 		 * 
 		 * @param clientID String que identifica o cliente que se pretende autenticar
-		 * @return 0 se autenticacao foi bem sucedida e 1 se registo do clientID não existe no servidor
+		 * @return 0 se autenticacao foi bem sucedida e 1 se registo do clientID nÃ£o existe no servidor
 		 */
 		public int isAuthenticated(String clientID) {
 
-			// Verificar se o ficheiro users.cif está vazio
+			// Verificar se o ficheiro users.cif estÃ¡ vazio
 			// Caso esteja apenas ciframos a nova entrada do cliente novo e colocamos
 			// no novo ficheiro users.cif
-			File usersF = new File(usersFileDec);
+			File usersF = new File("files/serverStuff/users.cif");
 			if(usersF.length() == 0) {
 				return 1;
 			} else {
 				// Decriptar o ficheiro users.cif
-				// Obter chave privada para decifrar o conteúdo do ficheiro
-				Key k = sec.getKey("myServer", "keystores/server", "passserver", "passserver", "JKS");
-				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-				sec.decFile(usersFileCif, usersFileDec, k);
+				// Obter chave privada para decifrar a chave secreta do servidor
+				Key k = sec.getKey(this.serverAlias, this.serverKS, this.serverKSPassword, this.serverKSPassword, this.storeType);
+				// Obter wrappedKey
+				byte[] wrappedKey = sec.getWrappedKey(this.serverSKPath);
+				
+				// Decifrar chave secreta do servidor
+				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.secKeyAlg, k);
+				// Decifrar ficheiro users.cif e colocar conteÃºdo no ficheiro users.txt
+				sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey);
 				// Procurar o clientID no aux.txt e devolve o resultado da busca
 				return userRegistered(clientID);
 			}
 		}
 		
 		/**
-		 * Cria os recursos necessários para o clienteID
-		 * @param clientID cliente aos quais os recursos pertencerão
-		 * @return 0 caso sejam criados todos os recursos com sucesso, -1 caso contrário
+		 * Cria os recursos necessï¿½rios para o clienteID
+		 * @param clientID cliente aos quais os recursos pertencerï¿½o
+		 * @return 0 caso sejam criados todos os recursos com sucesso, -1 caso contrï¿½rio
 		 * @requires clientID != null && clientID != "" 
 		 */
 		private int createClientResources(String clientID) {
@@ -768,7 +872,7 @@ public class SeiTchizServer {
 				userOwner.close();
 
 			} catch (IOException e) {
-				System.out.println("Não foi possível criar os recursos necessários para o cliente corrente");
+				System.out.println("Nï¿½o foi possï¿½vel criar os recursos necessï¿½rios para o cliente corrente");
 				e.printStackTrace();
 				return -1;
 			}
@@ -795,10 +899,10 @@ public class SeiTchizServer {
 				return -1;
 			}
 
-			if(this.serverKeyStore == null) {
+			if(this.serverKS == null) {
 				System.out.println("serverKeyStore null");
 			}
-			if(this.serverKeyStorePassword == null) {
+			if(this.serverKSPassword == null) {
 				System.out.println("serverKeyStorePassword null");
 			}
 			if(this.storeType == null) {
@@ -806,11 +910,16 @@ public class SeiTchizServer {
 			}
 
 			System.out.println();
-			// Obter chave privada para decifrar o conteúdo do ficheiro contendo os registos dos clientes
-			Key k = sec.getKey("myServer", "keystores/server", "passserver", "passserver", "JKS");
 
-			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", k) == -1) {
+			// Obter chave simÃ©trica wrapped
+			byte[] wrappedKey = sec.getWrappedKey(this.serverSKPath);
+			// Obter chave privada para fazer unwrap da chave simÃ©trica
+			Key k = sec.getKey(this.serverAlias, this.serverKS, this.serverKSPassword, this.serverKSPassword, this.storeType);
+			// Fazer unwrap
+			Key unwrappedKey = sec.unwrapKey(wrappedKey, this.secKeyAlg, k);
+
+			// Decifrar ficheiro users.cif e colocar conteÃºdo no ficheiro users.txt
+			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey) == -1) {
 				return -1;
 			}
 
@@ -818,7 +927,7 @@ public class SeiTchizServer {
 			Writer wr = null;
 			try {
 				wr = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
-				wr.append(clientID + "," + certPath);
+				wr.append(clientID + "," + certPath + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
 				try {
@@ -829,10 +938,6 @@ public class SeiTchizServer {
 				return -1;
 			}
 
-			// Obter chave pública para cifrar o ficheiro users.txt
-			Certificate cer  = sec.getCert(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.storeType);
-			PublicKey pk = cer.getPublicKey();
-
 			// Fazer closes
 			try {
 				wr.close();
@@ -840,8 +945,8 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
-			// Cifrar o ficheiro users.txt como users.cif com a chave pública do servidor
-			return sec.cifFilePK("files/serverStuff/users.txt", "files/serverStuff/users.cif", pk);
+			// Cifrar o ficheiro users.txt como users.cif com a chave pÃºblica do servidor
+			return sec.cifFile("files/serverStuff/users.txt", "files/serverStuff/users.cif", unwrappedKey);
 		}
 		
 		
