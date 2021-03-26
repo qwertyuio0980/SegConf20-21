@@ -103,7 +103,7 @@ keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JKS -keystor
 
 ---Chave simétrica do servidor--- 
 keytool -genseckey -alias serverSecKey -storetype JCEKS -keystore keystores/serverSecKey
-
+OBS: Contudo, a chave simétrica está sendo criada no código do servidor e é guardada no ficheiro keys/server.key
 
 ---Como verificar keystores---
 keytool -list -keystore keystores/1KS
