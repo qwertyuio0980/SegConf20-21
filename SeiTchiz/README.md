@@ -149,7 +149,7 @@ quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta
 
 comandos:
 
-**Criar chaves:
+## Chaves assimétricas
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -keystore <NOMEFICHEIROKEYSTORE>
 
 keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/serverKeyStore 
@@ -162,6 +162,10 @@ keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JKS -keystor
 *Password: passclient3
 keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/4KS
 *Password: passclient4
+
+## Chave simétrica do servidor 
+keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
+
 
 **Verificar chaves:
 keytool -list-keystore <clientID + 'KS'>
