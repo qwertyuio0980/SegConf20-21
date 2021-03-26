@@ -71,13 +71,24 @@ javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communicati
 
 ---PARA CORRER SERVIDOR COM POLICIES---
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 keystores/server passserver
+
 ---PARA CORRER SERVIDOR SEM POLICIES---
 java -cp bin server/SeiTchizServer 45678 keystores/server passserver
+## Debug
+java -cp bin -Djavax.net.debug=ssl server.SeiTchizServer 45678 keystores/server passserver
+## Com policies
+
+## Especificar a versão de TLS
+java -cp bin -Djavax.net.debug=ssl -Djdk.tls.client.protocols="TLSv1.2" server.SeiTchizServer 45678 keystores/server passserver
 
 ---PARA CORRER CLIENTE COM POLICIES---
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1
 ---PARA CORRER CLIENTE SEM POLICIES---
 java -cp bin client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1
+## Debug
+## Especificar a versão de TLS
+java -cp bin -Djdk.tls.client.protocols="TLSv1.2" client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1
+
 
 ---PARA CORRER SERVIDOR COM POLICIES POR JAR---
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 server passserver

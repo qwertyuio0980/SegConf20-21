@@ -208,14 +208,14 @@ public class ClientStub {
         // 1.1. Obter certificado
 		KeyStore kstore = null;
 		try {
-			kstore = KeyStore.getInstance("JCEKS");
+			kstore = KeyStore.getInstance("JKS");
 		} catch (KeyStoreException e2) {
 			e2.printStackTrace();
 			System.out.println("Erro ao obter keystore");
             closeConnection();
             System.exit(-1);
 		}
-		try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
+		try(FileInputStream kfile = new FileInputStream(keystore)) {
 			kstore.load(kfile, this.keystorePassword.toCharArray());
 		} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
 			System.out.println("Erro ao dar load de keystore");
