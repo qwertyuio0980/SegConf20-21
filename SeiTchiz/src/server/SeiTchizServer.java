@@ -73,10 +73,6 @@ public class SeiTchizServer {
 	private File globalPhotoCounterFile;
 	private File keysFolder;
 
-	private Socket socket;
-	private ObjectOutputStream outStream;
-	private ObjectInputStream inStream;
-	
 	public static void main(String[] args) {
 
 		System.setProperty("javax.net.ssl.keyStore", "keystores/serverKeyStore");
@@ -224,6 +220,11 @@ public class SeiTchizServer {
 
 	// Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
+
+		private Socket socket;
+		private ObjectOutputStream outStream;
+		private ObjectInputStream inStream;
+	
 
 		private Security sec;
 
@@ -410,7 +411,9 @@ public class SeiTchizServer {
 
 						try {
 							// receber <userID que o cliente quer seguir>:<userID do proprio cliente>
+							System.out.println("Esperando receber mais argumentos");
 							aux = (String) inStream.readObject();
+							System.out.println("Recebeu argumentos");
 							conteudo = aux.split(":");
 
 							// enviar estado da operacao
@@ -953,8 +956,6 @@ public class SeiTchizServer {
 				// Decifrar ficheiro following.cif e colocar conteúdo no ficheiro following.txt
 				sec.decFile(this.userStuffPath + senderID + "/following.cif", this.userStuffPath + senderID + "/following.txt", unwrappedKey);
 
-				System.out.println("Decifrou following");
-
 				File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
 				Scanner sc;
 				try {
@@ -996,12 +997,8 @@ public class SeiTchizServer {
 				//dar overwrite ao ficheiro following.cif com o conteudo de following.txt e apagar following.txt
 				sec.cifFile(this.userStuffPath + senderID + "/following.txt", this.userStuffPath + senderID + "/following.cif", unwrappedKey);
 
-				System.out.println("Cifrou following");
-
 				// Decifrar ficheiro followers.cif e colocar conteúdo no ficheiro followers.txt
 				sec.decFile(this.userStuffPath + userID + "/followers.cif", this.userStuffPath + userID + "/followers.txt", unwrappedKey);
-
-				System.out.println("Decifrou followers");
 
 				// adicionar senderID a followers.txt de userID
 				File userIDsFollowersFile = new File(userStuffPath + userID + "/followers.txt");
@@ -1023,8 +1020,6 @@ public class SeiTchizServer {
 
 				//dar overwrite ao ficheiro followers.cif com o conteudo de followers.txt e apagar followers.txt
 				sec.cifFile(this.userStuffPath + userID + "/followers.txt", this.userStuffPath + userID + "/followers.cif", unwrappedKey);
-
-				System.out.println("Cifrou following");
 
 				resultado = 0;
 			}
