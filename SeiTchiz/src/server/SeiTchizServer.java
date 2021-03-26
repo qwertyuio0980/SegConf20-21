@@ -1167,7 +1167,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar ficheiro following.txt
-			if(sec.cifFile(sendersFollowingTEMPFile.getPath(), userStuffPath + senderID + "/following.cif", key) == -1) {
+			if(sec.cifFile(sendersFollowingFile.getPath(), userStuffPath + senderID + "/following.cif", key) == -1) {
 				System.out.println("Erro ao cifrar ficheiro following.txt");
 				sendersFollowingTEMPFile.delete();
 				System.exit(-1);
@@ -1214,7 +1214,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar ficheiro temporário
-			if(sec.cifFile(usersFollowersTEMPFile.getPath(), userStuffPath + userID + "/followers.cif", key) == -1) {
+			if(sec.cifFile(usersFollowersFile.getPath(), userStuffPath + userID + "/followers.cif", key) == -1) {
 				System.out.println("Erro ao cifrar ficheiro followers.txt");
 				usersFollowersTEMPFile.delete();
 				System.exit(-1);
