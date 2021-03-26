@@ -13,6 +13,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -48,12 +49,9 @@ public class Security {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		if(keyStore  == null) {
+		if(keyStore  == null || kstore == null) {
 			System.out.println("Erro: ao obter a keystore");
 			System.exit(-1);
-		}
-		if(kstore == null) {
-			System.out.println("kstore null");
 		}
 		// Obter chave requerida caso exista
 		Key key = null;
@@ -63,7 +61,6 @@ public class Security {
 			e.printStackTrace();
 			System.exit(-1);
 		}
-
 		return key;
 	}
 
@@ -234,17 +231,13 @@ public class Security {
 	 */
 	public Key unwrapKey(byte[] wrappedKey,String wrappedKeyAlg, Key key) {
 		Cipher c = null;
+		Key unwrappedKey = null;
+
 		try {
 			c = Cipher.getInstance(key.getAlgorithm());
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-			e.printStackTrace();
-			return null;
-		}
-		Key unwrappedKey = null;
-		try {
 			c.init(Cipher.UNWRAP_MODE, key);
 			unwrappedKey = c.unwrap(wrappedKey, wrappedKeyAlg, Cipher.SECRET_KEY);
-		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException  | InvalidKeyException e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -266,7 +259,4 @@ public class Security {
 
 			return wrappedKey;
 	}
-
-
-
 }

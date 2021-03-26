@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -105,12 +106,8 @@ public class SeiTchizServer {
 
 		// Iniciar variáveis globais relacionadas com a keystore
 		serverKSPath = arguments[1];
-		System.out.println("Server:... " + serverKSPath);
 		serverKSPassword = arguments[2];
-		System.out.println("Server:..." + serverKSPassword);
 		serverKSAlias = arguments[1].split("/")[1];
-		System.out.println("Server:..." + serverKSAlias);
-
 
 		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
 		SSLServerSocket sSoc = null;
@@ -830,7 +827,6 @@ public class SeiTchizServer {
 				Key k = sec.getKey(this.serverAlias, this.serverKS, this.serverKSPassword, this.serverKSPassword, this.storeType);
 				// Obter wrappedKey
 				byte[] wrappedKey = sec.getWrappedKey(this.serverSKPath);
-				
 				// Decifrar chave secreta do servidor
 				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.secKeyAlg, k);
 				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
@@ -872,7 +868,7 @@ public class SeiTchizServer {
 				userOwner.close();
 
 			} catch (IOException e) {
-				System.out.println("N�o foi poss�vel criar os recursos necess�rios para o cliente corrente");
+				System.out.println("Nao foi possivel criar os recursos necessarios para o cliente corrente");
 				e.printStackTrace();
 				return -1;
 			}
@@ -899,34 +895,34 @@ public class SeiTchizServer {
 				return -1;
 			}
 
-			if(this.serverKS == null) {
-				System.out.println("serverKeyStore null");
-			}
-			if(this.serverKSPassword == null) {
-				System.out.println("serverKeyStorePassword null");
-			}
-			if(this.storeType == null) {
-				System.out.println("storeType null");
-			}
-
-			System.out.println();
-
-			// Obter chave simétrica wrapped
-			byte[] wrappedKey = sec.getWrappedKey(this.serverSKPath);
 			// Obter chave privada para fazer unwrap da chave simétrica
 			Key k = sec.getKey(this.serverAlias, this.serverKS, this.serverKSPassword, this.serverKSPassword, this.storeType);
+			// Obter chave simétrica wrapped
+			byte[] wrappedKey = sec.getWrappedKey("keys/server.key");
 			// Fazer unwrap
-			Key unwrappedKey = sec.unwrapKey(wrappedKey, this.secKeyAlg, k);
-
-			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey) == -1) {
-				return -1;
+			Key unwrappedKey = sec.unwrapKey(wrappedKey, "AES", k);
+			
+			// Verificar se o ficheiro users.cif esta vazio
+			File usersF = new File("files/serverStuff/users.cif");
+			if(usersF.length() > 0) {
+				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
+				if(sec.decFile(this.usersFileCif, this.usersFileDec, unwrappedKey) == -1) {
+					return -1;
+				}
+			} else {
+				File usersFtxt = new File(this.usersFileDec);
+				try {
+					usersFtxt.createNewFile();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 			// colocar a entrada <clientID,certPath> no ficheiro users.txt
 			Writer wr = null;
 			try {
-				wr = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
+				wr = new BufferedWriter(new FileWriter(this.usersFileDec, true));
 				wr.append(clientID + "," + certPath + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -944,9 +940,9 @@ public class SeiTchizServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-
+			
 			// Cifrar o ficheiro users.txt como users.cif com a chave pública do servidor
-			return sec.cifFile("files/serverStuff/users.txt", "files/serverStuff/users.cif", unwrappedKey);
+			return sec.cifFile(this.usersFileDec, this.usersFileCif, unwrappedKey);
 		}
 		
 		

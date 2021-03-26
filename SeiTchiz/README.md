@@ -82,19 +82,18 @@ java -cp bin -Djavax.net.debug=ssl server.SeiTchizServer 45678 keystores/server 
 java -cp bin -Djavax.net.debug=ssl -Djdk.tls.client.protocols="TLSv1.2" server.SeiTchizServer 45678 keystores/server passserver
 
 ---PARA CORRER CLIENTE COM POLICIES---
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost truststore/ts_client keystores/1ks passclient1 client1
 ---PARA CORRER CLIENTE SEM POLICIES---
-java -cp bin client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1
+java -cp bin client.SeiTchiz localhost truststore/ts_client keystores/1ks passclient1 client1
 ## Debug
 ## Especificar a versão de TLS
-java -cp bin -Djdk.tls.client.protocols="TLSv1.2" client.SeiTchiz localhost truststore/ts_client keystores/KS1 passclient1 passclient1
-
+java -cp bin -Djdk.tls.client.protocols="TLSv1.2" client.SeiTchiz localhost truststore/ts_client keystores/1ks passclient1 client1
 
 ---PARA CORRER SERVIDOR COM POLICIES POR JAR---
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 server passserver
 
 ---PARA CORRER CLIENTE COM POLICIES POR JAR---
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar localhost truststore/ts_client keystores/KS1 passclient1 passclient1
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar localhost truststore/ts_client keystores/1ks passclient1 client1
 
 ----------------------
 
@@ -102,13 +101,13 @@ java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar 
 
 keytool -genkeypair -alias server -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/server 
 *Password: passserver
-keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/1KS
+keytool -genkeypair -alias 1ks -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/1ks
 *Password: passclient1
-keytool -genkeypair -alias 2KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/2KS
+keytool -genkeypair -alias 2ks -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/2ks
 *Password: passclient2
-keytool -genkeypair -alias 3KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/3KS
+keytool -genkeypair -alias 3ks -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/3ks
 *Password: passclient3
-keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/4KS
+keytool -genkeypair -alias 4ks -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/4ks
 *Password: passclient4
 
 
@@ -117,10 +116,10 @@ keytool -genseckey -alias serverSecKey -storetype JCEKS -keystore keystores/serv
 OBS: Contudo, a chave simétrica está sendo criada no código do servidor e é guardada no ficheiro keys/server.key
 
 ---Como verificar keystores---
-keytool -list -keystore keystores/1KS
-keytool -list -keystore keystores/2KS
-keytool -list -keystore keystores/3KS
-keytool -list -keystore keystores/4KS
+keytool -list -keystore keystores/1ks
+keytool -list -keystore keystores/2ks
+keytool -list -keystore keystores/3ks
+keytool -list -keystore keystores/4ks
 keytool -list -keystore keystores/server
 keytool -list -keystore truststore/ts_client
 

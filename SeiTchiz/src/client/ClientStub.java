@@ -42,6 +42,7 @@ public class ClientStub {
 
 	//atributos de um stub
 	private String truststore; 
+	private String keystoreAlias;
 	private String keystore;
 	private String keystorePassword;
 	private String clientID;
@@ -55,6 +56,7 @@ public class ClientStub {
 		this.keystore = argsClient[2];
 		this.keystorePassword = argsClient[3];
 		this.clientID = argsClient[4];
+		this.keystoreAlias = argsClient[2].split("/")[1];
 
 		// Criar Streams de leitura e escrita
 		this.in = null;
@@ -138,7 +140,6 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
         }
-		System.out.println("---mandado clientID---");
 
         // Receber resposta do servidor, um (nonce) e int (flag de registo no servidor)
         Long nonce = 0L;
@@ -153,8 +154,6 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
-
-		System.out.println("---recebido nonce---");
 
         int flag = 1;
         try {
@@ -182,11 +181,11 @@ public class ClientStub {
 				System.out.println("Login efetuado com sucesso.");
 			} else if(flag == 1) {
 				// Client corrente foi registado com sucesso. Assinatura e nonce enviados foram validados
-				System.out.println("Sign up e autenticaÃ§Ã£o efetuados com sucesso.");
+				System.out.println("Sign up e autenticacao efetuados com sucesso.");
 			}
         } else {
             // Ocorreu um erro ao servidor verificar nonce e assinatura passados
-            System.out.println("Erro ao fazer autenticaÃ§Ã£o.");
+            System.out.println("Erro ao fazer autenticacao.");
             closeConnection();
             System.exit(-1);
         }
@@ -218,6 +217,7 @@ public class ClientStub {
 		try(FileInputStream kfile = new FileInputStream(keystore)) {
 			kstore.load(kfile, this.keystorePassword.toCharArray());
 		} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+			e.printStackTrace();
 			System.out.println("Erro ao dar load de keystore");
             closeConnection();
             System.exit(-1);
@@ -225,7 +225,9 @@ public class ClientStub {
         
         Certificate cert = null;
 		try {
-			cert = (Certificate) kstore.getCertificate(keystore);//alias e igual ao nome do keystore
+			
+			//cert = (Certificate) kstore.getCertificate(keystore);//alias e igual ao nome do keystore
+			cert = (Certificate) kstore.getCertificate(keystoreAlias);
 		} catch (KeyStoreException e1) {
 			System.out.println("Erro ao buscar certificado do cliente");
             closeConnection();
@@ -235,7 +237,7 @@ public class ClientStub {
         // 1.2. Obter chave privada
         PrivateKey privKey = null;
 		try {
-			privKey = (PrivateKey) kstore.getKey(keystore, this.keystorePassword.toCharArray());
+			privKey = (PrivateKey) kstore.getKey(keystoreAlias, this.keystorePassword.toCharArray());
 		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
 			System.out.println("Erro ao obter chave privada");
             closeConnection();
@@ -255,6 +257,7 @@ public class ClientStub {
 			s.initSign(privKey);
 		} catch (InvalidKeyException e) {
 			System.out.println("erro: chave invalida");
+			e.printStackTrace();
             closeConnection();
             System.exit(-1);
 		}
@@ -333,6 +336,8 @@ public class ClientStub {
 		buffer.flip();//need flip 
 		return buffer.getLong();
 	}
+
+	//---------------------Metodos de comandos-------------------
 
 	/**
 	 * Metodo que efetua a comunicacao entre um user que quer seguir outro

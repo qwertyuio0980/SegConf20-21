@@ -40,8 +40,6 @@ public class SeiTchiz {
 		// cria ligacao com socket
 		ClientStub cs = new ClientStub(args);
 
-		System.out.println("------problema TLS passado------");
-
 		// efetuar login
 		cs.efetuarLogin();
 
