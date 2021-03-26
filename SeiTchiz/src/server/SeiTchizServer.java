@@ -46,6 +46,9 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.imageio.ImageIO;
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.print.event.PrintEvent;
 
 import java.io.FileWriter;
@@ -76,6 +79,9 @@ public class SeiTchizServer {
 	
 	public static void main(String[] args) {
 
+		System.setProperty("javax.net.ssl.keyStore", "keystores/serverKeyStore");
+		System.setProperty("javax.net.ssl.keyStorePassword", "passserver");
+
 		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
 		if (args.length == 3 && args[0].equals("45678")) {
@@ -95,10 +101,10 @@ public class SeiTchizServer {
 	 */
 	public void startServer(String[] arguments) {
 
-		ServerSocket sSoc = null;
-
+		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
+		SSLServerSocket sSoc = null;
 		try {
-			sSoc = new ServerSocket(Integer.parseInt(arguments[0]));
+			sSoc = (SSLServerSocket) ssf.createServerSocket(Integer.parseInt(arguments[0]));
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);

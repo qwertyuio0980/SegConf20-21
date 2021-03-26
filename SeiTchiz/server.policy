@@ -7,6 +7,7 @@ grant codeBase "file:bin/" {
     permission java.io.FilePermission "PubKeys/client1.cer","delete";
     permission java.io.FilePermission "keystores/server.key","read,write";
     permission java.io.FilePermission "PubKeys/client3.cer","delete";
+    permission java.util.PropertyPermission "javax.net.ssl.keyStore","write";
 };
 
 grant codeBase "file:SeiTchizServer.jar" {
@@ -18,4 +19,5 @@ grant codeBase "file:SeiTchizServer.jar" {
     permission java.io.FilePermission "PubKeys/client1.cer","delete";
     permission java.io.FilePermission "keystores/server.key","read,write";
     permission java.io.FilePermission "PubKeys/client3.cer","delete";
+    permission java.util.PropertyPermission "javax.net.ssl.keyStore","write";
 };

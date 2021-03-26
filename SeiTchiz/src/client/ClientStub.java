@@ -25,12 +25,16 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import communication.Com;
 import security.Security;
 
 public class ClientStub {
 
-	private Socket clientSocket;
+	private SSLSocket clientSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
 	
@@ -108,10 +112,11 @@ public class ClientStub {
 	 * @requires ip != null
 	 */
 	public void conectar(String ip, int port) {
+		SocketFactory sf = SSLSocketFactory.getDefault();
 		try {
-			this.clientSocket = new Socket(ip, port);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
+			this.clientSocket = (SSLSocket) sf.createSocket(ip, port);
+		} catch(IOException e) {
+			System.out.println("Erro a criar a socket");
 			System.exit(-1);
 		}
 	}

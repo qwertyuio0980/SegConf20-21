@@ -8,6 +8,9 @@ public class SeiTchiz {
 
 	public static void main(String[] args) {
 
+		System.setProperty("javax.net.ssl.trustStore", "truststore/ts_client");
+		System.setProperty("javax.net.ssl.trustStorePassword", "passserver");
+
 		String separador = "------------------------------------------";
 		int arglen = args.length;
 		
