@@ -1276,34 +1276,6 @@ public class SeiTchizServer {
 					fos.flush();
 				}
 				
-				//--Maneira Digest nova TA A DAR ERRO--
-				//Criar ficheiro contendo a hash do conteúdo da foto recebida
-				//Obter o conteudo da foto como um array de bytes 
-				// BufferedImage bImage = ImageIO.read(photoFile);
-				// ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				// ImageIO.write(bImage, photoFile.getName().split("\\.")[1], bos);
-				// byte[] data = bos.toByteArray();
-
-				// // Obter hash do conteudo da foto
-				// MessageDigest hashMd = MessageDigest.getInstance("SHA");
-				// byte[] hash = hashMd.digest(data);
-				
-				// // Guardar hash no ficheiro 
-				// File hashFile = new File(userStuffPath + userName + "/photos/photoHash-" + globalCounter);
-				// FileOutputStream HashFos = null;
-				// try {
-				//  	HashFos = new FileOutputStream(hashFile);
-				//  	HashFos.write(hash);
-				// } catch (FileNotFoundException e) {
-				//  	System.out.println("File not found" + e);
-				//  	System.exit(-1);
-				// } finally {
-				//  	if (HashFos != null) {
-				//  		HashFos.close();
-				//  	}
-				// }
-				
-				//--Maneira Mac TA A DAR ERRO--
 				//Criar ficheiro contendo a hash do conteúdo da foto recebida
 				//Obter o conteudo da foto como um array de bytes 
 				BufferedImage bImage = ImageIO.read(photoFile);
@@ -1312,7 +1284,7 @@ public class SeiTchizServer {
 				byte[] data = bos.toByteArray();
 
 				// Fazer MAC e obter secretkey
-				Mac mac = Mac.getInstance(serverMacAlg);
+				Mac mac = Mac.getInstance("HmacSHA1");
 
 				// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
@@ -1336,6 +1308,7 @@ public class SeiTchizServer {
 				FileOutputStream HashFos = null;
 				ObjectOutputStream oos = null;
 				try {
+					System.out.println(mac.getMacLength()); 
 				 	HashFos = new FileOutputStream(hashFile);
 					oos = new ObjectOutputStream(fos);
 					oos.writeObject(mac.doFinal());
@@ -1347,6 +1320,37 @@ public class SeiTchizServer {
 				 		HashFos.close();
 				 	}
 				}
+
+				// TODO: DELETE TEST
+				// TEST //
+				// Fazer MAC e obter secretkey
+				Mac mac1 = Mac.getInstance("HmacSHA1");
+				//Fazer init do MAC
+				try {
+					mac1.init(unwrappedKey);
+				} catch (InvalidKeyException e) {
+					e.printStackTrace();
+					System.exit(-1);
+				}	
+				// Obter dados do ficheiro
+				FileInputStream fis1 = new FileInputStream(userStuffPath + userName + "/photos/photoHash-" + globalCounter);
+				ObjectInputStream ois1 = new ObjectInputStream(fis1);
+				byte[] hashedPic = (byte[]) ois1.readObject();
+				// Abrir um novo oos para um ficheiro teste.jpg
+				File test = new File(userStuffPath + userName + "/photos/teste.jpg");
+				test.createNewFile();
+				FileOutputStream fos1 = new FileOutputStream(test);
+				ObjectOutputStream oos1 = new ObjectOutputStream(fos1);
+				// Repetir o mesmo processo acima
+				// Fazer update do MAC
+				mac1.update(hashedPic);
+				// Guardar hash no ficheiro
+				oos1.writeObject(mac.doFinal());
+				oos1.close();
+				fos1.close();
+				ois1.close();
+				fis1.close();
+				// ---- //
 
 
 				oos.close();
