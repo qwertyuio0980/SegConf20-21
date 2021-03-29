@@ -19,36 +19,24 @@ PARA FAZER OS JARS:
 8.Fazer Next denovo e em "Select the class of the application entry point" fazer browse
 e meter a classe que tem o main
 
-PARA CORRER SERVIDOR COM POLICIES E JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678
-
-PARA CORRER CLIENTE COM POLICIES E JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <IP>:<45678> <userID> <userPassword>
-
-
 ----------------------
-Grupo 35
-Martim Silva 51304
-Francisco Freire 52177
-David Rodrigues 53307
-----------------------
-Limita��es do Trabalho da Fase 1
+Limitacoes do Trabalho da Fase 1
 
-O unico argumento que deve ser passado obrigatoriamente para o servidor correr � 45678.
+O unico argumento que deve ser passado obrigatoriamente para o servidor correr e 45678.
 
-O serverAdress passado pelo cliente como argumento pode ser apenas <endere�o IP> (por ex:localhost) ou <endere�o IP>:<porto 45678> (por ex: localhost:45678).
+O serverAdress passado pelo cliente como argumento pode ser apenas <endereco IP> (por ex:localhost) ou <endereco IP>:<porto 45678> (por ex: localhost:45678).
 
-Username e passwords passados como argumento em SeiTchiz n�o devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+Username e passwords passados como argumento em SeiTchiz nao devem conter espacos nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
-Nomes de grupos nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+Nomes de grupos nao devem conter espacos nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 Mensagens nao devem conter dois pontos(:) nem hifens(-).
 
-UserIDs inseridos nos comandos que recebem userIDs nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+UserIDs inseridos nos comandos que recebem userIDs nao devem conter espacos nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 Um user que ja esteja logged on nao deve fazer login enquanto a sessao inicial nao tenha sido terminada.
 
-groupIDs inseridos nos comandos que recebem userIDs nao devem conter espa�os nem dois pontos(:) nem hifens(-) nem forward slashes(/).
+groupIDs inseridos nos comandos que recebem userIDs nao devem conter espacos nem dois pontos(:) nem hifens(-) nem forward slashes(/).
 
 As fotos de stock que se podem partilhar sao apenas as que se encontram no ficheiro Fotos na root do projeto.
 Ou seja O argumento <photo> de post deve ser foto<1 a 4>.jpg
@@ -57,11 +45,11 @@ A pasta bin nao deve ser apagada.
 
 A pasta files pode ser apagada para dar um "restart" do servidor e todos os seus conteudos
 
-Como n�o foi dito no enunciado nao foi implementado o impedimento de um utilizador dar multiplos likes a mesma fotografia nem um utilizador poder dar like a sua propria fotografia.
+Como nao foi dito no enunciado nao foi implementado o impedimento de um utilizador dar multiplos likes a mesma fotografia nem um utilizador poder dar like a sua propria fotografia.
 
 Para interromper o funcionamento de um cliente usar a opcao s ou stop
 
-Limita��es do Trabalho da Fase 2
+Limitacoes do Trabalho da Fase 2
 
 Nao e tratado o caso de um user que ja esta ligado ao sistema e estar autenticado poder fazer login mais vezes por outros terminais. 
 
@@ -71,15 +59,18 @@ ADICIONAR MAIS LIMITACOES
 ----------------------
 Como compilar e executar o Trabalho da Fase 2
 
-PARA COMPILAR SERVIDOR COM POLICIES
+PARA COMPILAR SERVIDOR
 javac -d bin src/server/SeiTchizServer.java src/communication/Com.java src/security/Security.java
 
-PARA COMPILAR CLIENTE COM POLICIES
+PARA COMPILAR CLIENTE
 javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java src/security/Security.java
 
 PARA CORRER SERVIDOR COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 <keystore> <keystore-password>
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 serverKeyStore passserver
+
+PARA CORRER SERVIDOR SEM POLICIES
+java -cp bin server.SeiTchizServer 45678 serverKeyStore passserver
 
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
@@ -88,6 +79,8 @@ java -cp bin -Djava.security.manager -Djava.security.policy==client.policy clien
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 3KS passclient3 client3
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 4KS passclient4 client4
 
+PARA CORRER CLIENTE SEM POLICIES
+java -cp bin client.SeiTchiz localhost serverKeyStore 1KS passclient1 client1
 
 PARA CORRER SERVIDOR COM POLICIES POR JAR
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 <keystore> <keystore-password>
@@ -116,40 +109,22 @@ TODO:
             3.2.3. Comparação entre as duas Hash
 
 
-Mudar argumentos recebidos pelo servidor e cliente
-
-Estabelecimento de ligacao com TLS/SSL(truststore/keystore)
-
-Autenticacao do cliente com nonce
-
 Comandos:
+    -follow(BUGS)
+    -unfollow(BUGS)
+    -viewfollowers(BUGS)
 	-post
+    -wall
 	-newgroup
 	-addu
 	-removeu
+    -ginfo
 	-msg
 	-collect
 	-history
-	
-NAO ESQUECER:
-contexto do utilizador tem de estar fora do servidor
-quando aceder ao servidor enquanto cliente ja tenho de ter a keystore numa pasta de keystores            
-
-**DÚVIDAS**
-1. Estrutura dos keystores
-    1.1. Cada cliente terá sua própria keystore
-    1.2. O servidor terá sua própria keystore
-    1.3. A truststore será uma keystore com import do ficheiro .cert contendo 
-
-2. Em que forma será passado o certificado passado pelo cliente quando o mesmo é corrido.
-
-3. O alias de cada cliente pode ser igual ao nome do ficheiro keystore?Nao sabemos como buscar o alias dentro do java para fazer o getCertificate
 
 
-
-**Chaves & Keystores**
-
-comandos:
+**Criar Chaves & Keystores**
 
 ## Chaves assimétricas
 keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -keystore <NOMEFICHEIROKEYSTORE>
@@ -169,7 +144,7 @@ keytool -genkeypair -alias 4KS -keyalg RSA -keysize 2048 -storetype JKS -keystor
 keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 
 
-**Verificar chaves:
+**Verificar chaves**
 keytool -list-keystore <clientID + 'KS'>
 
 keytool -list -keystore keystores.serverKeyStore
@@ -187,7 +162,7 @@ keytool -list -keystore keystores.4KS
                 <keystore>        <alias>            <password>
 ------------------------------------------------------------------
 
-**Criar chaves em uma certa keystore:**
+**Criar chaves em uma certa keystore**
 
 //Chave simétrica para o servidor:
 keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore

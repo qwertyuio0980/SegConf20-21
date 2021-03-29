@@ -26,15 +26,13 @@ public class SeiTchiz {
 			System.exit(-1);
 		}
 
+		System.out.println("--------------cliente iniciado-----------");
+
 		// cria ligacao com socket
 		ClientStub cs = new ClientStub(args);
-		
-		//a partir daqui ja se fez a ligacao TLS (POR FAZER)
 
 		// efetuar login
 		cs.efetuarLogin();
-
-		System.out.println("login concluido");
 
 		boolean stop = false;
 		// ciclo principal do cliente

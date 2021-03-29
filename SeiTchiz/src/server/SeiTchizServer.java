@@ -61,7 +61,7 @@ import security.Security;
 public class SeiTchizServer {
 
 	private static final String GLOBALCOUNTERFILE = "files/serverStuff/globalPhotoCounter.txt";
-
+	static final String separador = "------------------------------------------";
 	private int port;
 
 	// Files & paths
@@ -78,13 +78,15 @@ public class SeiTchizServer {
 		System.setProperty("javax.net.ssl.keyStore", "keystores/serverKeyStore");
 		System.setProperty("javax.net.ssl.keyStorePassword", "passserver");
 
-		System.out.println("--------------servidor iniciado-----------");
 		SeiTchizServer server = new SeiTchizServer();
 		if (args.length == 3 && args[0].equals("45678")) {
+			System.out.println("--------------servidor iniciado-----------");
 			server.startServer(args);
 		} else {
+			System.out.println(separador);
 			System.out.println("Argumento de SeiTchizServer tem de ser obrigatoriamente \"45678\" e tem de ter 3 argumentos" +
 			"<port> <keystore> <keystore-password>");
+			System.out.println(separador);
 		}
 	}
 
@@ -132,15 +134,17 @@ public class SeiTchizServer {
 			groupsFolder.mkdirs();
 
 			System.out.println("ficheiros de esqueleto do servidor criados");
-			System.out.println("------------------------------------------");
+			System.out.println(separador);
 		} catch (IOException e) {
 			System.out.println("Houve um erro na criação de algum dos folders ou ficheiros de esqueleto");
+			System.out.println(separador);
 			System.exit(-1);
 		}
 
 		// Criar chave secreta para o servidor
 		if(!generateSecKey("keystores/server.key")) {
 			System.out.println("Houve um erro na criação da chave simétrica do servidor");
+			System.out.println(separador);
 			System.exit(-1);
 		}
 
@@ -239,21 +243,23 @@ public class SeiTchizServer {
 		private String serverKeyStorePassword;
 		private String storeType = "JKS";
 		private String serverAssKeyAlg = "RSA";
+		private String serverMacAlg = "SHA";
 		// --
 		
-		private final String serverStuffPath = "files/serverStuff/";
+		// Paths & Files
+		private final String groupsPath = "files/groups/";
 		private final String userStuffPath = "files/userStuff/";
-
 		private final String usersFileDec = "files/serverStuff/users.txt"; 
 		private final String usersFileCif = "files/serverStuff/users.cif";
-
+		
 		ServerThread(Socket inSoc, String serverKeyStore, String serverKeyStorePassword) {
 			this.serverKeyStore = "keystores/" + serverKeyStore;
 			this.serverAlias = serverKeyStore;
 			this.serverKeyStorePassword = serverKeyStorePassword;
-			socket = inSoc;
+			this.socket = inSoc;
 			this.sec = new Security();
-			System.out.println("Thread a correr no server para cada um cliente");
+			System.out.println("Thread nova a correr no server");
+			System.out.println(separador);
 		}
 
 		/**
@@ -383,7 +389,6 @@ public class SeiTchizServer {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 
 				// executar a operacao pedida pelo cliente
 				boolean stop = false;
@@ -706,7 +711,7 @@ public class SeiTchizServer {
 			}
 
 			System.out.println("thread do cliente fechada");
-			System.out.println("------------------------------------------");
+			System.out.println(separador);
 		}
 		
 		/**
@@ -730,7 +735,7 @@ public class SeiTchizServer {
 			// Verificar se o ficheiro users.cif está vazio
 			// Caso esteja apenas ciframos a nova entrada do cliente novo e colocamos
 			// no novo ficheiro users.cif
-			File usersF = new File("files/serverStuff/users.cif");
+			File usersF = new File(this.usersFileCif);
 			if(usersF.length() == 0) {
 				return 1;
 			} else {
@@ -743,7 +748,7 @@ public class SeiTchizServer {
 				// Decifrar chave secreta do servidor
 				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
 				// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-				sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey);
+				sec.decFile(this.usersFileCif, this.usersFileDec, unwrappedKey);
 				// Procurar o clientID no aux.txt e devolve o resultado da busca
 				return userRegistered(clientID);
 			}
@@ -782,7 +787,7 @@ public class SeiTchizServer {
 			*/
 		private int userRegistered(String clientID) {
 
-			File usersF = new File("files/serverStuff/users.txt");
+			File usersF = new File(this.usersFileDec);
 			if(!usersF.exists()) {
 				return -1;
 			}
@@ -797,7 +802,6 @@ public class SeiTchizServer {
 						// o usuario ja existe na lista de users
 						// Deletar o ficheiro contendo os users
 						if(!usersF.delete()) {
-							System.out.println("Erro ao deletar o ficheiro users.txt");
 							return -1;
 						}
 						return 0;
@@ -829,18 +833,6 @@ public class SeiTchizServer {
 				return -1;
 			}
 
-			if(this.serverKeyStore == null) {
-				System.out.println("serverKeyStore null");
-			}
-			if(this.serverKeyStorePassword == null) {
-				System.out.println("serverKeyStorePassword null");
-			}
-			if(this.storeType == null) {
-				System.out.println("storeType null");
-			}
-
-			System.out.println();
-
 			// Obter chave simétrica wrapped
 			byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
 			// Obter chave privada para fazer unwrap da chave simétrica
@@ -849,14 +841,14 @@ public class SeiTchizServer {
 			Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
 
 			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt
-			if(sec.decFile("files/serverStuff/users.cif", "files/serverStuff/users.txt", unwrappedKey) == -1) {
+			if(sec.decFile(this.usersFileCif, this.usersFileDec, unwrappedKey) == -1) {
 				return -1;
 			}
 
 			// colocar a entrada <clientID,certPath> no ficheiro users.txt
 			Writer wr = null;
 			try {
-				wr = new BufferedWriter(new FileWriter("files/serverStuff/users.txt", true));
+				wr = new BufferedWriter(new FileWriter(this.usersFileDec, true));
 				wr.append(clientID + "," + certPath + "\n");
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -876,7 +868,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar o ficheiro users.txt como users.cif com a chave pública do servidor
-			return sec.cifFile("files/serverStuff/users.txt", "files/serverStuff/users.cif", unwrappedKey);
+			return sec.cifFile(this.usersFileDec, this.usersFileCif, unwrappedKey);
 		}
 
 		/**
@@ -888,35 +880,36 @@ public class SeiTchizServer {
 		private int createClientResources(String clientID) {
 
 			try {
-				File userPage = new File(userStuffPath + clientID);
+				File userPage = new File(this.userStuffPath + clientID);
 				userPage.mkdir();
 
-				File photosFolder = new File(userStuffPath + clientID + "/photos");
+				File photosFolder = new File(this.userStuffPath + clientID + "/photos");
 				photosFolder.mkdir();
 
 				Writer userFollowers = new BufferedWriter(
-						new FileWriter(userStuffPath + clientID + "/followers.cif", true));
+						new FileWriter(this.userStuffPath + clientID + "/followers.cif", true));
 				userFollowers.close();
 
 				Writer userFollowing = new BufferedWriter(
-						new FileWriter(userStuffPath + clientID + "/following.cif", true));
+						new FileWriter(this.userStuffPath + clientID + "/following.cif", true));
 				userFollowing.close();
 
 				Writer userParticipant = new BufferedWriter(
-						new FileWriter(userStuffPath + clientID + "/participant.cif", true));
+						new FileWriter(this.userStuffPath + clientID + "/participant.cif", true));
 				userParticipant.close();
 
 				Writer userOwner = new BufferedWriter(
-						new FileWriter(userStuffPath + clientID + "/owner.cif", true));
+						new FileWriter(this.userStuffPath + clientID + "/owner.cif", true));
 				userOwner.close();
 
 			} catch (IOException e) {
 				System.out.println("Não foi possível criar os recursos necessários para o cliente corrente");
-				e.printStackTrace();
+				System.out.println(separador);
 				return -1;
 			}
 
 			System.out.println("Dados e ficheiros base do utilizador adicionados ao servidor");
+			System.out.println(separador);
 
 			return 0;
 
@@ -956,7 +949,7 @@ public class SeiTchizServer {
 				// Decifrar ficheiro following.cif e colocar conteúdo no ficheiro following.txt
 				sec.decFile(this.userStuffPath + senderID + "/following.cif", this.userStuffPath + senderID + "/following.txt", unwrappedKey);
 
-				File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
+				File sendersFollowingFile = new File(this.userStuffPath + senderID + "/following.txt");
 				Scanner sc;
 				try {
 					sc = new Scanner(sendersFollowingFile);
@@ -1001,7 +994,7 @@ public class SeiTchizServer {
 				sec.decFile(this.userStuffPath + userID + "/followers.cif", this.userStuffPath + userID + "/followers.txt", unwrappedKey);
 
 				// adicionar senderID a followers.txt de userID
-				File userIDsFollowersFile = new File(userStuffPath + userID + "/followers.txt");
+				File userIDsFollowersFile = new File(this.userStuffPath + userID + "/followers.txt");
 				try {
 					FileWriter fw = new FileWriter(userIDsFollowersFile, true);
 					BufferedWriter bw = new BufferedWriter(fw);
@@ -1119,10 +1112,10 @@ public class SeiTchizServer {
 		 */
 		private void unfollowAux(String userID, String senderID, Key key) {
 
-			File sendersFollowingFile = new File(userStuffPath + senderID + "/following.txt");
-			File sendersFollowingTEMPFile = new File(userStuffPath + senderID + "/followingTemp.txt");
-			File usersFollowersFile = new File(userStuffPath + userID + "/followers.txt");
-			File usersFollowersTEMPFile = new File(userStuffPath + userID + "/followersTemp.txt");
+			File sendersFollowingFile = new File(this.userStuffPath + senderID + "/following.txt");
+			File sendersFollowingTEMPFile = new File(this.userStuffPath + senderID + "/followingTemp.txt");
+			File usersFollowersFile = new File(this.userStuffPath + userID + "/followers.txt");
+			File usersFollowersTEMPFile = new File(this.userStuffPath + userID + "/followersTemp.txt");
 
 			try {
 				if (sendersFollowingTEMPFile.createNewFile()) {
@@ -1167,7 +1160,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar ficheiro following.txt
-			if(sec.cifFile(sendersFollowingFile.getPath(), userStuffPath + senderID + "/following.cif", key) == -1) {
+			if(sec.cifFile(sendersFollowingFile.getPath(), this.userStuffPath + senderID + "/following.cif", key) == -1) {
 				System.out.println("Erro ao cifrar ficheiro following.txt");
 				sendersFollowingTEMPFile.delete();
 				System.exit(-1);
@@ -1178,7 +1171,7 @@ public class SeiTchizServer {
 			// ----retirar senderID de followers de userID----
 
 			// Decifrar ficheiro followers.cif de userID
-			if(sec.decFile(userStuffPath + userID + "/followers.cif", userStuffPath + userID + "/followers.txt", key) == -1) {
+			if(sec.decFile(this.userStuffPath + userID + "/followers.cif", this.userStuffPath + userID + "/followers.txt", key) == -1) {
 				System.out.println("Erro ao decifrar ficheiro following.txt");
 				System.exit(-1);
 			}
@@ -1214,7 +1207,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar ficheiro temporário
-			if(sec.cifFile(usersFollowersFile.getPath(), userStuffPath + userID + "/followers.cif", key) == -1) {
+			if(sec.cifFile(usersFollowersFile.getPath(), this.userStuffPath + userID + "/followers.cif", key) == -1) {
 				System.out.println("Erro ao cifrar ficheiro followers.txt");
 				usersFollowersTEMPFile.delete();
 				System.exit(-1);
@@ -1253,13 +1246,13 @@ public class SeiTchizServer {
 				System.exit(-1);
 			}
 	
-			File photoFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".jpg");
+			File photoFile = new File(this.userStuffPath + userName + "/photos/photo-" + globalCounter + ".jpg");
 			
 			if(nomeFicheiro.endsWith(".png")) {
-				photoFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".png");
+				photoFile = new File(this.userStuffPath + userName + "/photos/photo-" + globalCounter + ".png");
 			}
 	
-			File likesFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".txt");
+			File likesFile = new File(this.userStuffPath + userName + "/photos/photo-" + globalCounter + ".txt");
 			FileWriter fwLikes = new FileWriter(likesFile, true);
 			BufferedWriter bwLikes = new BufferedWriter(fwLikes);
 			bwLikes.write("0");
@@ -1281,35 +1274,84 @@ public class SeiTchizServer {
 					bytesRead = inStream.read(byteArray, 0, (int) tamanho - offset);
 					fos.write(byteArray, 0, bytesRead);
 					fos.flush();
-				}	
+				}
+				
+				//--Maneira Digest nova TA A DAR ERRO--
+				//Criar ficheiro contendo a hash do conteúdo da foto recebida
+				//Obter o conteudo da foto como um array de bytes 
+				// BufferedImage bImage = ImageIO.read(photoFile);
+				// ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				// ImageIO.write(bImage, photoFile.getName().split("\\.")[1], bos);
+				// byte[] data = bos.toByteArray();
 
-				// Criar ficheiro contendo a hash do conteúdo da foto recebida
-					// Obter o conteudo da foto como um array de bytes 
+				// // Obter hash do conteudo da foto
+				// MessageDigest hashMd = MessageDigest.getInstance("SHA");
+				// byte[] hash = hashMd.digest(data);
+				
+				// // Guardar hash no ficheiro 
+				// File hashFile = new File(userStuffPath + userName + "/photos/photoHash-" + globalCounter);
+				// FileOutputStream HashFos = null;
+				// try {
+				//  	HashFos = new FileOutputStream(hashFile);
+				//  	HashFos.write(hash);
+				// } catch (FileNotFoundException e) {
+				//  	System.out.println("File not found" + e);
+				//  	System.exit(-1);
+				// } finally {
+				//  	if (HashFos != null) {
+				//  		HashFos.close();
+				//  	}
+				// }
+				
+				//--Maneira Mac TA A DAR ERRO--
+				//Criar ficheiro contendo a hash do conteúdo da foto recebida
+				//Obter o conteudo da foto como um array de bytes 
 				BufferedImage bImage = ImageIO.read(photoFile);
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				ImageIO.write(bImage, photoFile.getName().split("\\.")[1], bos);
 				byte[] data = bos.toByteArray();
-					// Obter hash do conteudo da foto
-				MessageDigest hashMd = MessageDigest.getInstance("SHA");
-				hashMd.update(data);
-				byte[] hash = hashMd.digest();
-					// Guardar hash no ficheiro 
-				File hashFile = new File(userStuffPath + userName + "/photos/photo-" + globalCounter + ".hash");
-				FileOutputStream HashFos = null;
+
+				// Fazer MAC e obter secretkey
+				Mac mac = Mac.getInstance(serverMacAlg);
+
+				// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+		
+				//metodo do sec vai aqui
+				Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+				//Fazer init do MAC
 				try {
-					HashFos = new FileOutputStream(hashFile);
-					HashFos.write(hash);
-				} catch (FileNotFoundException e) {
-					System.out.println("File not found" + e);
+					mac.init(unwrappedKey);
+				} catch (InvalidKeyException e) {
+					e.printStackTrace();
 					System.exit(-1);
+				}				
+
+				// Fazer update do MAC
+				mac.update(data);
+
+				// Guardar hash no ficheiro 
+				File hashFile = new File(userStuffPath + userName + "/photos/photoHash-" + globalCounter);
+				FileOutputStream HashFos = null;
+				ObjectOutputStream oos = null;
+				try {
+				 	HashFos = new FileOutputStream(hashFile);
+					oos = new ObjectOutputStream(fos);
+					oos.writeObject(mac.doFinal());
+				} catch (FileNotFoundException e) {
+				 	System.out.println("File not found" + e);
+				 	System.exit(-1);
 				} finally {
-					if (HashFos != null) {
-						HashFos.close();
-					}
+				 	if (HashFos != null) {
+				 		HashFos.close();
+				 	}
 				}
+
+
+				oos.close();
 				bos.close();
 				fos.close();
-
 
 			} catch(FileNotFoundException e) {
 				e.printStackTrace();
@@ -1318,6 +1360,7 @@ public class SeiTchizServer {
 				e.printStackTrace();
 				System.exit(-1);
 			}
+
 		}
 
 		
@@ -1339,11 +1382,11 @@ public class SeiTchizServer {
 			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
 
 			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
-			sec.decFile(userStuffPath + senderID + "/followers.cif", userStuffPath + senderID + "/followers.txt", unwrappedKey);
+			sec.decFile(this.userStuffPath + senderID + "/followers.cif", this.userStuffPath + senderID + "/followers.txt", unwrappedKey);
 
 			// procurar no folder de users no do sender se o ficheiro followers.txt esta
 			// vazio
-			File sendersFollowersFile = new File(userStuffPath + senderID + "/followers.txt");
+			File sendersFollowersFile = new File(this.userStuffPath + senderID + "/followers.txt");
 			if (sendersFollowersFile.length() == 0) {
 				// caso esteja vazio devolver esta string especifica
 				return "";
@@ -2254,7 +2297,8 @@ public class SeiTchizServer {
 		 * users que o senderID segue
 		 */
 		private ArrayList wall(String senderID, int nPhotos) {
-			// LOGICA:
+
+			// LOGICA COM SEGURANCA:
 			// 1.Buscar todos as fotos de todos os usuarios seguidos
 			// 2.Criar uma lista com os counters das fotos
 			// 3.Obter o maior indice
@@ -2263,8 +2307,11 @@ public class SeiTchizServer {
 			//  5.2.Verificar se i nao eh menor que o numero de fotos no array de fotos obtido
 			// 	5.1.Buscar a foto com counter i
 			// 		5.2.Caso nao exista foto com counter i, buscar foto counter i-1, pular uma posicao da lista de counters
-			// 		5.3.Adicionar foto ao array retorno com as informacoes: <photoID>, <likes>, <filepath>
-			// 6.Retornar array com todas as fotos validas
+			//      5.3.Caso hash nao bata certo adicionar ao array retorno com as seguintes informacoes: <photoID>,"erroHash","erroHash"
+			// 		5.3.Caso hash bata certo adicionar foto ao array retorno com as informacoes: <photoID>, <likes>, <filepath>
+			// 6.Retornar array com todas as fotos
+			
+			
 			// TODO: verificar se podemos representar o photoID como: <userID>-<photo><counter>
 
 			// codigos de resposta de erro

@@ -180,11 +180,11 @@ public class ClientStub {
 				System.out.println("Login efetuado com sucesso.");
 			} else if(flag == 1) {
 				// Client corrente foi registado com sucesso. Assinatura e nonce enviados foram validados
-				System.out.println("Sign up e autenticação efetuados com sucesso.");
+				System.out.println("Sign up e autenticacao efetuados com sucesso.");
 			}
         } else {
             // Ocorreu um erro ao servidor verificar nonce e assinatura passados
-            System.out.println("Erro ao fazer autenticação.");
+            System.out.println("Erro ao fazer autenticacao.");
             closeConnection();
             System.exit(-1);
         }
