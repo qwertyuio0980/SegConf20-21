@@ -29,6 +29,7 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+
 import communication.Com;
 import security.Security;
 
@@ -445,6 +446,27 @@ public class ClientStub {
 	}
 
 	/**
+	 * Metodo que devolve a string correspondente usando DatatypeConverter de um array de bytes
+	 *
+	 * @param data array de bytes a converter
+	 * @return String resultado pretendido em formato String
+	 */
+	public static String getStringFromBytes(byte[] data) {
+		return DatatypeConverter.printHexBinary(data);
+	}
+
+	/**
+	 * Metodo que devolve o array de bytes correspondente usando DatatypeConverter de uma String
+	 *
+	 * @param data String a converter
+	 * @return byte[] resultado pretendido em formato array de bytes
+	 */
+	public static byte[] getBytesFromString(String info) {
+		return DatatypeConverter.parseHexBinary(info);
+	}
+	
+
+	/**
 	 * Metodo que pede ao servidor para criar um novo grupo 
 	 * sendo o cliente que faz o pedido o seu dono
 	 * 
@@ -453,6 +475,11 @@ public class ClientStub {
 	 * @return 0 se o pedido for sucedido e o grupo criado e -1 caso contrario
 	 */
 	public int newgroup(String groupID, String senderID) {
+		// Criar chave simétrica
+		// Cifra a chave simétrica com a chave pública do servidor
+		// Envia para o servidor o identificador do grupo
+		// Envia o identificador da chave
+		// Cria uma lista contendo o [<ownerID,chave cifrada com chave pública do servidor>]
 
 		int resultado = -1;
 		try {

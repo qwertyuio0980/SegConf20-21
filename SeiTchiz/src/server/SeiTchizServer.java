@@ -1076,11 +1076,14 @@ public class SeiTchizServer {
 				}
 
 				if (!found) {
+					// Deletar ficheiro following caso userID não esteja no ficheiro
+					followingUserFile.delete();
 					return resultado;
 				}
 
 			} catch (FileNotFoundException e1) {
-				// TODO Auto-generated catch block
+				// Deletar ficheiro following caso userID não esteja no ficheiro
+				followingUserFile.delete();
 				e1.printStackTrace();
 			}
 
@@ -1288,9 +1291,8 @@ public class SeiTchizServer {
 
 				// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
-		
-				//metodo do sec vai aqui
-				Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+				byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
+				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
 
 				//Fazer init do MAC
 				try {
@@ -1308,9 +1310,8 @@ public class SeiTchizServer {
 				FileOutputStream HashFos = null;
 				ObjectOutputStream oos = null;
 				try {
-					System.out.println(mac.getMacLength()); 
 				 	HashFos = new FileOutputStream(hashFile);
-					oos = new ObjectOutputStream(fos);
+					oos = new ObjectOutputStream(HashFos);
 					oos.writeObject(mac.doFinal());
 				} catch (FileNotFoundException e) {
 				 	System.out.println("File not found" + e);
@@ -1323,35 +1324,30 @@ public class SeiTchizServer {
 
 				// TODO: DELETE TEST
 				// TEST //
-				// Fazer MAC e obter secretkey
-				Mac mac1 = Mac.getInstance("HmacSHA1");
-				//Fazer init do MAC
-				try {
-					mac1.init(unwrappedKey);
-				} catch (InvalidKeyException e) {
-					e.printStackTrace();
-					System.exit(-1);
-				}	
-				// Obter dados do ficheiro
-				FileInputStream fis1 = new FileInputStream(userStuffPath + userName + "/photos/photoHash-" + globalCounter);
-				ObjectInputStream ois1 = new ObjectInputStream(fis1);
-				byte[] hashedPic = (byte[]) ois1.readObject();
-				// Abrir um novo oos para um ficheiro teste.jpg
-				File test = new File(userStuffPath + userName + "/photos/teste.jpg");
-				test.createNewFile();
-				FileOutputStream fos1 = new FileOutputStream(test);
-				ObjectOutputStream oos1 = new ObjectOutputStream(fos1);
-				// Repetir o mesmo processo acima
-				// Fazer update do MAC
-				mac1.update(hashedPic);
-				// Guardar hash no ficheiro
-				oos1.writeObject(mac.doFinal());
-				oos1.close();
-				fos1.close();
-				ois1.close();
-				fis1.close();
-				// ---- //
+				// Obter hash da imagem
+				// MessageDigest md = MessageDigest.getInstance("SHA");
+				// md.update(data);
+				// byte[] hashed = md.digest();
+				// // Fazer MAC e obter secretkey
+				// Mac mac1 = Mac.getInstance("HmacSHA1");
+				// //Fazer init do MAC
+				// try {
+				// 	mac1.init(unwrappedKey);
+				// } catch (InvalidKeyException e) {
+				// 	e.printStackTrace();
+				// 	System.exit(-1);
+				// }	
+				// // Obter dados do ficheiro
+				// ObjectInputStream ois1 = new ObjectInputStream(hashFile);
+				// byte[] hashedPic = (byte[]) ois1.readObject();
+				// mac.update(hashedPic);
+				// byte[] hashedPic1 = mac.doFinal();
+				// // Comparar o hash obtido a partir do mac com o hash da imagem
+				// System.out.println("RESULTADO:.... " + MessageDigest.isEqual(hashed, hashedPic1));
 
+				// ois1.close();
+				// fis1.close();
+				// ---- //
 
 				oos.close();
 				bos.close();
@@ -1430,6 +1426,15 @@ public class SeiTchizServer {
 		 * @return 0 se for criado o grupo com sucesso e -1 caso contrario
 		 */
 		private int newgroup(String groupID, String senderID) {
+			// Recebe o identificador do grupo
+			// Cria diretorio com o nome do grupo <senderID-groupID>
+			// Cria estrutura do diretório do grupo
+			// Recebe identificador da chave
+			// Cria no diretório keys:
+				// ficheiro chamado senderID
+					// Com a primeira linha
+
+
 			String senderIDgroupID = senderID + "-" + groupID;
 
 
@@ -1730,7 +1735,7 @@ public class SeiTchizServer {
 		 * @param userID usuario a ser usado na busca por grupos
 		 * @return Optional<List> contendo todos os grupos achados
 		 */
-		private String ginfo(String userID) {
+		private String ginfo(String senderID) {
 			// Ler os ficheiros owner.txt e participant.txt
 			// 1. Criar um StringBuilder e ir colocando as linhas do ficheiro owner.txt
 			// Os grupos dos quais eh dono serao os primeiros a serem adicionados a SB.
@@ -1744,36 +1749,69 @@ public class SeiTchizServer {
 
 			StringBuilder grupos = new StringBuilder();
 
-            File owner = new File(userStuffPath + userID + "/owner.txt");
-            File participant = new File(userStuffPath + userID + "/participant.txt");
+			File ownerCifFile = new File(userStuffPath + senderID + "/owner.cif");
+			File participantCifFile = new File(userStuffPath + senderID + "/participant.cif");
+            File ownerTempFile = new File(userStuffPath + senderID + "/owner.txt");
+            File participantTempFile = new File(userStuffPath + senderID + "/participant.txt");
             
+			try {
+				if (ownerTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+				if (participantTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+
+			// Obter chave unwrapped
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			// Decifrar owner
+			sec.decFile(ownerCifFile.toPath().toString(), ownerTempFile.toPath().toString(), unwrappedKey);
 
 			// 1.
-			try (Scanner scOwner = new Scanner(owner)) {
+			try (Scanner scOwner = new Scanner(ownerTempFile)) {
 				while (scOwner.hasNextLine()) {
 					String line = scOwner.nextLine();
 					grupos.append(line + ",");
 				}
 				scOwner.close();
 			} catch (Exception e) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
+			// Decifrar participant
+			sec.decFile(participantCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey);
+
 			// 2.
-			try (Scanner scParticipant = new Scanner(participant)) {
+			try (Scanner scParticipant = new Scanner(participantTempFile)) {
 				while (scParticipant.hasNextLine()) {
 					String line = scParticipant.nextLine();
 					grupos.append(line + ",");
 				}
 				scParticipant.close();
 			} catch (Exception e) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
 				e.printStackTrace();
 				System.exit(-1);
 			}
 
+			// Apagar os ficheiros temporarios
+			ownerTempFile.delete();
+			participantTempFile.delete();
+
 			// 3.
 			return grupos.toString();
+			//return null;
 		}
 
         /**
@@ -1787,14 +1825,41 @@ public class SeiTchizServer {
          * eventualmente os nomes dos participantes.
          */
 		private String ginfo(String senderID, String groupID) {
-            StringBuilder ownerPaticipants = new StringBuilder();
+
+			StringBuilder ownerPaticipants = new StringBuilder();
+
             File owner = new File(userStuffPath + senderID + "/owner.txt");
-            File participant = new File(userStuffPath + senderID+ "/participant.txt");
+            File participant = new File(userStuffPath + senderID + "/participant.txt");
             File groupParticipants = null;
             String fileName = null;
 
+			File ownerCifFile = new File(userStuffPath + senderID + "/owner.cif");
+			File participantCifFile = new File(userStuffPath + senderID + "/participant.cif");
+            File ownerTempFile = new File(userStuffPath + senderID + "/owner.txt");
+            File participantTempFile = new File(userStuffPath + senderID + "/participant.txt");
+            
+			try {
+				if (ownerTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+				if (participantTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+
+			// Obter chave unwrapped
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			// Decifrar owner
+			sec.decFile(ownerCifFile.toPath().toString(), ownerTempFile.toPath().toString(), unwrappedKey);
+
             // 1. Procurar no ficheiro owner.txt pelo groupID
-			try (Scanner scOwner = new Scanner(owner)) {
+			try (Scanner scOwner = new Scanner(ownerTempFile)) {
 				while (scOwner.hasNextLine()) {
 					String line = scOwner.nextLine();
                     if(line.equals(groupID)) {
@@ -1803,9 +1868,14 @@ public class SeiTchizServer {
 				}
 				scOwner.close();
 			} catch (Exception e) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
 				e.printStackTrace();
 				System.exit(-1);
 			}
+
+			// Decifrar participant
+			sec.decFile(participantCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey);
 
             if(fileName == null) {
                 // 2. Procurar no ficheiro participant.txt pelo groupID
@@ -1819,6 +1889,8 @@ public class SeiTchizServer {
                     }
                     scParticipant.close();
                 } catch (Exception e) {
+					ownerTempFile.delete();
+					participantTempFile.delete();
                     e.printStackTrace();
                     System.exit(-1);
                 }
@@ -1826,12 +1898,15 @@ public class SeiTchizServer {
 
             // Caso não tenha sido encontrado o grupo nos ficheiros do senderID devolver um estado de erro
             if(fileName == null) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
                 return null;
             }
 
-            groupParticipants = new File("files/groups/" + fileName + "/participants.txt");
+			//ATENCAO ESTA PARTE AFETA FICHEIROS DENTRO DO FOLDER DOS GRUPOS VER COMO FAZER ISTO DEPOIS DE COMECAR OS COMANDOS DOS GRUPOS
+			//------------------------------------------------------------------------------
+            groupParticipants = new File("files/groups/" + fileName + "/participants.cif");
 
-			// 1.
 			try (Scanner scParticipants = new Scanner(groupParticipants)) {
 				while (scParticipants.hasNextLine()) {
 					String line = scParticipants.nextLine();
@@ -1839,11 +1914,19 @@ public class SeiTchizServer {
 				}
 				scParticipants.close();
 			} catch (Exception e) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
 				e.printStackTrace();
 				System.exit(-1);
 			}
+			//------------------------------------------------------------------------------
+
+			// Apagar os ficheiros temporarios
+			ownerTempFile.delete();
+			participantTempFile.delete();
 
 			return ownerPaticipants.toString();
+			// return null;
         }
 
 		/**

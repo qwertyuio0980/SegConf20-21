@@ -242,7 +242,7 @@ public class SeiTchiz {
 					break;
 				}
 
-				// envia-se o userID que se procura e o userID que fez o pedido
+				// envia-se o groupID e o userID que fez o pedido
 				resultado = cs.newgroup(option[1], args[4]);
 
 				if (resultado == 0) {
