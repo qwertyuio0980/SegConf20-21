@@ -1327,25 +1327,27 @@ public class SeiTchizServer {
 				// TODO: DELETE TEST
 				// TEST //
 				// Obter hash da imagem
-				// MessageDigest md = MessageDigest.getInstance("SHA");
-				// md.update(data);
-				// byte[] hashed = md.digest();
-				// // Fazer MAC e obter secretkey
-				// Mac mac1 = Mac.getInstance("HmacSHA1");
-				// //Fazer init do MAC
-				// try {
-				// 	mac1.init(unwrappedKey);
-				// } catch (InvalidKeyException e) {
-				// 	e.printStackTrace();
-				// 	System.exit(-1);
-				// }	
-				// // Obter dados do ficheiro
-				// ObjectInputStream ois1 = new ObjectInputStream(hashFile);
-				// byte[] hashedPic = (byte[]) ois1.readObject();
-				// mac.update(hashedPic);
-				// byte[] hashedPic1 = mac.doFinal();
-				// // Comparar o hash obtido a partir do mac com o hash da imagem
-				// System.out.println("RESULTADO:.... " + MessageDigest.isEqual(hashed, hashedPic1));
+				MessageDigest md = MessageDigest.getInstance("SHA");
+				md.update(data);
+				byte[] hashed = md.digest();
+				// Fazer MAC e obter secretkey
+				Mac mac1 = Mac.getInstance("HmacSHA1");
+				//Fazer init do MAC
+				try {
+					mac1.init(unwrappedKey);
+				} catch (InvalidKeyException e) {
+					e.printStackTrace();
+					System.exit(-1);
+				}	
+				// Obter dados do ficheiro
+				ObjectInputStream ois1 = new ObjectInputStream(hashFile);
+				byte[] hashedPic = (byte[]) ois1.readObject();
+				mac.update(hashedPic);
+				byte[] hashedPic1 = mac.doFinal();
+				// Comparar o hash obtido a partir do mac com o hash da imagem
+				System.out.println("RESULTADO:.... " + MessageDigest.isEqual(hashed, hashedPic1));//NAO USAR ISEQUAL PARA COMPARAR ARRAY DE BYTES
+
+					//CONVERTER ARRAYS PARA STRING E COMPARAR ESSAS STRINGS COM ISEQUALS
 
 				// ois1.close();
 				// fis1.close();
@@ -1595,6 +1597,9 @@ public class SeiTchizServer {
 		 * @return 0 caso sucesso ao adicionar o usuario ao grupo, -1 caso contrario
 		 */
 		private int addu(String userID, String groupID, String senderID) {
+
+			//IMPORTANTE NO LADO DO CLIENTE PARA CADA CLIENTE O DONO VAI A PUBKEYS BUSCAR O CERTIFICADO DO USER A ADICIONAR E FAZER WRAP DA CHAVE SIMETRICA DO GRUPO COM
+			//A PUBLICA DO USER A ADICIONAR (PARA 4 INDIVIDUOS VOU TER 4 CHAVES CIFRADAS POR CADA UM)
 
 			File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
 			File counterFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.txt");

@@ -135,3 +135,9 @@ keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 
 //Chave assimétrica para cada cliente:
 keytool -genkeypair -alias <clientID + 'KS'> -keystore <clientID + 'KS'>
+
+
+
+//CIFRAR COISAS:
+//WRAP E PARA CHAVES
+//ENCRYPT E PARA CONTEUDOS
