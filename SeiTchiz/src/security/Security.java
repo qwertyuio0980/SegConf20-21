@@ -183,7 +183,7 @@ public class Security {
 			return -1;
 		}
 
-		// obter algoritmo da key passada3.
+		// obter algoritmo da key passada
 		String alg = key.getAlgorithm();
 
 		// Obter capacidade de cifrar usando o algoritmo da key

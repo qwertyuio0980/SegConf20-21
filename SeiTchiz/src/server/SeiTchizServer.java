@@ -162,14 +162,14 @@ public class SeiTchizServer {
 		}
 	}
 
-	/**
-	* Gera uma chave secreta, cifra a mesma com a chave pública do servidor e guarda a mesma
-	* num ficheiro server.key no keyStorePath passado
-	* @param keyStorePath caminho do ficheiro server.key
-	* @return true caso a chave tenha sido criada, cifrada e guardado com sucesso.
-	* False, caso contrário.
-	* @requires keyStorePath != null && keyStorePath != "";
-	*/
+    /**
+	 * Gera uma chave secreta, cifra a mesma com a chave pública do servidor e guarda a mesma
+	 * num ficheiro server.key no keyStorePath passado
+	 * @param keyStorePath caminho do ficheiro server.key
+	 * @return true caso a chave tenha sido criada, cifrada e guardado com sucesso.
+	 * False, caso contrário.
+	 * @requires keyStorePath != null && keyStorePath != "";
+	 */
 	private boolean generateSecKey(String keyStorePath) {
 
 		Security sec = new Security();

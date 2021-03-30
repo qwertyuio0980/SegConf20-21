@@ -1,9 +1,9 @@
 # SegConf20-21
 Página da cadeira de Segurança e Confiabilidade 20/21 
 
-Martim Silva 
-Francisco Freire
-David Rodrigues
+Martim Silva 51304
+Francisco Freire 52177
+David Rodrigues 
 
 
 ----------------------
@@ -89,40 +89,6 @@ PARA CORRER CLIENTE COM POLICIES POR JAR
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
 
 ----------------------
-
-TODO:
-1. Cada grupo mantido pelo servidor usará uma chave de grupo simétrica AES para cifrar e decifrar mensagens trocadas nesse grupo. A cifra será fim-a-fim, i.e., o servidor não terá acesso ao conteúdo das mensagens trocadas, significando que ambas as operações de cifrar e decifrar são efetuadas pelo cliente. Por exemplo, quando um utilizador envia uma mensagem para um grupo, esta será cifrada no cliente antes do seu envio. O servidor recebe a mensagem cifrada e armazena-a. Da mesma forma, quando um utilizador pede ao servidor as mensagens do grupo, este envia para a máquina cliente as mensagens cifradas (tal como estão armazenadas) e será o cliente que as decifra e as mostra ao utilizador.
-    1.1. ClientStub fará a cifra do conteúdo das mensagens e enviará o array de bytes correspondente. O SeiTchizServer apenas guardará a mensagem. 
-
-2. Finalmente, para maximizar ainda mais a confiança no ambiente de execução, o servidor deve armazenar a lista de utilizadores, a lista de seguidores de cada utilizador, e a associação entre utilizadores e grupos, em ficheiros cifrados. Isto garante que ninguém além do servidor corretamente inicializado consegue ler esses ficheiros. 
-    2.1. SeiTchizServer cifra os ficheiros:
-            follower.txt
-            following.txt
-            owner.txt
-            participant.txt
-
-3. A informação sobre likes e as próprias fotografias não precisam de ser cifradas Contudo, o servidor deve ser capaz de verificar se a integridade das fotografias armazenadas não foi comprometida, antes de as enviar aos clientes.
-    3.1. Armazenar a hash das fotos em um ficheiro encriptado
-    3.2. Sempre que enviar fotos ao cliente, fará: 
-            3.2.1. Descodificação da hash encriptada
-            3.2.2. Hash da foto não encriptada
-            3.2.3. Comparação entre as duas Hash
-
-
-Comandos:
-    -follow(BUGS)
-    -unfollow(BUGS)
-    -viewfollowers(BUGS)
-	-post
-    -wall
-	-newgroup
-	-addu
-	-removeu
-    -ginfo
-	-msg
-	-collect
-	-history
-
 
 **Criar Chaves & Keystores**
 

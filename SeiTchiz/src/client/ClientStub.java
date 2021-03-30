@@ -35,6 +35,7 @@ import security.Security;
 
 public class ClientStub {
 
+	private static final String keyGenSimAlg = "AES";
 	private SSLSocket clientSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
@@ -465,6 +466,66 @@ public class ClientStub {
 		return DatatypeConverter.parseHexBinary(info);
 	}
 	
+	/**
+	 * Metodo que gera uma string da chave simetrica cifrada pela chave publica do dono do grupo
+	 *
+	 * @return Nova instancia de chave simetrica cifrada pela chave publica do dono do grupo
+	 */
+	public String generateWrappedStringifiedSimKey() {
+		//feito com recurso ao slide 9 do powerpoint de chaves assimetricas
+
+		// Gerar chave simetrica
+		KeyGenerator kg = KeyGenerator.getInstance(keyGenSimAlg);
+		kg.init(128);
+		SecretKey secretKey = kg.generateKey();
+
+		//-----------------
+		//ISTO ESTA MAL OU A MAIS???
+
+		Cipher c1 = Cipher.getInstance(keyGenSimAlg);//NAO ESTOU SEGURO SOBRE QUAL ALGORITMO AQUI SE E AES COMO OS OUTROS OU RSA
+		c.init(Cipher.ENCRYPT_MODE, secretKey);
+		byte[] keyEncoded = secretKey.getEncoded();//Do outro lado(para desencriptar usa-se o secretkeyspec do powerpoint de chaves simetricas)
+		byte[] encripted = c.doFinal(keyEncoded);
+		//-----------------
+
+		// Obter chave publica do dono a partir do seu certificado
+		KeyStore kstore = null;
+		try {
+			kstore = KeyStore.getInstance("JKS");//AQUI E JKS OU JCEKS?
+		} catch (KeyStoreException e) {
+			e.printStackTrace();
+            System.exit(-1);
+		}
+
+		try(FileInputStream kfile = new FileInputStream("keystores/" + this.keystore)) {
+			kstore.load(kfile, this.keystorePassword.toCharArray());
+		} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+			e2.printStackTrace(e);
+            System.exit(-1);
+		}
+        
+        Certificate cert = null;
+		try {
+			cert = (Certificate) kstore.getCertificate(this.keystore);
+		} catch (KeyStoreException e1) {
+            closeConnection();
+            System.exit(-1);
+		}
+		PublicKey pubk = cert.getPublicKey();
+
+		// Preparar o algoritmo de cifra para cifrar a chave secreta
+		Cipher c2 = Cipher.getInstance("RSA");//NAO TENHO 100% CERTEZA MAS AQUI E RSA PORQUE SE TRATA DA CHAVE PUBLICA VINDA DAS KEYSTORES QUE FORAM GUARDADAS COM O TIPO RSA
+		c2.init(Cipher.WRAP_MODE, pubk);
+
+		// Cifrar a chave secreta que queremos enviar
+		byte[] wrappedKey = c.wrap(secretKey)
+
+
+		//Finalmente passar este array de bytes que ja se trata de um criptograma numa String que nao estrague o formato que estara (no ficheiro userID de Keys do grupo??? pergunta francisco)
+		String chaveAEnviar = getStringFromBytes(wrappedKey);
+
+		return chaveAEnviar;
+	}
 
 	/**
 	 * Metodo que pede ao servidor para criar um novo grupo 
@@ -486,11 +547,12 @@ public class ClientStub {
 			// enviar tipo de operacao
 			out.writeObject("n");
 
-			// enviar ID do grupo a ser criado:ID do cliente que o pretende criar
-			out.writeObject(groupID + ":" + senderID);
+			// enviar ID do grupo a ser criado:ID do cliente que o pretende criar:formato string da chave simetrica cifrada pela chave publica do dono do grupo
+			out.writeObject(groupID + ":" + senderID ":" + generateWrappedStringifiedSimKey());
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
+			
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -503,412 +565,4 @@ public class ClientStub {
 
 	/**
 	 * Metodo que pede ao servidor para adicionar um user a um grupo existente
-	 * do qual o dono e o cliente que faz o pedido
-	 * 
-	 * @param userID String que representa o ID do user a adicionar ao grupo
-	 * @param groupID String que representa o ID do grupo
-	 * @param senderID  String que representa o ID do user a fazer o pedido de addu
-	 * @return 0 se a operacao tiver sucesso e -1 caso contrario
-	 */
-	public int addu(String userID, String groupID, String senderID) {
-
-		int resultado = -1;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("a");
-
-			// enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
-			out.writeObject(userID + ":" + groupID + ":" + senderID);
-
-			// receber o resultado da operacao
-			resultado = (int) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return resultado;
-	}
-
-	/**
-	 * Metodo que pede ao servidor para remover um user que pertence a um 
-	 * grupo existente do qual o dono e o cliente que faz o pedido
-	 * 
-	 * @param userID String que representa o ID do user a remover ao grupo
-	 * @param groupID String que representa o ID do grupo
-	 * @param senderID  String que representa o ID do user a fazer o pedido de removeu
-	 * @return 0 se a operacao tiver sucesso e -1 caso contrario
-	 */
-	public int removeu(String userID, String groupID, String senderID) {
-		int resultado = -1;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("r");
-
-			// enviar ID do cliente que se quer adicionar ao grupo:ID do grupo:ID do sender
-			out.writeObject(userID + ":" + groupID + ":" + senderID);
-
-			// receber o resultado da operacao
-			resultado = (int) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return resultado;
-	}
-
-	/**
-	 * Metodo que pede ao servidor para enviar uma nova mensagem para o grupo
-	 * do qual o cliente que fez o pedido participa
-	 * 
-	 * @param groupID String que representa o ID do grupo
-	 * @param senderID String que representa o ID do user a fazer o pedido de msg
-	 * @param mensagem String que representa a mensagem a enviar
-	 * @return 0 se a mensagem foi enviada com sucesso para o grupo e -1 caso contrario
-	 */
-	public int msg(String groupID, String senderID, String mensagem) {
-		int resultado = -1;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("m");
-
-			// enviar groupID:ID do user que fez o pedido:mensagem
-			out.writeObject(groupID + ":" + senderID + ":" + mensagem);
-
-			// receber o resultado da operacao
-			resultado = (int) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return resultado;
-	}
-
-	/**
-	 * Metodo que pergunta ao servidor se o cliente pode fazer um pedido de
-	 * collect ou history sem que ocorram erros ou anomalias
-	 * 
-	 * @param groupID String que representa o ID do grupo
-	 * @param senderID String que representa o ID do user a fazer o 
-	 * pedido de canCollectOrHistory
-	 * @return 0 se pode fazer esses pedidos sem problemas ou -1 caso contrario
-	 */
-	public int canCollectOrHistory(String groupID, String senderID) {
-		int resultado = -1;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("ch");
-
-			// enviar groupID:ID do user que fez o pedido
-			out.writeObject(groupID + ":" + senderID);
-
-			// receber o resultado da operacao
-			resultado = (int) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return resultado;
-	}
-
-	/**
-	 * Metodo que faz pedido ao servidor para receber todas as mensagens
-	 * nao lidas ainda pelo cliente que fez o pedido
-	 * 
-	 * @param groupID String que representa o ID do grupo
-	 * @param senderID String que representa o ID do user a fazer o 
-	 * pedido de collect
-	 * @return lista de Strings em que cada uma representa o dono de uma mensagem
-	 * ainda nao lida e o conteudo da mesma separada por : e se nao houverem mensagens
-	 * por ler devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
-	 */
-	public String[] collect(String groupID, String senderID) {
-		String[] listaMensagens = null;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("c");
-
-			// enviar groupID:ID do user que fez o pedido
-			out.writeObject(groupID + ":" + senderID);
-
-			// receber o resultado da operacao
-			listaMensagens = (String[]) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return listaMensagens;
-	}
-
-	/**
-	 * Metodo que faz pedido ao servidor para receber todas as mensagens ja lidas
-	 * pelo cliente que fez o pedido
-	 * 
-	 * @param groupID String que representa o ID do grupo
-	 * @param senderID String que representa o ID do user a fazer o 
-	 * pedido de history
-	 * @return lista de Strings em que cada uma representa o dono de uma mensagem
-	 * ja lida e o conteudo da mesma separada por : e se nao houverem mensagens
-	 * ja lidas devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
-	 */
-	public String[] history(String groupID, String senderID) {
-		String[] listaMensagens = null;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("h");
-
-			// enviar groupID:ID do user que fez o pedido
-			out.writeObject(groupID + ":" + senderID);
-
-			// receber o resultado da operacao
-			listaMensagens = (String[]) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return listaMensagens;
-	}
-
-	/**
-	 * Recebe um senderID e envia o mesmo para o servidor.
-	 * É recebida uma lista de grupos dos quais o senderID é membro ou é dono.
-	 * Caso não participe em nenhum grupo ou não seja dono de nenhum
-	 * é recebida uma String vazia
-	 * 
-	 * @param senderID usuario corrente
-	 * @return Array de Strings contendo primeiro os grupos dos quais o senderID é dono,
-	 * caso seja dono de algum. 
-	 * Em seguida, veêm os donos e os nomes dos grupos dos quais o senderID participa
-	 * no formato <ownerID-groupID>.
-	 * Todos os grupos são separados por ','.
-	 */
-	public String[] ginfo(String senderID) {
-
-		String resultado = null;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("g");
-			// enviar senderID
-			out.writeObject(senderID);
-			// enviar infomacao que foi apenas um argumento
-			out.writeObject("/");
-			// receber o resultado da operacao
-			resultado = (String) in.readObject();
-			if (resultado.equals("")) {
-				return null;
-			}
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// Tratar resposta
-		String[] groups = new String[0];
-
-		groups = resultado.split(",");
-
-		return groups;
-	}
-
-	/**
-	 * Pede ao servidor o nome do dono e participantes do groupID,
-	 * caso o senderID seja dono ou participante do groupID.
-	 * 
-	 * @param senderID usuário corrente
-	 * @param groupID grupo do qual a identificação do dono e dos membros será procurada
-	 * @return Array de Strings contendo primeiro os grupos dos quais o senderID é dono,
-	 * caso seja dono de algum. 
-	 * Em seguida, veêm os donos e os nomes dos grupos dos quais o senderID participa
-	 * no formato <ownerID-groupID>.
-	 * Todos os grupos são separados por ','.
-	 */
-	public String[] ginfo(String senderID, String groupID) {
-
-		String resultado = null;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("g");
-			// enviar senderID
-			out.writeObject(senderID);
-			// enviar informação que foi apenas um argumento
-			out.writeObject(groupID);
-			// receber o resultado da operacao
-			resultado = (String) in.readObject();
-
-			// Caso em que o groupID não existe
-			// Caso em que o usuario nao eh membro nem dono do groupID
-			if(resultado.equals("")) {
-				System.out.println("O grupo nao existe ou voce nao e dono ou participa no mesmo");
-				return null;
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// Tratar resposta
-		String[] groups = new String[0];
-
-		groups = resultado.split(",");
-
-		return groups;
-	}
-
-	/**
-	 * Metodo que faz o pedido ao servidor para postar uma fotografia no mural
-	 * do cliente que fez o pedido
-	 * 
-	 * @param pathFile String que representa o pathFile da fotografia a enviar
-	 * @return true se houve sucesso a postar a fotografia e false caso contrario
-	 */
-	public boolean post(String pathFile) {
-
-		File file = new File("Fotos/" + pathFile);
-		boolean bool = false;
-		try {
-			com.send("p");
-			com.sendFile("Fotos/" + pathFile);
-
-			if ((boolean) com.receive()) {
-				bool = true;
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-
-		return bool;
-	}
-
-	/**
-	 * Pede ao servidor as nPhotos mais recentes dos usuários que o segue
-	 * 
-	 * @param senderID usuário corrente
-	 * @param nPhotos número de fotos mais recentes a serem devolvidas
-	 * @return Lista de Strings contendo o identificador individual de cada foto,
-	 * assim como seu número de likes
-	 */
-	public String[] wall(String senderID, int nPhotos) {
-
-		String resultado[] = null;
-		int tamanhoArray = 0;
-		try {
-			// enviar tipo de operação
-			out.writeObject("w");
-			// enviar senderID
-			out.writeObject(senderID);
-			// enviar número de fotografias mais recentes
-			out.writeObject(nPhotos);
-			
-			//receber tamanho do array a devolver
-			tamanhoArray = (int) in.readObject();
-
-			if(tamanhoArray == -1) {
-				resultado = new String[1];
-				resultado[0] = (String) in.readObject();
-			} else {
-				// Cada photo sera representada por duas entradas no array resultado:
-				// 1.photoID
-				// 2.likes
-				resultado = new String[tamanhoArray*2];
-
-				// Loop for para receber os 3 instreams de cada foto
-				for(int i = 0; i < tamanhoArray*2; i+=2) {
-					// Receber identificador da photo
-					resultado[i] = (String) in.readObject();
-					// Receber numero de likes na foto atual
-					resultado[i+1] = (String) in.readObject();
-					// Receber e guardar ficheiro da foto
-					com.receiveFileWall();
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e1) {
-			e1.printStackTrace();
-		}
-
-		return resultado;
-	}
-
-	/**
-	 * Metodo que faz pedido ao servidor para dar like na foto com photoID dado
-	 * 
-	 * @param photoID String que representa o ID da foto
-	 * @return 0 se o pedido teve sucesso e -1 caso contrario
-	 */
-	public int like(String photoID) {
-		int resultado = -1;
-		try {
-			// enviar tipo de operacao
-			out.writeObject("l");
-
-			// enviar groupID:ID do user que fez o pedido
-			out.writeObject(photoID);
-
-			// receber o resultado da operacao
-			resultado = (int) in.readObject();
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return resultado;
-	}
-
-	/**
-	 * Fecha a conexao com o servidor
-	 */
-	protected void closeConnection() {
-		try {
-			this.out.close();
-			this.in.close();
-			this.clientSocket.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-}
+	 * do qual o
