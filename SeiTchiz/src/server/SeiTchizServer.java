@@ -276,6 +276,7 @@ public class SeiTchizServer {
 				Long receivedNonce = 0L;
 				int newUserFlag = 1;//por default trata-se de um novo user
 				int resultadoLogin = -1;//por default o login nao e bem sucedido
+				String key = null; // Chave recebida do cliente
 				
 				// autenticacao
 				try {
@@ -553,9 +554,10 @@ public class SeiTchizServer {
 							// receber <groupID do grupo a criar>:<userID do proprio cliente>
 							aux = (String) inStream.readObject();
 							conteudo = aux.split(":");
+							key = (String) inStream.readObject();
 
 							// enviar estado da operacao
-							outStream.writeObject(newgroup(conteudo[0], conteudo[1]));
+							outStream.writeObject(newgroup(conteudo[0], conteudo[1], key));
 
 						} catch (ClassNotFoundException e1) {
 							e1.printStackTrace();
@@ -1425,18 +1427,11 @@ public class SeiTchizServer {
 		 *                 ou 1 caso haja algum erro no processo
 		 * @return 0 se for criado o grupo com sucesso e -1 caso contrario
 		 */
-		private int newgroup(String groupID, String senderID) {
-			// Recebe o identificador do grupo
-			// Cria diretorio com o nome do grupo <senderID-groupID>
-			// Cria estrutura do diretório do grupo
+		private int newgroup(String groupID, String senderID, String key) {
 			// Recebe identificador da chave
 			// Cria no diretório keys:
 				// ficheiro chamado senderID
 					// Com a primeira linha
-
-
-			String senderIDgroupID = senderID + "-" + groupID;
-
 
 			// verificar se dentro do folder dos grupos existe um folder com o nome 
 			// "*-groupID"
@@ -1454,64 +1449,132 @@ public class SeiTchizServer {
 			// Obter nomes dos ficheiros e diretorios válidos
 			File[] files = groupsFolder.listFiles(filter);
 
-			File ownerGroupFolder = new File("files/groups/" + senderIDgroupID);
 			
 			if (files.length == 0) {
+				// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+				Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+	
+				// Cria estrutura do diretório do grupo
+
+				String senderIDgroupID = senderID + "-" + groupID;
+
+				// Cria diretorio com o nome do grupo <senderID-groupID>
+				File ownerGroupFolder = new File("files/groups/" + senderIDgroupID);
+
 				// caso nao existir criar esse folder
 				if (ownerGroupFolder.mkdir()) {
 					// Criar ficheiros counter.txt e participants.txt
+					// Counter *cifrado pelo servidor* que guardará a sequência das mensagens
 					File counter = new File("files/groups/" + senderIDgroupID + "/counter.txt");
+					// Guarda os participantes do grupo *cifrado pelo servidor*
 					File participants = new File("files/groups/" + senderIDgroupID + "/participants.txt");
 					try {
-						counter.createNewFile();
-						participants.createNewFile();
+						if(counter.createNewFile() && participants.createNewFile()) {
+							// Inicializar o ficheiro counter.txt com um inteiro 0, indicando que ainda nao
+							// ha mensagens no grupo
+							FileWriter fwCounter = new FileWriter(counter, true);
+							BufferedWriter bwCounter = new BufferedWriter(fwCounter);
+							bwCounter.write("0");
+							bwCounter.newLine();
+							bwCounter.close();
+							// Cifrar o ficheiro counter
+							if(sec.cifFile(counter.toString(), "files/groups/" + senderIDgroupID + "/counter.cif", unwrappedKey) == -1) {
+								System.out.println("Erro:... ao criar os ficheiros counter e participants para o novo grupo");
+								return -1;
+							}
+	
+							// Inicializar o ficheiro participants.txt no folder groups com o primeiro
+							// participante: senderID, chave simétrica recebida
+							// Obter chave simétrica 
+							FileWriter fwParticipants = new FileWriter(participants, true);
+							BufferedWriter bwParticipants = new BufferedWriter(fwParticipants);
+							bwParticipants.write(senderID);
+							bwParticipants.newLine();
+							bwParticipants.close();
+							// Cifrar ficheiro participants.txt
+							if(sec.cifFile(participants.toString(), "files/groups/" + senderIDgroupID + "/participants.cif", unwrappedKey) == -1) {
+								System.out.println("Erro:... Não foi possível cifrar o ficheiro participants");
+								return -1;
+							}
 
-						// Inicializar o ficheiro counter.txt com um inteiro 0, indicando que ainda nao
-						// ha mensagens no grupo
-						FileWriter fwCounter = new FileWriter(counter, true);
-						BufferedWriter bwCounter = new BufferedWriter(fwCounter);
-						bwCounter.write("0");
-						bwCounter.newLine();
-						bwCounter.close();
+						} else {
+							System.out.println("Erro:... ao criar os ficheiros counter e participants para o novo grupo");
+							return -1;
+						}
 
-						// Inicializar o ficheiro participants.txt no folder groups com o primeiro
-						// participante: senderID
-						FileWriter fwParticipants = new FileWriter(participants, true);
-						BufferedWriter bwParticipants = new BufferedWriter(fwParticipants);
-						bwParticipants.write(senderID);
-						bwParticipants.newLine();
-						bwParticipants.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 
 					// Adicionar o nome do grupo ao ficheiro owner.txt do senderID
+					File fUserOwner = new File(userStuffPath + senderID + "/owner.txt");
+					// Decifrar ficheiro owner.cif
+					if(sec.decFile(userStuffPath + senderID + "/owner.cif", fUserOwner.toString(), unwrappedKey) == -1) {
+						System.out.println("Erro:... Não foi possível decifrar o ficheiro owner.cif do " + senderID);
+						return -1;
+					}
 					try {
-						File fUserOwner = new File(userStuffPath + senderID + "/owner.txt");
 						FileWriter fwUserOwner = new FileWriter(fUserOwner, true);
 						BufferedWriter bwUserOwner = new BufferedWriter(fwUserOwner);
 						bwUserOwner.write(groupID);
 						bwUserOwner.newLine();
 						bwUserOwner.close();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
+						return -1;
+					}
+					// Cifrar o ficheiro owner.txt
+					if(sec.cifFile(userStuffPath + senderID + "/owner.txt", userStuffPath + senderID + "/owner.cif", unwrappedKey) == -1) {
+						System.out.println("Erro:... Não foi possível cifrar o ficheiro owner.txt do " + senderID);
+						return -1;
 					}
 
-					// Adicionar o dono do grupo-nome do grupo ao ficheiro participant.txt do
-					// senderID
+					// Adicionar o nome do grupo ao ficheiro participant.txt do senderID
+					File fUserParticipant = new File(userStuffPath + senderID + "/participant.txt");
+					// Decifrar ficheiro participant.cif
+					if(sec.decFile(userStuffPath + senderID + "/participant.cif", fUserParticipant.toString(), unwrappedKey) == -1) {
+						System.out.println("Erro:... Não foi possível decifrar o ficheiro participant.txt do " + senderID);
+						return -1;
+					}
 					try {
-						File fUserParticipant = new File(userStuffPath + senderID + "/participant.txt");
 						FileWriter fwUserParticipant = new FileWriter(fUserParticipant, true);
 						BufferedWriter bwUserParticipant = new BufferedWriter(fwUserParticipant);
 						bwUserParticipant.write(senderID + "-" + groupID);
 						bwUserParticipant.newLine();
 						bwUserParticipant.close();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
+						return -1;
 					}
 
+
+					// Criar Diretório keys
+					// Guardará os ficheiro referentes a cada participante contendo as chaves de grupo usadas durante a sua permanência no grupo
+					File keysDir = new File("files/groups/" + senderIDgroupID + "/keys");
+					if(!keysDir.mkdir()) {
+						System.out.println("Não foi possível criar o diretório keys para o grupo " + senderIDgroupID);
+						return -1;
+					}
+					// O identificador da chave não será criado, neste caso representa que o mesmo é igual a 0
+					// Contudo, o ficheiro referente as chaves do grupo usadas pelo dono do grupo será criado
+					File ownerKeys = new File("files/groups/" + senderIDgroupID + "/keys/" + senderID + ".txt");
+					try {
+						FileWriter fwOwnerKeys = new FileWriter(ownerKeys, true);
+						BufferedWriter bwOwnerKeys = new BufferedWriter(fwOwnerKeys);
+						bwOwnerKeys.write(Integer.toString(0) + "," + key);
+						bwOwnerKeys.newLine();
+						bwOwnerKeys.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+						return -1;
+					}
+					// Cifrar ficheiro
+					if(sec.cifFile(ownerKeys.toString(), "files/groups/" + senderIDgroupID + "/keys/" + senderID + ".cif", unwrappedKey) == -1) {
+						System.out.println("Erro:... Não foi possível cifrar o ficheiro contendo as keys do grupo para o participante " + senderID);
+						return -1;
+					}
+					
 					return 0;
 				} else {
 					return 1;

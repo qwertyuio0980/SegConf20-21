@@ -13,6 +13,7 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -20,6 +21,7 @@ import java.security.cert.CertificateException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 /**
@@ -266,6 +268,29 @@ public class Security {
 
 			return wrappedKey;
 	}
+
+	/**
+	 * Encripta a chave key passada com a chave pública pk passada
+	 * @param key chave simétrica que será encriptada
+	 * @param pk chave pública usada para encriptar
+	 * @return byte[] contendo a chave simétrica encriptada
+	 * @require key != null && pk != null 
+	 */
+    public byte[] wrapKey(Key key, PublicKey pk) {
+		// Encriptar chave simétrica
+		Cipher c = null;
+		byte[] wrappedKey = null;
+		try {
+			c = Cipher.getInstance("RSA");
+			c.init(Cipher.WRAP_MODE, pk);
+			wrappedKey = c.wrap(key);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+        return wrappedKey;
+    }
 
 
 

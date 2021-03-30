@@ -74,10 +74,10 @@ java -cp bin server.SeiTchizServer 45678 serverKeyStore passserver
 
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 1KS passclient1 client1
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 2KS passclient2 client2
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 3KS passclient3 client3
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost serverKeyStore 4KS passclient4 client4
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 1KS passclient1 client1
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 2KS passclient2 client2
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 3KS passclient3 client3
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 4KS passclient4 client4
 
 PARA CORRER CLIENTE SEM POLICIES
 java -cp bin client.SeiTchiz localhost serverKeyStore 1KS passclient1 client1
