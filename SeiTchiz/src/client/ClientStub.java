@@ -25,9 +25,13 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.util.Scanner;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+//import javax.xml.bind.DatatypeConverter;
 
 
 import communication.Com;
@@ -452,9 +456,9 @@ public class ClientStub {
 	 * @param data array de bytes a converter
 	 * @return String resultado pretendido em formato String
 	 */
-	public static String getStringFromBytes(byte[] data) {
-		return DatatypeConverter.printHexBinary(data);
-	}
+//	public static String getStringFromBytes(byte[] data) {
+//		return javax.xml.bind.DatatypeConverter.printHexBinary(data);
+//	}
 
 	/**
 	 * Metodo que devolve o array de bytes correspondente usando DatatypeConverter de uma String
@@ -483,9 +487,9 @@ public class ClientStub {
 		//ISTO ESTA MAL OU A MAIS???
 
 		Cipher c1 = Cipher.getInstance(keyGenSimAlg);//NAO ESTOU SEGURO SOBRE QUAL ALGORITMO AQUI SE E AES COMO OS OUTROS OU RSA
-		c.init(Cipher.ENCRYPT_MODE, secretKey);
+		c1.init(Cipher.ENCRYPT_MODE, secretKey);
 		byte[] keyEncoded = secretKey.getEncoded();//Do outro lado(para desencriptar usa-se o secretkeyspec do powerpoint de chaves simetricas)
-		byte[] encripted = c.doFinal(keyEncoded);
+		byte[] encripted = c1.doFinal(keyEncoded);
 		//-----------------
 
 		// Obter chave publica do dono a partir do seu certificado
@@ -518,7 +522,7 @@ public class ClientStub {
 		c2.init(Cipher.WRAP_MODE, pubk);
 
 		// Cifrar a chave secreta que queremos enviar
-		byte[] wrappedKey = c.wrap(secretKey)
+		byte[] wrappedKey = c.wrap(secretKey);
 
 
 		//Finalmente passar este array de bytes que ja se trata de um criptograma numa String que nao estrague o formato que estara (no ficheiro userID de Keys do grupo??? pergunta francisco)
