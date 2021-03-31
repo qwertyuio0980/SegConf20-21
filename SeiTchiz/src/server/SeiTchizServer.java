@@ -1264,98 +1264,59 @@ public class SeiTchizServer {
 			bwLikes.close();
 
 			try {
-				FileOutputStream fos = new FileOutputStream(photoFile);
+				// Guardar a foto em um ficheiro e fazer um Mac dos bytes lidos
+				FileOutputStream fosPhoto = new FileOutputStream(photoFile);
+				// Obter chave simétrica para adicionar segurança à síntese
+				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+				byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
+				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
+				// Iniciar Mac
+				Mac mac = Mac.getInstance("HmacSHA1");
+				mac.init(unwrappedKey);
+
 				while ((offset + 1024) < (int) tamanho) {
 					bytesRead = inStream.read(byteArray, 0, 1024);
 
 					// Escrever bytes para o ficheiro que guardará a foto
-					fos.write(byteArray, 0, bytesRead);
-					fos.flush();
+					fosPhoto.write(byteArray, 0, bytesRead);
+					fosPhoto.flush();
+
+					// Adicionar os bytes lidos ao Mac
+					mac.update(byteArray);
 
 					offset += bytesRead;
 				}
 		
 				if ((1024 + offset) != (int) tamanho) {
 					bytesRead = inStream.read(byteArray, 0, (int) tamanho - offset);
-					fos.write(byteArray, 0, bytesRead);
-					fos.flush();
+					fosPhoto.write(byteArray, 0, bytesRead);
+					fosPhoto.flush();
+
+					// Adicionar os bytes lidos ao Mac
+					mac.update(byteArray);
 				}
+				// ---
+
+				// Guardar Mac em um ficheiro
+				File macFile = new File(this.userStuffPath + userName + "/photos/photoMac-" + globalCounter + ".cif");
+				if(!macFile.createNewFile()) {
+					System.out.println("Erro:... não foi possível criar um ficheiro para guardar a síntese segura da foto");
+				}
+				FileOutputStream fosMac = new FileOutputStream(macFile);
+				ObjectOutputStream oosMac = new ObjectOutputStream(fosMac);
+				oosMac.write(mac.doFinal());
+				// ---
+
+				fosPhoto.close();
+				oosMac.close();
+				fosMac.close();
+
 				
-				//Criar ficheiro contendo a hash do conteúdo da foto recebida
-				//Obter o conteudo da foto como um array de bytes 
-				BufferedImage bImage = ImageIO.read(photoFile);
-				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				ImageIO.write(bImage, photoFile.getName().split("\\.")[1], bos);
-				byte[] data = bos.toByteArray();
-
-				// Fazer MAC e obter secretkey
-				Mac mac = Mac.getInstance("HmacSHA1");
-
-				// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
-				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
-				byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
-				Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
-
-				//Fazer init do MAC
-				try {
-					mac.init(unwrappedKey);
-				} catch (InvalidKeyException e) {
-					e.printStackTrace();
-					System.exit(-1);
-				}				
-
-				// Fazer update do MAC
-				mac.update(data);
-
-				// Guardar hash no ficheiro 
-				File hashFile = new File(userStuffPath + userName + "/photos/photoHash-" + globalCounter);
-				FileOutputStream HashFos = null;
-				ObjectOutputStream oos = null;
-				try {
-				 	HashFos = new FileOutputStream(hashFile);
-					oos = new ObjectOutputStream(HashFos);
-					oos.writeObject(mac.doFinal());
-				} catch (FileNotFoundException e) {
-				 	System.out.println("File not found" + e);
-				 	System.exit(-1);
-				} finally {
-				 	if (HashFos != null) {
-				 		HashFos.close();
-				 	}
-				}
-
 				// TODO: DELETE TEST
-				// TEST //
-				// Obter hash da imagem
-				MessageDigest md = MessageDigest.getInstance("SHA");
-				md.update(data);
-				byte[] hashed = md.digest();
-				// Fazer MAC e obter secretkey
-				Mac mac1 = Mac.getInstance("HmacSHA1");
-				//Fazer init do MAC
-				try {
-					mac1.init(unwrappedKey);
-				} catch (InvalidKeyException e) {
-					e.printStackTrace();
-					System.exit(-1);
-				}	
-				// Obter dados do ficheiro
-				ObjectInputStream ois1 = new ObjectInputStream(hashFile);
-				byte[] hashedPic = (byte[]) ois1.readObject();
-				mac.update(hashedPic);
-				byte[] hashedPic1 = mac.doFinal();
-				// Comparar o hash obtido a partir do mac com o hash da imagem
-				System.out.println("RESULTADO:.... " + MessageDigest.isEqual(hashed, hashedPic1));//NAO USAR ISEQUAL PARA COMPARAR ARRAY DE BYTES
-
-					//CONVERTER ARRAYS PARA STRING E COMPARAR ESSAS STRINGS COM ISEQUALS
-
-				// ois1.close();
-				// fis1.close();
+				verifyPhotoHash(new File(photoFile.toString()), new File(macFile.toString()));
 				// ---- //
 
-				oos.close();
-				bos.close();
-				fos.close();
+				
 
 			} catch(FileNotFoundException e) {
 				e.printStackTrace();
@@ -1363,8 +1324,74 @@ public class SeiTchizServer {
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 				System.exit(-1);
+			} catch (InvalidKeyException e) {
+				e.printStackTrace();
+				System.exit(-1);
 			}
 
+		}
+
+		private boolean verifyPhotoHash(File photoFile, File macFile) {
+
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
+			Key unwrappedKey = sec.unwrapKey(wrappedKey, this.serverSecKeyAlg, k);
+
+			// Ler ficheiro contendo a foto e adicionar bytes lidos a Mac
+			FileInputStream fis = null;
+			byte[] data = new byte[16];
+			Mac mac = null;
+			int j = 0;
+			try {
+				mac = Mac.getInstance("HmacSHA1");
+				mac.init(unwrappedKey);
+				fis = new FileInputStream(photoFile);
+				j = fis.read(data);
+				mac.update(data);
+				while(j != -1) {
+					j = fis.read(data);
+					mac.update(data);
+				}
+			} catch (IOException | InvalidKeyException | NoSuchAlgorithmException e1) {
+				e1.printStackTrace();
+			} finally {
+				if(fis != null){
+					try {
+						fis.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			// Ler ficheiro contendo a Mac da foto
+			FileInputStream fisMac = null;
+			ObjectInputStream oisMac = null;
+			byte[] macPhoto = null;
+			try {
+				fisMac = new FileInputStream(macFile);
+				oisMac = new ObjectInputStream(fisMac);
+				macPhoto = (byte[]) oisMac.readObject();
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+			// ---
+
+			String hashedPic1 = new String(mac.doFinal());
+			String hashedPic2 = new String(macPhoto);
+			System.out.println(hashedPic1);
+			// Comparar o hash obtido a partir do mac com o hash da imagem
+			System.out.println("RESULTADO:.... " + hashedPic1.equals(hashedPic2));
+
+			try {
+				fis.close();
+				fisMac.close();
+				oisMac.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+
+			return hashedPic1.equals(hashedPic2);
 		}
 
 		
@@ -1894,13 +1921,12 @@ public class SeiTchizServer {
          */
 		private String ginfo(String senderID, String groupID) {
 
-			StringBuilder ownerPaticipants = new StringBuilder();
+			StringBuilder ownerParticipants = new StringBuilder();
 
-            File owner = new File(userStuffPath + senderID + "/owner.txt");
-            File participant = new File(userStuffPath + senderID + "/participant.txt");
-            File groupParticipants = null;
             String fileName = null;
 
+			File groupParticipantsCifFile = null;
+			File groupParticipantsTempFile = null;
 			File ownerCifFile = new File(userStuffPath + senderID + "/owner.cif");
 			File participantCifFile = new File(userStuffPath + senderID + "/participant.cif");
             File ownerTempFile = new File(userStuffPath + senderID + "/owner.txt");
@@ -1944,57 +1970,70 @@ public class SeiTchizServer {
 
 			// Decifrar participant
 			sec.decFile(participantCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey);
+			// if (ownerTempFile.createNewFile()) {
+			// 	// nada acontece aqui
+			// }
 
-            if(fileName == null) {
-                // 2. Procurar no ficheiro participant.txt pelo groupID
-                try (Scanner scParticipant = new Scanner(participant)) {
-                    while (scParticipant.hasNextLine()) {
-                        String line = scParticipant.nextLine();
-                        String[] lineAux = line.split("-");
-                        if(lineAux[1].equals(groupID)) {
-                            fileName = line;
-                        }
-                    }
-                    scParticipant.close();
-                } catch (Exception e) {
-					ownerTempFile.delete();
-					participantTempFile.delete();
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-            }
+            // if(fileName == null) {
+            //     // 2. Procurar no ficheiro participant.txt pelo groupID
+            //     try (Scanner scParticipant = new Scanner(participant)) {
+            //         while (scParticipant.hasNextLine()) {
+            //             String line = scParticipant.nextLine();
+            //             String[] lineAux = line.split("-");
+            //             if(lineAux[1].equals(groupID)) {
+            //                 fileName = line;
+            //             }
+            //         }
+            //         scParticipant.close();
+            //     } catch (Exception e) {
+			// 		ownerTempFile.delete();
+			// 		participantTempFile.delete();
+            //         e.printStackTrace();
+            //         System.exit(-1);
+            //     }
+            // }
 
             // Caso não tenha sido encontrado o grupo nos ficheiros do senderID devolver um estado de erro
-            if(fileName == null) {
-				ownerTempFile.delete();
-				participantTempFile.delete();
-                return null;
-            }
+            // if(fileName == null) {
+			// 	ownerTempFile.delete();
+			// 	participantTempFile.delete();
+            //     return null;
+            // }
 
-			//ATENCAO ESTA PARTE AFETA FICHEIROS DENTRO DO FOLDER DOS GRUPOS VER COMO FAZER ISTO DEPOIS DE COMECAR OS COMANDOS DOS GRUPOS
-			//------------------------------------------------------------------------------
-            groupParticipants = new File("files/groups/" + fileName + "/participants.cif");
+            // groupParticipantsCifFile = new File("files/groups/" + fileName + "/participants.cif");
+			// groupParticipantsTempFile = new File("files/groups/" + fileName + "/participants.txt");
 
-			try (Scanner scParticipants = new Scanner(groupParticipants)) {
-				while (scParticipants.hasNextLine()) {
-					String line = scParticipants.nextLine();
-                    ownerPaticipants.append(line + ',');
-				}
-				scParticipants.close();
-			} catch (Exception e) {
-				ownerTempFile.delete();
-				participantTempFile.delete();
-				e.printStackTrace();
-				System.exit(-1);
-			}
-			//------------------------------------------------------------------------------
+			// try {
+			// 	if (groupParticipantsTemp.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// } catch (IOException e1) {
+			// 	e1.printStackTrace();
+			// }
 
-			// Apagar os ficheiros temporarios
-			ownerTempFile.delete();
-			participantTempFile.delete();
+			// sec.decFile(groupParticipantsCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey);
 
-			return ownerPaticipants.toString();
-			// return null;
+			// try (Scanner scParticipants = new Scanner(participantTempFile)) {
+			// 	while (scParticipants.hasNextLine()) {
+			// 		String line = scParticipants.nextLine();
+            //         ownerParticipants.append(line + ',');
+			// 	}
+			// 	scParticipants.close();
+			// } catch (Exception e) {
+			// 	ownerTempFile.delete();
+			// 	participantTempFile.delete();
+			// 	groupParticipantsTemp.delete();
+			// 	e.printStackTrace();
+			// 	System.exit(-1);
+			// }
+
+			// // Apagar os ficheiros temporarios
+			// ownerTempFile.delete();
+			// participantTempFile.delete();
+			// groupParticipantsTemp.delete();
+
+			// return ownerParticipants.toString();
+			return null;
         }
 
 		/**
