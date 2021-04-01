@@ -22,6 +22,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 
 import javax.crypto.KeyGenerator;	
 import javax.crypto.SecretKey;
@@ -486,8 +487,8 @@ public class ClientStub {
 			}
 
 			//  Enviar chave para o servidor como uma String
-			//out.writeObject(getStringFromBytes(wrappedKey));
-			//out.writeObject("key");
+			System.out.println(wrappedKey);
+			out.writeObject(new String(wrappedKey));
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
@@ -503,15 +504,74 @@ public class ClientStub {
 	}
 
 	/**
-	 * Metodo que gera uma string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
+	 * Metodo que gera uma string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,
 	 * para cada participantes no array de participantes recebido
 	 * 
 	 * @param array com todos os participantes
 	 * @return string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
 	 */
-	public String generateParticipantCipheredKeyPair(String[] participantes) {
-		//TODO
-		return null;
+	public String generateParticipantCipheredKeyPair(String[] participantes, Key groupKey) {
+
+		// Criar uma StringBuilder
+		StringBuilder sb = new StringBuilder();
+
+		PublicKey pk = null;
+		byte[] chaveCifrada = null;
+
+		// Percorrer a lista de participantes
+		for(int i = 0; i < participantes.length; i++) {
+			// Buscar a chave pública de cada participante
+			pk = getParticipantPK(participantes[i]);
+			if(pk == null) {
+				System.out.println("Erro:... Não foi possível obter a chave pública do participante");
+				return null;
+			}
+			// cifrar a chave recebida com a chave pública do participante
+			chaveCifrada = sec.wrapKey(groupKey, pk);
+			if(chaveCifrada == null) {
+				System.out.println("Erro:... Não foi possível fazer wrap da chave de grupo com o ");
+				return null;
+			}
+			// Adicionar <participante,chave cifrada> à StringBuilder 
+			if(i == participantes.length - 1){
+				sb.append(participantes[i] + "," + new String(chaveCifrada));	
+			}else{
+				sb.append(participantes[i] + "," + new String(chaveCifrada) + ",");
+			}
+		}
+		System.out.println(sb.toString());
+
+		return sb.toString();
+	}
+
+	/**
+	 * Procura o chave pública do participant passado
+	 * @param participant
+	 * @return PublicKey do participante
+	 */
+	private PublicKey getParticipantPK(String participant) {
+
+		FileInputStream fis = null;
+		Certificate cert = null;
+		try {
+			fis = new FileInputStream("PubKeys/" + participant + ".cer");
+			CertificateFactory cf = CertificateFactory.getInstance("X509");
+			cert = cf.generateCertificate(fis);
+		} catch (FileNotFoundException | CertificateException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			if(fis != null) fis.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		PublicKey pk = null;
+		if(cert != null) pk = cert.getPublicKey();
+		
+		return pk;
+
 	}
 
 	/**
@@ -544,8 +604,6 @@ public class ClientStub {
 	 */
 	public int addu(String userID, String groupID, String senderID) {
 		
-		//CONFIRMA COM O FRANCISCO
-		
 		//Cria uma nova chave secreta
 		//obtem todos os participantes ate ao momento que se encontram no grupo
 		//obtem o counter corrente de chave do grupo
@@ -554,8 +612,6 @@ public class ClientStub {
 		int resultado = -1;
 		String participantes = null;
 		String[] listaParticipantes = null;
-		int qntParticipantes = 0;
-		StringBuilder sb = new StringBuilder();
 
 		try {
 			// enviar tipo de operacao
@@ -572,7 +628,7 @@ public class ClientStub {
 				return resultado;
 			}
 			listaParticipantes = participantes.split(":");
-			qntParticipantes = listaParticipantes.length;
+			// qntParticipantes = listaParticipantes.length;
 
 			// Criar nova chave simétrica para o grupo
 			Key groupKey = generateKey();
@@ -583,21 +639,11 @@ public class ClientStub {
 
 			// Adicionar o id de cada participante e a chave cifrada 
 			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
-			for(int i = 0; i < qntParticipantes; i++) {
-
-				//ESTA LINHA TEM DE SER MUDADA PARA BUSCAR A PK NAO DA KEYSTORE MAS DA PUBKEYS
-				PublicKey pk = sec.getCert(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.storetype).getPublicKey();
-
-				byte[] wrappedKey = sec.wrapKey(groupKey, pk);
-				if(wrappedKey == null) {
-					System.out.println("Erro:... Não foi possível fazer um wrap da chave simétrica para o novo grupo");
-					return resultado;
-				}
-			}
+			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey);
 
 			// Enviar unica string que ficara no ficheiro de chaves do grupo
-			// com o aspeto 1:<donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...
-			out.writeObject(sb.toString());
+			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...
+			out.writeObject(retorno);
 			
 			//--------------------------------------------------------------------------------------------
 
@@ -605,11 +651,11 @@ public class ClientStub {
 			resultado = (int) in.readObject();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(-1);
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(-1);
 		}
 
 		return resultado;

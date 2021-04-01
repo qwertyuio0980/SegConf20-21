@@ -579,7 +579,6 @@ public class SeiTchizServer {
 							if(!todosParticipantes.isEmpty()) {
 								outStream.writeObject(addu(conteudo[0], conteudo[1], conteudo[2]));
 							}
-							
 
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
@@ -1317,7 +1316,7 @@ public class SeiTchizServer {
 		 * @throws ClassNotFoundException
 		 * @throws IOException
 		 */
-		private void post(String userName) throws ClassNotFoundException, IOException {
+		private void post(String userName) throws ClassNotFoundException, IOException { 
 	
 			String nomeFicheiro = (String) inStream.readObject();
 			long tamanho = inStream.readLong();
@@ -1351,6 +1350,7 @@ public class SeiTchizServer {
 			try {
 				// Guardar a foto em um ficheiro e fazer um Mac dos bytes lidos
 				FileOutputStream fosPhoto = new FileOutputStream(photoFile);
+				ObjectOutputStream oosPhoto = new ObjectOutputStream(fosPhoto);
 				// Obter chave simétrica para adicionar segurança à síntese
 				Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 				byte[] wrappedKey = sec.getWrappedKey(this.serverSecKey);
@@ -1358,15 +1358,17 @@ public class SeiTchizServer {
 				// Iniciar Mac
 				Mac mac = Mac.getInstance("HmacSHA1");
 				mac.init(unwrappedKey);
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 				while ((offset + 1024) < (int) tamanho) {
 					bytesRead = inStream.read(byteArray, 0, 1024);
 
 					// Escrever bytes para o ficheiro que guardará a foto
-					fosPhoto.write(byteArray, 0, bytesRead);
-					fosPhoto.flush();
+					// fosPhoto.write(byteArray, 0, bytesRead);
+					// fosPhoto.flush();
+					baos.write(byteArray, 0, bytesRead);
 
-					// Adicionar os bytes lidos ao Mac
+					// Adicionar os bytes lidos ao mac
 					mac.update(byteArray);
 
 					offset += bytesRead;
@@ -1374,13 +1376,15 @@ public class SeiTchizServer {
 		
 				if ((1024 + offset) != (int) tamanho) {
 					bytesRead = inStream.read(byteArray, 0, (int) tamanho - offset);
-					fosPhoto.write(byteArray, 0, bytesRead);
-					fosPhoto.flush();
+					// fosPhoto.write(byteArray, 0, bytesRead);
+					// fosPhoto.flush();
+					baos.write(byteArray, 0, bytesRead);
 
 					// Adicionar os bytes lidos ao Mac
 					mac.update(byteArray);
 				}
 				// ---
+				oosPhoto.writeObject(baos.toByteArray());
 
 				// Guardar Mac em um ficheiro
 				File macFile = new File(this.userStuffPath + userName + "/photos/photoMac-" + globalCounter + ".cif");
@@ -1423,6 +1427,7 @@ public class SeiTchizServer {
 
 			// Ler ficheiro contendo a foto e adicionar bytes lidos a Mac
 			FileInputStream fis = null;
+			ObjectInputStream ois = null;
 			byte[] data = new byte[16];
 			Mac mac = null;
 			int j = 0;
@@ -1430,13 +1435,10 @@ public class SeiTchizServer {
 				mac = Mac.getInstance("HmacSHA1");
 				mac.init(unwrappedKey);
 				fis = new FileInputStream(photoFile);
-				j = fis.read(data);
+				ois = new ObjectInputStream(fis);
+				data = (byte[]) ois.readObject();
 				mac.update(data);
-				while(j != -1) {
-					j = fis.read(data);
-					mac.update(data);
-				}
-			} catch (IOException | InvalidKeyException | NoSuchAlgorithmException e1) {
+			} catch (IOException | InvalidKeyException | NoSuchAlgorithmException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			} finally {
 				if(fis != null){
@@ -1460,11 +1462,18 @@ public class SeiTchizServer {
 			}
 			// ---
 
-			String hashedPic1 = new String(mac.doFinal());
-			String hashedPic2 = new String(macPhoto);
-			System.out.println(hashedPic1);
-			// Comparar o hash obtido a partir do mac com o hash da imagem
-			System.out.println("RESULTADO:.... " + hashedPic1.equals(hashedPic2));
+			// Comparar byte a byte
+			byte[] resultado = mac.doFinal();
+			boolean iguais = true;
+			if(resultado.length == macPhoto.length) {
+				System.out.println("possuem tamanho igual");
+				for(int i = 0; i < resultado.length; i++) {
+					if(Byte.compare(resultado[i], macPhoto[i]) != 0) iguais = false;
+				}
+			}
+			// ---
+
+			System.out.println("RESULTADO:.... " + iguais);
 
 			try {
 				fis.close();
@@ -1473,9 +1482,8 @@ public class SeiTchizServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
 
-			return hashedPic1.equals(hashedPic2);
+			return iguais;
 		}
 	
 		/**
@@ -1671,8 +1679,12 @@ public class SeiTchizServer {
 						e.printStackTrace();
 						return -1;
 					}
-
-
+					// Cifrar ficheiro
+					if(sec.cifFile(fUserParticipant.toString(), userStuffPath + senderID + "/participant.cif", unwrappedKey) == -1) {
+						System.out.println("Erro:... Não foi possível cifrar o ficheiro contendo as keys do grupo para o participante " + senderID);
+						return -1;
+					}
+					
 					// Criar Diretório keys
 					// Guardará os ficheiro referentes a cada participante contendo as chaves de grupo usadas durante a sua permanência no grupo
 					File keysDir = new File("files/groups/" + senderIDgroupID + "/keys");
@@ -1682,11 +1694,11 @@ public class SeiTchizServer {
 					}
 					// O identificador da chave não será criado, neste caso representa que o mesmo é igual a 0
 					// Contudo, o ficheiro referente as chaves do grupo usadas pelo dono do grupo será criado
-					File ownerKeys = new File("files/groups/" + senderIDgroupID + "/keys/" + senderID + ".txt");
+					File ownerKeys = new File("files/groups/" + senderIDgroupID + "/keys/allKeys.txt");
 					try {
 						FileWriter fwOwnerKeys = new FileWriter(ownerKeys, true);
 						BufferedWriter bwOwnerKeys = new BufferedWriter(fwOwnerKeys);
-						bwOwnerKeys.write(Integer.toString(0) + "," + key);
+						bwOwnerKeys.write(Integer.toString(0) + ":" + senderID + "," + key);
 						bwOwnerKeys.newLine();
 						bwOwnerKeys.close();
 					} catch (IOException e) {
@@ -1695,6 +1707,24 @@ public class SeiTchizServer {
 					}
 					// Cifrar ficheiro
 					if(sec.cifFile(ownerKeys.toString(), "files/groups/" + senderIDgroupID + "/keys/" + senderID + ".cif", unwrappedKey) == -1) {
+						System.out.println("Erro:... Não foi possível cifrar o ficheiro contendo as keys do grupo para o participante " + senderID);
+						return -1;
+					}
+
+					// Criar ficheiro e escrever identificador da chave
+					File keysCounter = new File("files/groups/" + senderIDgroupID + "/keys/counter.txt");
+					try {
+						FileWriter fwKeysCounter = new FileWriter(keysCounter, true);
+						BufferedWriter bwKeysCounter = new BufferedWriter(fwKeysCounter);
+						bwKeysCounter.write(0);
+						bwKeysCounter.newLine();
+						bwKeysCounter.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+						return -1;
+					}
+					// Cifrar ficheiro
+					if(sec.cifFile(keysCounter.toString(), "files/groups/" + senderIDgroupID + "/keys/counter.cif", unwrappedKey) == -1) {
 						System.out.println("Erro:... Não foi possível cifrar o ficheiro contendo as keys do grupo para o participante " + senderID);
 						return -1;
 					}
@@ -1780,120 +1810,153 @@ public class SeiTchizServer {
 		 */
 		private int addu(String userID, String groupID, String senderID) {
 
-			//IMPORTANTE NO LADO DO CLIENTE PARA CADA CLIENTE O DONO VAI A PUBKEYS BUSCAR O CERTIFICADO DO USER A ADICIONAR E FAZER WRAP DA CHAVE SIMETRICA DO GRUPO COM
-			//A PUBLICA DO USER A ADICIONAR (PARA 4 INDIVIDUOS VOU TER 4 CHAVES CIFRADAS POR CADA UM)
+			// IMPORTANTE NO LADO DO CLIENTE PARA CADA CLIENTE O DONO VAI A PUBKEYS BUSCAR O CERTIFICADO DO USER A ADICIONAR E FAZER WRAP DA CHAVE SIMETRICA DO GRUPO COM
+			// A PUBLICA DO USER A ADICIONAR (PARA 4 INDIVIDUOS VOU TER 4 CHAVES CIFRADAS POR CADA UM)
 
-			// File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
+			File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
 
-			// File counterCifFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.cif");
-			// File counterTempFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.txt");
+			File counterKeyCifFile = new File("files/groups/" + senderID + "-" + groupID + "/keys/counter.cif");
+			File counterKeyTempFile = new File("files/groups/" + senderID + "-" + groupID + "/keys/counter.txt");
 
-			// File groupParticipantsCifFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.cif");
-			// File groupParticipantsTempFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.txt");
+			File groupParticipantsCifFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.cif");
+			File groupParticipantsTempFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.txt");
 
-			// File participantCifFile = new File(userStuffPath + userID + "/participant.cif");
-			// File participantTempFile = new File(userStuffPath + userID + "/participant.txt");
+			File participantCifFile = new File(userStuffPath + userID + "/participant.cif");
+			File participantTempFile = new File(userStuffPath + userID + "/participant.txt");
 
-			// if (!groupFolder.exists() || !participantCifFile.exists()) {
-			// 	// se senderID nao tiver o folder com nome groupID
-			// 	// ou se o ficheiro participant.txt nao existe no folder do userID
-			// 	// tambem devolver -1(porque isto significa que o userID inserido nao
-			// 	// corresponde a nenhum user existente)
-			// 	return -1;
-			// }
+			if (!groupFolder.exists() || !participantCifFile.exists()) {
+				// se senderID nao tiver o folder com nome groupID
+				// ou se o ficheiro participant.txt nao existe no folder do userID
+				// tambem devolver -1(porque isto significa que o userID inserido nao
+				// corresponde a nenhum user existente)
+				return -1;
+			}
 
-			// try {
-			// 	if(counterTempFile.createNewFile()) {
-			// 		// nada acontece aqui
-			// 	}
-			// 	if(groupParticipantsTempFile.createNewFile()) {
-			// 		// nada acontece aqui
-			// 	}
-			// 	if(participantTempFile.createNewFile()) {
-			// 		// nada acontece aqui
-			// 	}
-			// } catch(IOException e) {
-			// 	e.printStackTrace();
-			// }
+			try {
+				if(counterKeyTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+				if(groupParticipantsTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+				if(participantTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
 
-			// // Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
-			// Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 			
-			// //metodo do sec vai aqui
-			// Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+			//metodo do sec vai aqui
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
 
-			// // Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
-			// if(sec.decFile(groupParticipantsCifFile.toPath().toString(), groupParticipantsTempFile.toPath().toString(), unwrappedKey) == -1) {
-			// 	counterTempFile.delete();
-			// 	groupParticipantsTempFile.delete();
-			// 	participantTempFile.delete();
-			// 	return -1;
-			// }
+			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			if(sec.decFile(groupParticipantsCifFile.toPath().toString(), groupParticipantsTempFile.toPath().toString(), unwrappedKey) == -1) {
+				counterKeyTempFile.delete();
+				groupParticipantsTempFile.delete();
+				participantTempFile.delete();
+				return -1;
+			}
 
-			// //ESTAVA AQUI QUANDO DEIXEI DE CONSEGUIR GUARDAR COISAS
+			// Verifica se o userID ja participa do grupo
+			try {
+				Scanner scGroupParticipants = new Scanner(groupParticipantsTempFile);
+				while (scGroupParticipants.hasNextLine()) {
+					String lineGroupParticipant = scGroupParticipants.nextLine();
+					if (lineGroupParticipant.contentEquals(userID)) {
+						scGroupParticipants.close();
+						counterKeyTempFile.delete();
+						groupParticipantsTempFile.delete();
+						participantTempFile.delete();
+						return -1;
+					}
+				}
+				scGroupParticipants.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
-			// // Verifica se o userID ja participa do grupo
-			// try {
-			// 	Scanner scGroupParticipants = new Scanner(groupParticipantsTempFile);
-			// 	while (scGroupParticipants.hasNextLine()) {
-			// 		String lineGroupParticipant = scGroupParticipants.nextLine();
-			// 		if (lineGroupParticipant.contentEquals(userID)) {
-			// 			scGroupParticipants.close();
-			// 			counterTempFile.delete();
-			// 			groupParticipantsTempFile.delete();
-			// 			participantTempFile.delete();
-			// 			return -1;
-			// 		}
-			// 	}
-			// 	scGroupParticipants.close();
-			// } catch (FileNotFoundException e) {
-			// 	// TODO Auto-generated catch block
-			// 	e.printStackTrace();
-			// }
+			if(sec.decFile(participantCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey) == -1) {
+				counterKeyTempFile.delete();
+				groupParticipantsTempFile.delete();
+				participantTempFile.delete();
+				return -1;
+			}
 
-			// // Verifica se o grupo ja esta nos registros de grupos ao qual o userID pertence
-			// try {
-			// 	Scanner scParticipant = new Scanner(participantTempFile);
-			// 	while (scParticipant.hasNextLine()) {
-			// 		String lineParticipant = scParticipant.nextLine();
-			// 		if (lineParticipant.contentEquals(groupID)) {
-			// 			scParticipant.close();
-			// 			return -1;
-			// 		}
-			// 	}
-			// 	scParticipant.close();
-			// } catch (FileNotFoundException e) {
-			// 	// TODO Auto-generated catch block
-			// 	e.printStackTrace();
-			// }
+			// Verifica se o grupo ja esta nos registros de grupos ao qual o userID pertence
+			try {
+				Scanner scParticipant = new Scanner(participantTempFile);
+				while (scParticipant.hasNextLine()) {
+					String lineParticipant = scParticipant.nextLine();
+					if (lineParticipant.contentEquals(groupID)) {
+						scParticipant.close();
+						counterKeyTempFile.delete();
+						groupParticipantsTempFile.delete();
+						participantTempFile.delete();
+						return -1;
+					}
+				}
+				scParticipant.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 
-			// // proceder á adicao do userID ao grupo que implica:
-			// // 1.colocar senderID-groupID no ficheiro participant.txt do userID
-			// try {
-			// 	FileWriter fwParticipant = new FileWriter(participantTempFile, true);
-			// 	BufferedWriter bwParticipant = new BufferedWriter(fwParticipant);
-			// 	bwParticipant.write(senderID + "-" + groupID);
-			// 	bwParticipant.newLine();
-			// 	bwParticipant.close();
-			// } catch (IOException e) {
-			// 	// TODO Auto-generated catch block
-			// 	e.printStackTrace();
-			// }
+			// proceder á adicao do userID ao grupo que implica:
 
-			// // 2.colocar userID no ficheiro members.txt do grupo
-			// try {
-			// 	FileWriter fwMember = new FileWriter(groupMembersTempFile, true);
-			// 	BufferedWriter bwMember = new BufferedWriter(fwMember);
-			// 	bwMember.write(userID);
-			// 	bwMember.newLine();
-			// 	bwMember.close();
-			// } catch (IOException e) {
-			// 	// TODO Auto-generated catch block
-			// 	e.printStackTrace();
-			// }
+			// 1.colocar senderID-groupID no ficheiro participant.txt do userID
+			try {
+				FileWriter fwParticipant = new FileWriter(participantTempFile, true);
+				BufferedWriter bwParticipant = new BufferedWriter(fwParticipant);
+				bwParticipant.write(senderID + "-" + groupID);
+				bwParticipant.newLine();
+				bwParticipant.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			// 2.colocar userID no ficheiro participants.txt do grupo
+			try {
+				FileWriter fwMember = new FileWriter(groupParticipantsTempFile, true);
+				BufferedWriter bwMember = new BufferedWriter(fwMember);
+				bwMember.write(userID);
+				bwMember.newLine();
+				bwMember.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			//3.incrementar o counterKeys do grupo
+			FileInputStream fis = new FileInputStream(counterKeyTempFile);
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			String identificador = (String) ois.readObject();
+			int i = Integer.parseInt(identificador);
+			i++;
+			FileOutputStream fos = new FileOutputStream(counterKeyTempFile);
+
+			//4.adicionar nova linha com <counter incrementado>:<donoID,chave cifrada>,<client1,chave cifrada>,...
+			StringBuilder sb = new StringBuilder();
+			sb.append(identificador);
 
 
-			// //Cifrar os txts no fim
+
+
+			//Cifrar os txts no fim
+			if(sec.cifFile()) {
+
+
+			}
+			if(sec.cifFile()) {
+
+
+			}
+			if(sec.cifFile()) {
+
+				
+			}
+
 
 			return 0;
 		}
