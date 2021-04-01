@@ -1389,7 +1389,8 @@ public class SeiTchizServer {
 				}
 				FileOutputStream fosMac = new FileOutputStream(macFile);
 				ObjectOutputStream oosMac = new ObjectOutputStream(fosMac);
-				oosMac.write(mac.doFinal());
+				
+				oosMac.writeObject(mac.doFinal());
 				// ---
 
 				fosPhoto.close();
@@ -1399,8 +1400,6 @@ public class SeiTchizServer {
 				
 				// TODO: DELETE TEST
 				verifyPhotoHash(new File(photoFile.toString()), new File(macFile.toString()));
-				// ---- //
-
 				
 
 			} catch(FileNotFoundException e) {
@@ -1784,117 +1783,117 @@ public class SeiTchizServer {
 			//IMPORTANTE NO LADO DO CLIENTE PARA CADA CLIENTE O DONO VAI A PUBKEYS BUSCAR O CERTIFICADO DO USER A ADICIONAR E FAZER WRAP DA CHAVE SIMETRICA DO GRUPO COM
 			//A PUBLICA DO USER A ADICIONAR (PARA 4 INDIVIDUOS VOU TER 4 CHAVES CIFRADAS POR CADA UM)
 
-			File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
+			// File groupFolder = new File("files/groups/" + senderID + "-" + groupID);
 
-			File counterCifFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.cif");
-			File counterTempFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.txt");
+			// File counterCifFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.cif");
+			// File counterTempFile = new File("files/groups/" + senderID + "-" + groupID + "/counter.txt");
 
-			File groupParticipantsCifFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.cif");
-			File groupParticipantsTempFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.txt");
+			// File groupParticipantsCifFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.cif");
+			// File groupParticipantsTempFile = new File("files/groups/" + senderID + "-" + groupID + "/participants.txt");
 
-			File participantCifFile = new File(userStuffPath + userID + "/participant.cif");
-			File participantTempFile = new File(userStuffPath + userID + "/participant.txt");
+			// File participantCifFile = new File(userStuffPath + userID + "/participant.cif");
+			// File participantTempFile = new File(userStuffPath + userID + "/participant.txt");
 
-			if (!groupFolder.exists() || !participantCifFile.exists()) {
-				// se senderID nao tiver o folder com nome groupID
-				// ou se o ficheiro participant.txt nao existe no folder do userID
-				// tambem devolver -1(porque isto significa que o userID inserido nao
-				// corresponde a nenhum user existente)
-				return -1;
-			}
+			// if (!groupFolder.exists() || !participantCifFile.exists()) {
+			// 	// se senderID nao tiver o folder com nome groupID
+			// 	// ou se o ficheiro participant.txt nao existe no folder do userID
+			// 	// tambem devolver -1(porque isto significa que o userID inserido nao
+			// 	// corresponde a nenhum user existente)
+			// 	return -1;
+			// }
 
-			try {
-				if(counterTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-				if(groupParticipantsTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-				if(participantTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
+			// try {
+			// 	if(counterTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// 	if(groupParticipantsTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// 	if(participantTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// } catch(IOException e) {
+			// 	e.printStackTrace();
+			// }
 
-			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
-			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			// // Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			// Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
 			
-			//metodo do sec vai aqui
-			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+			// //metodo do sec vai aqui
+			// Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
 
-			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
-			if(sec.decFile(groupParticipantsCifFile.toPath().toString(), groupParticipantsTempFile.toPath().toString(), unwrappedKey) == -1) {
-				counterTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				return -1;
-			}
+			// // Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			// if(sec.decFile(groupParticipantsCifFile.toPath().toString(), groupParticipantsTempFile.toPath().toString(), unwrappedKey) == -1) {
+			// 	counterTempFile.delete();
+			// 	groupParticipantsTempFile.delete();
+			// 	participantTempFile.delete();
+			// 	return -1;
+			// }
 
-			//ESTAVA AQUI QUANDO DEIXEI DE CONSEGUIR GUARDAR COISAS
+			// //ESTAVA AQUI QUANDO DEIXEI DE CONSEGUIR GUARDAR COISAS
 
-			// Verifica se o userID ja participa do grupo
-			try {
-				Scanner scGroupParticipants = new Scanner(groupParticipantsTempFile);
-				while (scGroupParticipants.hasNextLine()) {
-					String lineGroupParticipant = scGroupParticipants.nextLine();
-					if (lineGroupParticipant.contentEquals(userID)) {
-						scGroupParticipants.close();
-						counterTempFile.delete();
-						groupParticipantsTempFile.delete();
-						participantTempFile.delete();
-						return -1;
-					}
-				}
-				scGroupParticipants.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// // Verifica se o userID ja participa do grupo
+			// try {
+			// 	Scanner scGroupParticipants = new Scanner(groupParticipantsTempFile);
+			// 	while (scGroupParticipants.hasNextLine()) {
+			// 		String lineGroupParticipant = scGroupParticipants.nextLine();
+			// 		if (lineGroupParticipant.contentEquals(userID)) {
+			// 			scGroupParticipants.close();
+			// 			counterTempFile.delete();
+			// 			groupParticipantsTempFile.delete();
+			// 			participantTempFile.delete();
+			// 			return -1;
+			// 		}
+			// 	}
+			// 	scGroupParticipants.close();
+			// } catch (FileNotFoundException e) {
+			// 	// TODO Auto-generated catch block
+			// 	e.printStackTrace();
+			// }
 
-			// Verifica se o grupo ja esta nos registros de grupos ao qual o userID pertence
-			try {
-				Scanner scParticipant = new Scanner(participantTempFile);
-				while (scParticipant.hasNextLine()) {
-					String lineParticipant = scParticipant.nextLine();
-					if (lineParticipant.contentEquals(groupID)) {
-						scParticipant.close();
-						return -1;
-					}
-				}
-				scParticipant.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// // Verifica se o grupo ja esta nos registros de grupos ao qual o userID pertence
+			// try {
+			// 	Scanner scParticipant = new Scanner(participantTempFile);
+			// 	while (scParticipant.hasNextLine()) {
+			// 		String lineParticipant = scParticipant.nextLine();
+			// 		if (lineParticipant.contentEquals(groupID)) {
+			// 			scParticipant.close();
+			// 			return -1;
+			// 		}
+			// 	}
+			// 	scParticipant.close();
+			// } catch (FileNotFoundException e) {
+			// 	// TODO Auto-generated catch block
+			// 	e.printStackTrace();
+			// }
 
-			// proceder á adicao do userID ao grupo que implica:
-			// 1.colocar senderID-groupID no ficheiro participant.txt do userID
-			try {
-				FileWriter fwParticipant = new FileWriter(participantTempFile, true);
-				BufferedWriter bwParticipant = new BufferedWriter(fwParticipant);
-				bwParticipant.write(senderID + "-" + groupID);
-				bwParticipant.newLine();
-				bwParticipant.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// // proceder á adicao do userID ao grupo que implica:
+			// // 1.colocar senderID-groupID no ficheiro participant.txt do userID
+			// try {
+			// 	FileWriter fwParticipant = new FileWriter(participantTempFile, true);
+			// 	BufferedWriter bwParticipant = new BufferedWriter(fwParticipant);
+			// 	bwParticipant.write(senderID + "-" + groupID);
+			// 	bwParticipant.newLine();
+			// 	bwParticipant.close();
+			// } catch (IOException e) {
+			// 	// TODO Auto-generated catch block
+			// 	e.printStackTrace();
+			// }
 
-			// 2.colocar userID no ficheiro members.txt do grupo
-			try {
-				FileWriter fwMember = new FileWriter(groupMembersTempFile, true);
-				BufferedWriter bwMember = new BufferedWriter(fwMember);
-				bwMember.write(userID);
-				bwMember.newLine();
-				bwMember.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			// // 2.colocar userID no ficheiro members.txt do grupo
+			// try {
+			// 	FileWriter fwMember = new FileWriter(groupMembersTempFile, true);
+			// 	BufferedWriter bwMember = new BufferedWriter(fwMember);
+			// 	bwMember.write(userID);
+			// 	bwMember.newLine();
+			// 	bwMember.close();
+			// } catch (IOException e) {
+			// 	// TODO Auto-generated catch block
+			// 	e.printStackTrace();
+			// }
 
 
-			//Cifrar os txts no fim
+			// //Cifrar os txts no fim
 
 			return 0;
 		}

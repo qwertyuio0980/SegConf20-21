@@ -484,9 +484,10 @@ public class ClientStub {
 				System.out.println("Erro:... Não foi possível fazer um wrap da chave simétrica para o novo grupo");
 				return resultado;
 			}
+
 			//  Enviar chave para o servidor como uma String
-			// out.writeObject(getStringFromBytes(wrappedKey));
-			out.writeObject("key");
+			//out.writeObject(getStringFromBytes(wrappedKey));
+			//out.writeObject("key");
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
@@ -510,6 +511,7 @@ public class ClientStub {
 	 */
 	public String generateParticipantCipheredKeyPair(String[] participantes) {
 		//TODO
+		return null;
 	}
 
 	/**
