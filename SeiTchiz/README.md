@@ -137,7 +137,20 @@ keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
 keytool -genkeypair -alias <clientID + 'KS'> -keystore <clientID + 'KS'>
 
 
+**IMPORTANTE**
 
-//CIFRAR COISAS:
-//WRAP E PARA CHAVES
-//ENCRYPT E PARA CONTEUDOS
+to do:
+wall
+ginfo(POR TESTAR)
+newgroup
+addu
+removeu
+msg
+collect
+history
+correr com policies
+refazer os jars
+
+CIFRAR COISAS:
+WRAP E PARA CHAVES
+ENCRYPT E PARA CONTEUDOS

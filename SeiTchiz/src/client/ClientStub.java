@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -23,7 +22,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.util.Scanner;
 
 import javax.crypto.KeyGenerator;	
 import javax.crypto.SecretKey;
@@ -452,88 +450,6 @@ public class ClientStub {
 	}
 
 	/**
-	 * Metodo que devolve a string correspondente usando DatatypeConverter de um array de bytes
-	 *
-	 * @param data array de bytes a converter
-	 * @return String resultado pretendido em formato String
-	 */
-	public static String getStringFromBytes(byte[] data) {
-		// return DatatypeConverter.printHexBinary(data);
-		// return javax.xml.bind.DatatypeConverter.printHexBinary(data);
-		return null;
-	}
-
-	/**
-	 * Metodo que devolve o array de bytes correspondente usando DatatypeConverter de uma String
-	 *
-	 * @param data String a converter
-	 * @return byte[] resultado pretendido em formato array de bytes
-	 */
-	public static byte[] getBytesFromString(String info) {
-		// return DatatypeConverter.parseHexBinary(info);
-		return null;
-	}
-	
-	// /**
-	//  * Metodo que gera uma string da chave simetrica cifrada pela chave publica do dono do grupo
-	//  *
-	//  * @return Nova instancia de chave simetrica cifrada pela chave publica do dono do grupo
-	//  */
-	// public String generateWrappedStringifiedSimKey() {
-	// 	//feito com recurso ao slide 9 do powerpoint de chaves assimetricas
-
-	// 	// Gerar chave simetrica
-	// 	KeyGenerator kg = KeyGenerator.getInstance(keyGenSimAlg);
-	// 	kg.init(128);
-	// 	SecretKey secretKey = kg.generateKey();
-
-	// 	//-----------------
-	// 	//ISTO ESTA MAL OU A MAIS???
-
-	// 	Cipher c1 = Cipher.getInstance(keyGenSimAlg);//NAO ESTOU SEGURO SOBRE QUAL ALGORITMO AQUI SE E AES COMO OS OUTROS OU RSA
-	// 	c.init(Cipher.ENCRYPT_MODE, secretKey);
-	// 	byte[] keyEncoded = secretKey.getEncoded();//Do outro lado(para desencriptar usa-se o secretkeyspec do powerpoint de chaves simetricas)
-	// 	byte[] encripted = c.doFinal(keyEncoded);
-	// 	//-----------------
-
-	// 	// Obter chave publica do dono a partir do seu certificado
-	// 	KeyStore kstore = null;
-	// 	try {
-	// 		kstore = KeyStore.getInstance("JKS");//AQUI E JKS OU JCEKS?
-	// 	} catch (KeyStoreException e) {
-	// 		e.printStackTrace();
-    //         System.exit(-1);
-	// 	}
-
-	// 	try(FileInputStream kfile = new FileInputStream("keystores/" + this.keystore)) {
-	// 		kstore.load(kfile, this.keystorePassword.toCharArray());
-	// 	} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
-	// 		e2.printStackTrace(e);
-    //         System.exit(-1);
-	// 	}
-        
-	// 	try {
-	// 	} catch (KeyStoreException e1) {
-    //         closeConnection();
-    //         System.exit(-1);
-	// 	}
-	// 	PublicKey pubk = cert.getPublicKey();
-
-	// 	// Preparar o algoritmo de cifra para cifrar a chave secreta
-	// 	Cipher c2 = Cipher.getInstance("RSA");//NAO TENHO 100% CERTEZA MAS AQUI E RSA PORQUE SE TRATA DA CHAVE PUBLICA VINDA DAS KEYSTORES QUE FORAM GUARDADAS COM O TIPO RSA
-	// 	c2.init(Cipher.WRAP_MODE, pubk);
-
-	// 	// Cifrar a chave secreta que queremos enviar
-	// 	byte[] wrappedKey = c.wrap(secretKey);
-
-
-	// 	//Finalmente passar este array de bytes que ja se trata de um criptograma numa String que nao estrague o formato que estara (no ficheiro userID de Keys do grupo??? pergunta francisco)
-	// 	String chaveAEnviar = getStringFromBytes(wrappedKey);
-
-	// 	return chaveAEnviar;
-	// }
-
-	/**
 	 * Metodo que pede ao servidor para criar um novo grupo 
 	 * sendo o cliente que faz o pedido o seu dono
 	 * 
@@ -586,6 +502,17 @@ public class ClientStub {
 	}
 
 	/**
+	 * Metodo que gera uma string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
+	 * para cada participantes no array de participantes recebido
+	 * 
+	 * @param array com todos os participantes
+	 * @return string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
+	 */
+	public String generateParticipantCipheredKeyPair(String[] participantes) {
+		//TODO
+	}
+
+	/**
 	 * Cria uma chave simétrica usando o algoritmo AES e devolve a mesma em formato byte[]
 	 * @return byte[] da chave criada 
 	 */
@@ -614,14 +541,63 @@ public class ClientStub {
 	 * @return 0 se a operacao tiver sucesso e -1 caso contrario
 	 */
 	public int addu(String userID, String groupID, String senderID) {
+		
+		//CONFIRMA COM O FRANCISCO
+		
+		//Cria uma nova chave secreta
+		//obtem todos os participantes ate ao momento que se encontram no grupo
+		//obtem o counter corrente de chave do grupo
+		//para cada um destes manda <counter corrente>:<ID do membro, nova chave secreta cifrada pelo membro>
 
 		int resultado = -1;
+		String participantes = null;
+		String[] listaParticipantes = null;
+		int qntParticipantes = 0;
+		StringBuilder sb = new StringBuilder();
+
 		try {
 			// enviar tipo de operacao
 			out.writeObject("a");
 
-			// enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
+			// enviar ID do grupo a ser criado:ID do cliente que o pretende criar:
 			out.writeObject(userID + ":" + groupID + ":" + senderID);
+
+			//--------------------------------------------------------------------------------------------
+			// Obter todos os participantes do grupo separados por ":"
+			participantes = (String) in.readObject();
+			if(participantes.isEmpty()) {
+				System.out.println("Erro:... Não foi possível obter a lista de participantes do grupo");
+				return resultado;
+			}
+			listaParticipantes = participantes.split(":");
+			qntParticipantes = listaParticipantes.length;
+
+			// Criar nova chave simétrica para o grupo
+			Key groupKey = generateKey();
+			if(groupKey == null) {
+				System.out.println("Erro:... Não foi possível criar uma chave simétrica para o novo grupo");
+				return resultado;
+			}
+
+			// Adicionar o id de cada participante e a chave cifrada 
+			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
+			for(int i = 0; i < qntParticipantes; i++) {
+
+				//ESTA LINHA TEM DE SER MUDADA PARA BUSCAR A PK NAO DA KEYSTORE MAS DA PUBKEYS
+				PublicKey pk = sec.getCert(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.storetype).getPublicKey();
+
+				byte[] wrappedKey = sec.wrapKey(groupKey, pk);
+				if(wrappedKey == null) {
+					System.out.println("Erro:... Não foi possível fazer um wrap da chave simétrica para o novo grupo");
+					return resultado;
+				}
+			}
+
+			// Enviar unica string que ficara no ficheiro de chaves do grupo
+			// com o aspeto 1:<donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...
+			out.writeObject(sb.toString());
+			
+			//--------------------------------------------------------------------------------------------
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
