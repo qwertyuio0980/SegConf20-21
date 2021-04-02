@@ -66,14 +66,12 @@ PARA COMPILAR CLIENTE
 javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communication/Com.java src/security/Security.java
 
 PARA CORRER SERVIDOR COM POLICIES
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 <keystore> <keystore-password>
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 serverKeyStore passserver
 
 PARA CORRER SERVIDOR SEM POLICIES
 java -cp bin server.SeiTchizServer 45678 serverKeyStore passserver
 
 PARA CORRER CLIENTE COM POLICIES
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 1KS passclient1 client1
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 2KS passclient2 client2
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 3KS passclient3 client3

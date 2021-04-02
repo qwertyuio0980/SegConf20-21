@@ -32,6 +32,11 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 
+import java.util.*;
+import java.lang.Object;
+import java.util.Base64;
+
+
 import communication.Com;
 import security.Security;
 
@@ -479,7 +484,7 @@ public class ClientStub {
 				return resultado;
 			}
 			// Cifrar a chave com a chave pública do senderID
-				// Obter chave pública do senderID
+			// Obter chave pública do senderID
 			PublicKey pk = sec.getCert(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.storetype).getPublicKey();
 			byte[] wrappedKey = sec.wrapKey(groupKey, pk);
 			if(wrappedKey == null) {
@@ -487,9 +492,8 @@ public class ClientStub {
 				return resultado;
 			}
 
-			//  Enviar chave para o servidor como uma String
-			System.out.println(wrappedKey);
-			out.writeObject(new String(wrappedKey, StandardCharsets.UTF_8));
+			// Enviar chave para o servidor como uma String
+			out.writeObject(Base64.getEncoder().encodeToString(wrappedKey));
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
@@ -510,7 +514,7 @@ public class ClientStub {
 	 * @param array com todos os participantes
 	 * @return string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
 	 */
-	public String generateParticipantCipheredKeyPair(String[] participantes, Key groupKey, String participanteNovo) {
+	public String generateParticipantCipheredKeyPair(String[] participantes, Key groupKey, String participanteEspecial, int opType) {
 
 		// Criar uma StringBuilder
 		StringBuilder sb = new StringBuilder();
@@ -534,16 +538,22 @@ public class ClientStub {
 				System.out.println("Erro:... Não foi possível fazer wrap da chave de grupo com o ");
 				return null;
 			}
-			// Adicionar <participante,chave cifrada> à StringBuilder 
-			
-			sb.append(participantes[i] + "," + new String(chaveCifrada, StandardCharsets.UTF_8) + ",");
-			
+
+			// Adicionar <participante,chave cifrada> à StringBuilder
+			if(i == (participantes.length - 1) && opType == 1){
+				sb.append(participantes[i] + "," + new String(chaveCifrada));	
+			}else{
+				sb.append(participantes[i] + "," + new String(chaveCifrada) + ",");
+			}
+			sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada) + ",");
 		}
 
-		// Falta buscar o gajo novo
-		pkNovo = getParticipantPK(participanteNovo);
-		chaveCifradaGajoNovo = sec.wrapKey(groupKey, pkNovo);
-		sb.append(participanteNovo + "," + new String(chaveCifradaGajoNovo, StandardCharsets.UTF_8));
+		// Se for optype de addu adiciona-se o novo participante
+		if(opType == 0) {
+			pkNovo = getParticipantPK(participanteEspecial);
+			chaveCifradaGajoNovo = sec.wrapKey(groupKey, pkNovo);
+			sb.append(participanteEspecial + "," + Base64.getEncoder().encodeToString(chaveCifradaGajoNovo));
+		}	
 
 		return sb.toString();
 	}
@@ -643,7 +653,7 @@ public class ClientStub {
 
 			// Adicionar o id de cada participante e a chave cifrada 
 			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
-			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey, userID);
+			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey, userID, 0);
 
 			// Enviar unica string que ficara no ficheiro de chaves do grupo
 			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...,<participantNovo,chave nova>
@@ -664,7 +674,7 @@ public class ClientStub {
 
 		return resultado;
 	}
-
+	
 	/**
 	 * Metodo que pede ao servidor para remover um user que pertence a um 
 	 * grupo existente do qual o dono e o cliente que faz o pedido
@@ -676,12 +686,46 @@ public class ClientStub {
 	 */
 	public int removeu(String userID, String groupID, String senderID) {
 		int resultado = -1;
+		String participantes = null;
+		String[] listaParticipantes = null;
 		try {
 			// enviar tipo de operacao
 			out.writeObject("r");
 
 			// enviar ID do cliente que se quer adicionar ao grupo:ID do grupo:ID do sender
 			out.writeObject(userID + ":" + groupID + ":" + senderID);
+
+			//--------------------------------------------------------------------------------------------
+			// Obter todos os participantes do grupo separados por ":"
+			participantes = (String) in.readObject();
+			if(participantes.isEmpty()) {
+				System.out.println("Erro:... Não foi possível obter a lista de participantes do grupo");
+				return resultado;
+			}
+			listaParticipantes = participantes.split(":");
+
+			// Criar nova chave simétrica para o grupo
+			Key groupKey = generateKey();
+			if(groupKey == null) {
+				System.out.println("Erro:... Não foi possível criar uma chave simétrica para o novo grupo");
+				return resultado;
+			}
+			
+			//remover o participante a remover da listaParticipantes
+			List<String> list = new ArrayList<>(Arrays.asList(listaParticipantes));
+			list.remove(userID);
+			listaParticipantes = list.toArray(new String[0]);
+
+
+			// Adicionar o id de cada participante e a chave cifrada 
+			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
+			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey, userID, 1);
+
+			// Enviar unica string que ficara no ficheiro de chaves do grupo
+			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...,<participantNovo,chave nova>
+			out.writeObject(retorno);
+			
+			//--------------------------------------------------------------------------------------------
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();

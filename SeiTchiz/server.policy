@@ -21,4 +21,5 @@ grant codeBase "file:SeiTchizServer.jar" {
     permission java.io.FilePermission "keystores/server.key","read,write";
     permission java.io.FilePermission "PubKeys/client3.cer","delete";
     permission java.util.PropertyPermission "javax.net.ssl.keyStore","write";
+    permission java.util.PropertyPermission "javax.net.ssl.keyStorePassword","write";
 };
