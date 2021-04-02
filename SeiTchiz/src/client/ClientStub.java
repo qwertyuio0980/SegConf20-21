@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -23,29 +23,40 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.util.Scanner;
+import java.security.cert.CertificateFactory;
 
+import javax.crypto.KeyGenerator;	
+import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import communication.ComClient;
+
+import java.util.*;
+import java.lang.Object;
+import java.util.Base64;
+
+
+import communication.Com;
 import security.Security;
 
 public class ClientStub {
 
+	private static final String keyGenSimAlg = "AES";
 	private SSLSocket clientSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
 	
 	private int defaultPort = 45678;
 
-	private ComClient com;
+	private Com com;
+	private Security sec;
 	
 	private String truststore; 
 	private String keystore;
 	private String keystorePassword;
 	private String clientID;
+	private final String storetype = "JKS";
 
 	public ClientStub(String[] argsClient) {
 
@@ -68,7 +79,8 @@ public class ClientStub {
 			System.exit(-1);
 		}
 
-		com = new ComClient(clientSocket, in, out);
+		com = new Com(clientSocket, in, out);
+		sec = new Security();
 
 		// Criar ficheiro onde ficarao guardadas as fotos recebidas
 		File wall = new File("wall");
@@ -112,12 +124,11 @@ public class ClientStub {
 	 * @requires ip != null
 	 */
 	public void conectar(String ip, int port) {
-
 		SocketFactory sf = SSLSocketFactory.getDefault();
 		try {
-			clientSocket = (SSLSocket) sf.createSocket(ip, port);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
+			this.clientSocket = (SSLSocket) sf.createSocket(ip, port);
+		} catch(IOException e) {
+			System.out.println("Erro a criar a socket");
 			System.exit(-1);
 		}
 	}
@@ -144,7 +155,6 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
         }
-		System.out.println("---mandado clientID---");
 
         // Receber resposta do servidor, um (nonce) e int (flag de registo no servidor)
         Long nonce = 0L;
@@ -160,8 +170,6 @@ public class ClientStub {
             System.exit(-1);
 		}
 
-		System.out.println("---recebido nonce---");
-
         int flag = 1;
         try {
             flag = (Integer) in.readObject();
@@ -174,25 +182,21 @@ public class ClientStub {
             closeConnection();
             System.exit(-1);
 		}
-		
-		//apaga sysout
-		System.out.println("flag recebida:" + flag);
 
         // Enviar assinatura para o servidor de acordo com a flag recebida pelo mesmo
         int res = sendSigned(nonce, flag);
 
         if(res == 0) {
-
 			if(flag == 0) {
 				// Client corrente já registado previamente no servidor. Assinatura e nonce enviados foram validados
 				System.out.println("Login efetuado com sucesso.");
 			} else if(flag == 1) {
 				// Client corrente foi registado com sucesso. Assinatura e nonce enviados foram validados
-				System.out.println("Sign up e autenticação efetuados com sucesso.");
+				System.out.println("Sign up e autenticacao efetuados com sucesso.");
 			}
         } else {
             // Ocorreu um erro ao servidor verificar nonce e assinatura passados
-            System.out.println("Erro ao fazer autenticação.");
+            System.out.println("Erro ao fazer autenticacao.");
             closeConnection();
             System.exit(-1);
         }
@@ -210,11 +214,11 @@ public class ClientStub {
      * @return devolve -1 se a autenticacao correu mal e 0 se correu bem
      */
     private int sendSigned(Long nonce, int flag) {
-        // 1. Obter chaves do Client corrente
+		// 1. Obter chaves do Client corrente
         // 1.1. Obter certificado
 		KeyStore kstore = null;
 		try {
-			kstore = KeyStore.getInstance("JCEKS");
+			kstore = KeyStore.getInstance("JKS");
 		} catch (KeyStoreException e2) {
 			e2.printStackTrace();
 			System.out.println("Erro ao obter keystore");
@@ -410,7 +414,7 @@ public class ClientStub {
 	 * Metodo que faz a ligacao com o servidor e lhe pede quais os
 	 * seguidores do cliente
 	 * 
-	 * @param senderID String que representa o ID do clinte que fez 
+	 * @param senderID String que representa o ID do cliente que fez 
 	 * o pedido viewfollowers
 	 * @return String que tem todos os followers do cliente ou esta vazia
 	 * se este nao tem followers
@@ -461,6 +465,9 @@ public class ClientStub {
 	 * @return 0 se o pedido for sucedido e o grupo criado e -1 caso contrario
 	 */
 	public int newgroup(String groupID, String senderID) {
+		// Envia para o servidor o identificador do grupo
+		// Envia o identificador da chave
+		// Cria uma lista contendo o [<ownerID,chave cifrada com chave pública do servidor>]
 
 		int resultado = -1;
 		try {
@@ -470,9 +477,27 @@ public class ClientStub {
 			// enviar ID do grupo a ser criado:ID do cliente que o pretende criar
 			out.writeObject(groupID + ":" + senderID);
 
+			// Criar nova chave simétrica para o grupo
+			Key groupKey = generateKey();
+			if(groupKey == null) {
+				System.out.println("Erro:... Não foi possível criar uma chave simétrica para o novo grupo");
+				return resultado;
+			}
+			// Cifrar a chave com a chave pública do senderID
+			// Obter chave pública do senderID
+			PublicKey pk = sec.getCert(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.storetype).getPublicKey();
+			byte[] wrappedKey = sec.wrapKey(groupKey, pk);
+			if(wrappedKey == null) {
+				System.out.println("Erro:... Não foi possível fazer um wrap da chave simétrica para o novo grupo");
+				return resultado;
+			}
+
+			// Enviar chave para o servidor como uma String
+			out.writeObject(Base64.getEncoder().encodeToString(wrappedKey));
+
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
-
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -480,6 +505,106 @@ public class ClientStub {
 		}
 
 		return resultado;
+	}
+
+	/**
+	 * Metodo que gera uma string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,
+	 * para cada participantes no array de participantes recebido
+	 * 
+	 * @param array com todos os participantes
+	 * @return string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
+	 */
+	public String generateParticipantCipheredKeyPair(String[] participantes, Key groupKey, String participanteEspecial, int opType) {
+
+		// Criar uma StringBuilder
+		StringBuilder sb = new StringBuilder();
+
+		PublicKey pk = null;
+		PublicKey pkNovo = null;
+		byte[] chaveCifrada = null;
+		byte[] chaveCifradaGajoNovo = null;
+
+		// Percorrer a lista de participantes
+		for(int i = 0; i < participantes.length; i++) {
+			// Buscar a chave pública de cada participante
+			pk = getParticipantPK(participantes[i]);
+			if(pk == null) {
+				System.out.println("Erro:... Não foi possível obter a chave pública do participante");
+				return null;
+			}
+			// cifrar a chave recebida com a chave pública do participante
+			chaveCifrada = sec.wrapKey(groupKey, pk);
+			if(chaveCifrada == null) {
+				System.out.println("Erro:... Não foi possível fazer wrap da chave de grupo com o ");
+				return null;
+			}
+
+			// Adicionar <participante,chave cifrada> à StringBuilder
+			if(i == (participantes.length - 1) && opType == 1){
+				sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada));	
+			}else{
+				sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada) + ",");
+			} 
+			// sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada) + ",");
+		}
+
+		// Se for optype de addu adiciona-se o novo participante
+		if(opType == 0) {
+			pkNovo = getParticipantPK(participanteEspecial);
+			chaveCifradaGajoNovo = sec.wrapKey(groupKey, pkNovo);
+			sb.append(participanteEspecial + "," + Base64.getEncoder().encodeToString(chaveCifradaGajoNovo));
+		}	
+
+		return sb.toString();
+	}
+
+	/**
+	 * Procura o chave pública do participant passado
+	 * @param participant
+	 * @return PublicKey do participante
+	 */
+	private PublicKey getParticipantPK(String participant) {
+
+		FileInputStream fis = null;
+		Certificate cert = null;
+		try {
+			fis = new FileInputStream("PubKeys/" + participant + ".cer");
+			CertificateFactory cf = CertificateFactory.getInstance("X509");
+			cert = cf.generateCertificate(fis);
+		} catch (FileNotFoundException | CertificateException e) {
+			e.printStackTrace();
+		}
+
+		try {
+			if(fis != null) fis.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		PublicKey pk = null;
+		if(cert != null) pk = cert.getPublicKey();
+		
+		return pk;
+
+	}
+
+	/**
+	 * Cria uma chave simétrica usando o algoritmo AES e devolve a mesma em formato byte[]
+	 * @return byte[] da chave criada 
+	 */
+	private Key generateKey() {
+		// Criar chave simétrica
+		KeyGenerator kg = null;
+		try {
+			kg = KeyGenerator.getInstance("AES");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		kg.init(128);
+		// Chave simétrica
+		return kg.generateKey();
 	}
 
 	/**
@@ -492,29 +617,64 @@ public class ClientStub {
 	 * @return 0 se a operacao tiver sucesso e -1 caso contrario
 	 */
 	public int addu(String userID, String groupID, String senderID) {
+		
+		//Cria uma nova chave secreta
+		//obtem todos os participantes ate ao momento que se encontram no grupo
+		//obtem o counter corrente de chave do grupo
+		//para cada um destes manda <counter corrente>:<ID do membro, nova chave secreta cifrada pelo membro>
 
 		int resultado = -1;
+		String participantes = null;
+		String[] listaParticipantes = null;
+
 		try {
 			// enviar tipo de operacao
 			out.writeObject("a");
 
-			// enviar ID do cliente que se quer adicionar ao grupo:ID do grupo
+			// enviar ID do grupo a ser criado:ID do cliente que o pretende criar:
 			out.writeObject(userID + ":" + groupID + ":" + senderID);
+
+			//--------------------------------------------------------------------------------------------
+			// Obter todos os participantes do grupo separados por ":"
+			participantes = (String) in.readObject();
+			if(participantes.isEmpty()) {
+				System.out.println("Erro:... Não foi possível obter a lista de participantes do grupo");
+				return resultado;
+			}
+			listaParticipantes = participantes.split(":");
+			// qntParticipantes = listaParticipantes.length;
+
+			// Criar nova chave simétrica para o grupo
+			Key groupKey = generateKey();
+			if(groupKey == null) {
+				System.out.println("Erro:... Não foi possível criar uma chave simétrica para o novo grupo");
+				return resultado;
+			}
+
+			// Adicionar o id de cada participante e a chave cifrada 
+			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
+			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey, userID, 0);
+
+			// Enviar unica string que ficara no ficheiro de chaves do grupo
+			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...,<participantNovo,chave nova>
+			out.writeObject(retorno);
+			
+			//--------------------------------------------------------------------------------------------
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(-1);
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.exit(-1);
 		}
 
 		return resultado;
 	}
-
+	
 	/**
 	 * Metodo que pede ao servidor para remover um user que pertence a um 
 	 * grupo existente do qual o dono e o cliente que faz o pedido
@@ -526,12 +686,46 @@ public class ClientStub {
 	 */
 	public int removeu(String userID, String groupID, String senderID) {
 		int resultado = -1;
+		String participantes = null;
+		String[] listaParticipantes = null;
 		try {
 			// enviar tipo de operacao
 			out.writeObject("r");
 
 			// enviar ID do cliente que se quer adicionar ao grupo:ID do grupo:ID do sender
 			out.writeObject(userID + ":" + groupID + ":" + senderID);
+
+			//--------------------------------------------------------------------------------------------
+			// Obter todos os participantes do grupo separados por ":"
+			participantes = (String) in.readObject();
+			if(participantes.isEmpty()) {
+				System.out.println("Erro:... Não foi possível obter a lista de participantes do grupo");
+				return resultado;
+			}
+			listaParticipantes = participantes.split(":");
+
+			// Criar nova chave simétrica para o grupo
+			Key groupKey = generateKey();
+			if(groupKey == null) {
+				System.out.println("Erro:... Não foi possível criar uma chave simétrica para o novo grupo");
+				return resultado;
+			}
+			
+			//remover o participante a remover da listaParticipantes
+			List<String> list = new ArrayList<>(Arrays.asList(listaParticipantes));
+			list.remove(userID);
+			listaParticipantes = list.toArray(new String[0]);
+
+
+			// Adicionar o id de cada participante e a chave cifrada 
+			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
+			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey, userID, 1);
+
+			// Enviar unica string que ficara no ficheiro de chaves do grupo
+			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...,<participantNovo,chave nova>
+			out.writeObject(retorno);
+			
+			//--------------------------------------------------------------------------------------------
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
@@ -621,18 +815,23 @@ public class ClientStub {
 	 * @return lista de Strings em que cada uma representa o dono de uma mensagem
 	 * ainda nao lida e o conteudo da mesma separada por : e se nao houverem mensagens
 	 * por ler devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
+	 * Metodo que gera uma string da chave simetrica cifrada pela chave publica do dono do grupo
+	 *
+	 * @return Nova instancia de chave simetrica cifrada pela chave publica do dono do grupo
 	 */
 	public String[] collect(String groupID, String senderID) {
 		String[] listaMensagens = null;
 		try {
 			// enviar tipo de operacao
 			out.writeObject("c");
+	
+		// enviar groupID:ID do user que fez o pedido
+		out.writeObject(groupID + ":" + senderID);
 
-			// enviar groupID:ID do user que fez o pedido
-			out.writeObject(groupID + ":" + senderID);
-
-			// receber o resultado da operacao
-			listaMensagens = (String[]) in.readObject();
+		// receber o resultado da operacao
+		listaMensagens = (String[]) in.readObject();
+		//-----------------
+		//ISTO ESTA MAL OU A MAIS???
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -658,6 +857,8 @@ public class ClientStub {
 	 */
 	public String[] history(String groupID, String senderID) {
 		String[] listaMensagens = null;
+		// Obter chave publica do dono a partir do seu certificado
+		KeyStore kstore = null;
 		try {
 			// enviar tipo de operacao
 			out.writeObject("h");
@@ -669,10 +870,8 @@ public class ClientStub {
 			listaMensagens = (String[]) in.readObject();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -715,6 +914,12 @@ public class ClientStub {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		try(FileInputStream kfile = new FileInputStream("keystores/" + this.keystore)) {
+			// kstore.load(kfile, this.keystorePassword.toCharArray());
+		} catch (IOException e2) {
+			e2.printStackTrace();
+            System.exit(-1);
+		}
 
 		// Tratar resposta
 		String[] groups = new String[0];
@@ -723,6 +928,7 @@ public class ClientStub {
 
 		return groups;
 	}
+
 
 	/**
 	 * Pede ao servidor o nome do dono e participantes do groupID,
@@ -739,6 +945,7 @@ public class ClientStub {
 	public String[] ginfo(String senderID, String groupID) {
 
 		String resultado = null;
+
 		try {
 			// enviar tipo de operacao
 			out.writeObject("g");
@@ -762,8 +969,8 @@ public class ClientStub {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		// Tratar resposta
+		
+		// // Tratar resposta
 		String[] groups = new String[0];
 
 		groups = resultado.split(",");
@@ -800,11 +1007,16 @@ public class ClientStub {
 
 	/**
 	 * Pede ao servidor as nPhotos mais recentes dos usuários que o segue
+	 * Metodo que pede ao servidor para criar um novo grupo 
+	 * sendo o cliente que faz o pedido o seu dono
 	 * 
 	 * @param senderID usuário corrente
 	 * @param nPhotos número de fotos mais recentes a serem devolvidas
 	 * @return Lista de Strings contendo o identificador individual de cada foto,
 	 * assim como seu número de likes
+	 * @param groupID String que representa o ID unico que o grupo vai ter
+	 * @param senderID String que representa o ID do user a fazer o pedido de newgroup
+	 * @return 0 se o pedido for sucedido e o grupo criado e -1 caso contrario
 	 */
 	public String[] wall(String senderID, int nPhotos) {
 
@@ -817,7 +1029,7 @@ public class ClientStub {
 			out.writeObject(senderID);
 			// enviar número de fotografias mais recentes
 			out.writeObject(nPhotos);
-			
+
 			//receber tamanho do array a devolver
 			tamanhoArray = (int) in.readObject();
 
@@ -860,12 +1072,11 @@ public class ClientStub {
 		try {
 			// enviar tipo de operacao
 			out.writeObject("l");
-
-			// enviar groupID:ID do user que fez o pedido
-			out.writeObject(photoID);
+			out.writeObject("n");
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
+
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -892,4 +1103,4 @@ public class ClientStub {
 		}
 	}
 
-}
+} 

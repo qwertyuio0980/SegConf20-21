@@ -10,14 +10,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
-
-import javax.net.ssl.SSLSocket;
-
 import java.io.FileWriter;
 import java.io.BufferedWriter;	
 
 
-public class ComClient {
+public class Com {
 
 	ObjectInputStream in = null;
 	ObjectOutputStream out = null;
@@ -26,13 +23,12 @@ public class ComClient {
 	String password;
 	Socket socket;
 
-	public ComClient(SSLSocket socket) {
+	public Com(Socket socket) {
 
 		this.socket = socket;
-
 	}
 
-	public ComClient(SSLSocket socket, ObjectInputStream in, ObjectOutputStream out) {
+	public Com(Socket socket, ObjectInputStream in, ObjectOutputStream out) {
 		this.socket = socket;
 		this.in = in;
 		this.out = out;

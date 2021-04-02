@@ -2,9 +2,12 @@ package security;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.Reader;
+import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -18,6 +21,7 @@ import java.security.cert.CertificateException;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 /**
@@ -35,7 +39,6 @@ public class Security {
 	 * @return Chave requerida ou null caso a mesma não exista
 	 */
 	public Key getKey(String alias, String keyStore, String passwordKS, String passwordK, String storeType) {
-		
 		// Obter keystore que guarda a chave requerida
 		FileInputStream kfile = null;
 		KeyStore kstore = null;
@@ -61,9 +64,6 @@ public class Security {
 		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			System.exit(-1);
-		}
-		if(key == null) {
-			System.out.println("Key é null");
 		}
 
 		return key;
@@ -176,7 +176,7 @@ public class Security {
 	 * @return 0 caso o conteúdo do ficheiro inputFile tenha sido cifrado e colocado no outputFile com sucesso
 	 * -1 caso contrário 
 	 */
-	public int cifFilePK(String inputFile, String outputFile, PublicKey key) {
+	public int cifFile(String inputFile, String outputFile, Key key) {
 
 		File inputF = new File(inputFile);
 		
@@ -185,7 +185,7 @@ public class Security {
 			return -1;
 		}
 
-		// obter algoritmo da key passada3.
+		// obter algoritmo da key passada
 		String alg = key.getAlgorithm();
 
 		// Obter capacidade de cifrar usando o algoritmo da key
@@ -222,9 +222,76 @@ public class Security {
 		}
 		
 		// Deletar ficheiro input
-		inputF.delete();
+		// inputF.delete();
 
 		return 0;
 	}
-    
+
+	/**
+	 * Faz um unwrap da chave wrappedKey passada usando a chave key passada
+	 * @param wrappedKey wrapped key
+	 * @param key chave que será usada para fazer unwrap
+	 * @param wrappedKeyAlg algoritmo da wrappedKey
+	 * @return Key unwrapped key
+	 */
+	public Key unwrapKey(byte[] wrappedKey,String wrappedKeyAlg, Key key) {
+		Cipher c = null;
+		try {
+			c = Cipher.getInstance(key.getAlgorithm());
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+			e.printStackTrace();
+			return null;
+		}
+		Key unwrappedKey = null;
+		try {
+			c.init(Cipher.UNWRAP_MODE, key);
+			unwrappedKey = c.unwrap(wrappedKey, wrappedKeyAlg, Cipher.SECRET_KEY);
+		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return unwrappedKey;
+	}
+
+	/**
+	 * 
+	 */
+	public byte[] getWrappedKey(String serverSecKey) {
+			File f = new File(serverSecKey);
+			byte[] wrappedKey = null;
+			try {
+				wrappedKey = Files.readAllBytes(f.toPath());
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			return wrappedKey;
+	}
+
+	/**
+	 * Encripta a chave key passada com a chave pública pk passada
+	 * @param key chave simétrica que será encriptada
+	 * @param pk chave pública usada para encriptar
+	 * @return byte[] contendo a chave simétrica encriptada
+	 * @require key != null && pk != null 
+	 */
+    public byte[] wrapKey(Key key, PublicKey pk) {
+		// Encriptar chave simétrica
+		Cipher c = null;
+		byte[] wrappedKey = null;
+		try {
+			c = Cipher.getInstance("RSA");
+			c.init(Cipher.WRAP_MODE, pk);
+			wrappedKey = c.wrap(key);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+        return wrappedKey;
+    }
+
+
+
 }
