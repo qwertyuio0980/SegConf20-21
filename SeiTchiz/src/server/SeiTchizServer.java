@@ -1,6 +1,7 @@
 package server;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,6 +11,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -1605,21 +1607,16 @@ public class SeiTchizServer {
 						if(counter.createNewFile() && participants.createNewFile()) {
 							// Inicializar o ficheiro counter.txt com um inteiro 0, indicando que ainda nao
 							// ha mensagens no grupo
-							FileWriter fwCounter = new FileWriter(counter, true);
-							BufferedWriter bwCounter = new BufferedWriter(fwCounter);
-							bwCounter.write("0");
-							bwCounter.newLine();
-							bwCounter.close();
-							
+							FileOutputStream fwCounter = new FileOutputStream(counter, true);
+							ObjectOutputStream bwCounter = new ObjectOutputStream(fwCounter);
+							bwCounter.writeObject(0);
 	
 							// Inicializar o ficheiro participants.txt no folder groups com o primeiro
 							// participante: senderID, chave simétrica recebida
 							// Obter chave simétrica 
-							FileWriter fwParticipants = new FileWriter(participants, true);
-							BufferedWriter bwParticipants = new BufferedWriter(fwParticipants);
-							bwParticipants.write(senderID);
-							bwParticipants.newLine();
-							bwParticipants.close();
+							FileOutputStream fwParticipants = new FileOutputStream(participants, true);
+							ObjectOutputStream bwParticipants = new ObjectOutputStream(fwParticipants);
+							bwParticipants.writeObject(senderID);
 							
 							// Cifrar ficheiro participants.txt
 							if(sec.cifFile(participants.toString(), "files/groups/" + senderIDgroupID + "/participants.cif", unwrappedKey) == -1) {
@@ -1650,11 +1647,9 @@ public class SeiTchizServer {
 						return -1;
 					}
 					try {
-						FileWriter fwUserOwner = new FileWriter(fUserOwner, true);
-						BufferedWriter bwUserOwner = new BufferedWriter(fwUserOwner);
-						bwUserOwner.write(groupID);
-						bwUserOwner.newLine();
-						bwUserOwner.close();
+						FileOutputStream fwUserOwner = new FileOutputStream(fUserOwner, true);
+						ObjectOutputStream bwUserOwner = new ObjectOutputStream(fwUserOwner);
+						bwUserOwner.writeObject(groupID);
 					} catch (IOException e) {
 						e.printStackTrace();
 						return -1;
@@ -1668,11 +1663,9 @@ public class SeiTchizServer {
 						return -1;
 					}
 					try {
-						FileWriter fwUserParticipant = new FileWriter(fUserParticipant, true);
-						BufferedWriter bwUserParticipant = new BufferedWriter(fwUserParticipant);
-						bwUserParticipant.write(senderID + "-" + groupID);
-						bwUserParticipant.newLine();
-						bwUserParticipant.close();
+						FileOutputStream fwUserParticipant = new FileOutputStream(fUserParticipant, true);
+						ObjectOutputStream bwUserParticipant = new ObjectOutputStream(fwUserParticipant);
+						bwUserParticipant.writeObject(senderID + "-" + groupID);
 					} catch (IOException e) {
 						e.printStackTrace();
 						return -1;
@@ -1689,11 +1682,10 @@ public class SeiTchizServer {
 					// Contudo, o ficheiro referente as chaves do grupo usadas pelo dono do grupo será criado
 					File ownerKeys = new File("files/groups/" + senderIDgroupID + "/keys/allKeys.txt");
 					try {
-						FileWriter fwOwnerKeys = new FileWriter(ownerKeys, true);
-						BufferedWriter bwOwnerKeys = new BufferedWriter(fwOwnerKeys);
-						bwOwnerKeys.write(Integer.toString(0) + ":" + senderID + "," + key);
-						bwOwnerKeys.newLine();
-						bwOwnerKeys.close();
+						ownerKeys.createNewFile();
+						FileOutputStream fwOwnerKeys = new FileOutputStream(ownerKeys, true);
+						ObjectOutputStream bwOwnerKeys = new ObjectOutputStream(fwOwnerKeys);
+						bwOwnerKeys.writeObject(Integer.toString(0) + ":" + senderID + "," + key);
 					} catch (IOException e) {
 						e.printStackTrace();
 						return -1;
@@ -1702,9 +1694,9 @@ public class SeiTchizServer {
 					// Criar ficheiro e escrever identificador da chave
 					File keysCounter = new File("files/groups/" + senderIDgroupID + "/keys/counter.txt");
 					try {
-						FileWriter fwKeysCounter = new FileWriter(keysCounter, true);
-						BufferedWriter bwKeysCounter = new BufferedWriter(fwKeysCounter);
-						bwKeysCounter.write(0);
+						FileOutputStream fwKeysCounter = new FileOutputStream(keysCounter, true);
+						ObjectOutputStream bwKeysCounter = new ObjectOutputStream(fwKeysCounter);
+						bwKeysCounter.writeObject(0);
 						bwKeysCounter.close();
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -1716,7 +1708,7 @@ public class SeiTchizServer {
 						return -1;
 					}
 					// Cifrar ficheiro
-					if(sec.cifFile(ownerKeys.toString(), "files/groups/" + senderIDgroupID + "/keys/" + senderID + ".cif", unwrappedKey) == -1) {
+					if(sec.cifFile(ownerKeys.toString(), "files/groups/" + senderIDgroupID + "/keys/allKeys.txt", unwrappedKey) == -1) {
 						System.out.println("Erro:... Não foi possível cifrar o ficheiro contendo as keys do grupo para o participante " + senderID);
 						return -1;
 					}
@@ -1834,22 +1826,22 @@ public class SeiTchizServer {
 				return -1;
 			}
 
-			try {
-				if(counterKeyTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-				if(groupParticipantsTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-				if(participantTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-				if(allKeysTempFile.createNewFile()) {
-					// nada acontece aqui
-				}
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
+			// try {
+			// 	if(counterKeyTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// 	if(groupParticipantsTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// 	if(participantTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// 	if(allKeysTempFile.createNewFile()) {
+			// 		// nada acontece aqui
+			// 	}
+			// } catch(IOException e) {
+			// 	e.printStackTrace();
+			// }
 
 			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
@@ -1859,10 +1851,10 @@ public class SeiTchizServer {
 
 			// Decifrar ficheiro users.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
 			if(sec.decFile(groupParticipantsCifFile.toPath().toString(), groupParticipantsTempFile.toPath().toString(), unwrappedKey) == -1) {
-				counterKeyTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				allKeysTempFile.delete();
+				// counterKeyTempFile.delete();
+				// groupParticipantsTempFile.delete();
+				// participantTempFile.delete();
+				// allKeysTempFile.delete();
 				return -1;
 			}
 
@@ -1873,27 +1865,28 @@ public class SeiTchizServer {
 					String lineGroupParticipant = scGroupParticipants.nextLine();
 					if (lineGroupParticipant.contentEquals(userID)) {
 						scGroupParticipants.close();
-						counterKeyTempFile.delete();
-						groupParticipantsTempFile.delete();
-						participantTempFile.delete();
-						allKeysTempFile.delete();
+						// counterKeyTempFile.delete();
+						// groupParticipantsTempFile.delete();
+						// participantTempFile.delete();
+						// allKeysTempFile.delete();
 						return -1;
 					}
 				}
 				scGroupParticipants.close();
 			} catch (FileNotFoundException e) {
-				counterKeyTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				allKeysTempFile.delete();
+				// counterKeyTempFile.delete();
+				// groupParticipantsTempFile.delete();
+				// participantTempFile.delete();
+				// allKeysTempFile.delete();
 				e.printStackTrace();
+				return -1;
 			}
 
 			if(sec.decFile(participantCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey) == -1) {
-				counterKeyTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				allKeysTempFile.delete();
+				// counterKeyTempFile.delete();
+				// groupParticipantsTempFile.delete();
+				// participantTempFile.delete();
+				// allKeysTempFile.delete();
 				return -1;
 			}
 
@@ -1904,20 +1897,21 @@ public class SeiTchizServer {
 					String lineParticipant = scParticipant.nextLine();
 					if (lineParticipant.contentEquals(groupID)) {
 						scParticipant.close();
-						counterKeyTempFile.delete();
-						groupParticipantsTempFile.delete();
-						participantTempFile.delete();
-						allKeysTempFile.delete();
+						// counterKeyTempFile.delete();
+						// groupParticipantsTempFile.delete();
+						// participantTempFile.delete();
+						// allKeysTempFile.delete();
 						return -1;
 					}
 				}
 				scParticipant.close();
 			} catch (FileNotFoundException e) {
-				counterKeyTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				allKeysTempFile.delete();
+				// counterKeyTempFile.delete();
+				// groupParticipantsTempFile.delete();
+				// participantTempFile.delete();
+				// allKeysTempFile.delete();
 				e.printStackTrace();
+				return -1;
 			}
 
 			// proceder á adicao do userID ao grupo que implica:
@@ -1930,11 +1924,12 @@ public class SeiTchizServer {
 				bwParticipant.newLine();
 				bwParticipant.close();
 			} catch (IOException e) {
-				counterKeyTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				allKeysTempFile.delete();
+				// counterKeyTempFile.delete();
+				// groupParticipantsTempFile.delete();
+				// participantTempFile.delete();
+				// allKeysTempFile.delete();
 				e.printStackTrace();
+				return -1;
 			}
 
 			// 2.colocar userID no ficheiro participants.txt do grupo
@@ -1945,19 +1940,21 @@ public class SeiTchizServer {
 				bwMember.newLine();
 				bwMember.close();
 			} catch (IOException e) {
-				
 				e.printStackTrace();
+				return -1;
 			}
 
 			//3.incrementar o counterKeys do grupo
 			if(sec.decFile(counterKeyCifFile.toString(), counterKeyTempFile.toString(), unwrappedKey) == -1) {
 				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro contendo o counter das chaves dos grupos");
-				counterKeyTempFile.delete();
-				groupParticipantsTempFile.delete();
-				participantTempFile.delete();
-				allKeysTempFile.delete();
+				// counterKeyTempFile.delete();
+				// groupParticipantsTempFile.delete();
+				// participantTempFile.delete();
+				// allKeysTempFile.delete();
 				return -1;
 			}
+
+			if(!counterKeyTempFile.exists()) System.out.println("Ficheiro nao existe");
 
 			int counter = 0;
 			try {
@@ -1965,15 +1962,17 @@ public class SeiTchizServer {
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				counter = (Integer) ois.readObject();
 				counter++;
-				FileWriter fw = new FileWriter(counterKeyTempFile, false);
-				fw.write(counter);
-				fw.close();
+				FileOutputStream fw = new FileOutputStream(counterKeyTempFile, false);
+				ObjectOutputStream oos = new ObjectOutputStream(fw);
+				oos.writeObject(counter);
+				oos.close();
 			} catch(IOException | ClassNotFoundException e) {
 				counterKeyTempFile.delete();
 				groupParticipantsTempFile.delete();
 				participantTempFile.delete();
 				allKeysTempFile.delete();
 				e.printStackTrace();
+				return -1;
 			}
 
 			//4.adicionar nova linha com <counter incrementado>:<donoID,chave cifrada>,<client1,chave cifrada>,...
