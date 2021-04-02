@@ -34,6 +34,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
@@ -1413,7 +1414,7 @@ public class SeiTchizServer {
 				FileOutputStream fosMac = new FileOutputStream(macFile);
 				ObjectOutputStream oosMac = new ObjectOutputStream(fosMac);
 				
-				oosMac.writeObject(Base64.getEncoder().encodeToString(mac.doFinal()));
+				oosMac.writeObject(mac.doFinal());
 				// ---
 				
 				fosPhoto.close();
@@ -1475,27 +1476,22 @@ public class SeiTchizServer {
 			// Ler ficheiro contendo a Mac da foto
 			FileInputStream fisMac = null;
 			ObjectInputStream oisMac = null;
-			String macPhoto = null;
+			byte [] macPhoto = null;
 			try {
 				fisMac = new FileInputStream(macFile);
 				oisMac = new ObjectInputStream(fisMac);
-				macPhoto = (String) oisMac.readObject();
+				macPhoto = (byte[]) oisMac.readObject();
 				
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
 			// ---
 			byte[] resultado = mac.doFinal();
-			String macDaFoto= Base64.getEncoder().encodeToString(resultado);
-			System.out.println(macDaFoto + "\n" + macPhoto);
-			// String ogMac = Base64.getEncoder().encodeToString(macPhoto);
-				// Comparar byte a byte
-				
-			boolean iguais = true;
 		
-								
-			
-			if (!macDaFoto.equals(macPhoto)){
+
+			// Comparar byte a byte	
+			boolean iguais = true;
+			if (!Arrays.equals(resultado, macPhoto)){
 				System.out.println("deu mal");
 				iguais = false;
 			}
