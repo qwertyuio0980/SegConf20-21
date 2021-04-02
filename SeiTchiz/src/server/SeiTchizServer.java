@@ -1413,12 +1413,14 @@ public class SeiTchizServer {
 				FileOutputStream fosMac = new FileOutputStream(macFile);
 				ObjectOutputStream oosMac = new ObjectOutputStream(fosMac);
 				
-				oosMac.writeObject(mac.doFinal());
+				oosMac.writeObject(Base64.getEncoder().encodeToString(mac.doFinal()));
 				// ---
-
+				
 				fosPhoto.close();
 				oosMac.close();
 				fosMac.close();
+
+
 
 				
 				// TODO: DELETE TEST
@@ -1438,7 +1440,7 @@ public class SeiTchizServer {
 
 		}
 
-
+ 
 
 		private boolean verifyPhotoHash(File photoFile, File macFile) {
 
@@ -1473,26 +1475,36 @@ public class SeiTchizServer {
 			// Ler ficheiro contendo a Mac da foto
 			FileInputStream fisMac = null;
 			ObjectInputStream oisMac = null;
-			byte[] macPhoto = null;
+			String macPhoto = null;
 			try {
 				fisMac = new FileInputStream(macFile);
 				oisMac = new ObjectInputStream(fisMac);
-				macPhoto = (byte[]) oisMac.readObject();
+				macPhoto = (String) oisMac.readObject();
+				
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
 			// ---
-
+			byte[] resultado = mac.doFinal();
+			String macDaFoto= Base64.getEncoder().encodeToString(resultado);
+			System.out.println(macDaFoto + "\n" + macPhoto);
+			// String ogMac = Base64.getEncoder().encodeToString(macPhoto);
 				// Comparar byte a byte
-				byte[] resultado = mac.doFinal();
-				boolean iguais = true;
-				if(resultado.length == macPhoto.length) {
-					System.out.println("possuem tamanho igual");
-					for(int i = 0; i < resultado.length; i++) {
-						if(Byte.compare(resultado[i], macPhoto[i]) != 0) iguais = false;
-					}
-				}
-				// ---
+				
+			boolean iguais = true;
+		
+								
+			
+			if (!macDaFoto.equals(macPhoto)){
+				System.out.println("deu mal");
+				iguais = false;
+			}
+				
+				// for(int i = 0; i < resultado.length; i++) {
+				// 	if(Byte.compare(resultado[i], macPhoto[i]) != 0) iguais = false;
+				// }
+			
+			// ---
 
 			System.out.println("RESULTADO:.... " + iguais);
 
@@ -2076,8 +2088,7 @@ public class SeiTchizServer {
 			// Percorre o ficheiro participants.txt e ir colocando o conteudo do mesmo
 			// num ficheiro temporario
 
-			File groupMembersTEMPFile = new File(
-					"files/groups/" + senderID + "-" + groupID + "/participantsTemp.txt");
+			File groupMembersTEMPFile = new File("files/groups/" + senderID + "-" + groupID + "/participantsTemp.txt");
 
 			try {
 				if (groupMembersTEMPFile.createNewFile()) {
@@ -2102,13 +2113,18 @@ public class SeiTchizServer {
 				FileWriter fwgroupMembersTEMP = new FileWriter(groupMembersTEMPFile);
 				BufferedWriter bwgroupMembersTEMP = new BufferedWriter(fwgroupMembersTEMP);) {
 
-				while (scgroupMembers.hasNextLine()) {
-					String line = scgroupMembers.nextLine();
-					if (!line.contentEquals(userID)) {
-						bwgroupMembersTEMP.write(line);
-						bwgroupMembersTEMP.newLine();
+				String line = scgroupMembers.nextLine();
+				String[] lineAux = line.split(":");
+				StringBuilder sb = new StringBuilder();
+				
+				for(int i = 0; i < lineAux.length; i++) {
+					if (!lineAux[i].equals(userID)) {
+						sb.append(lineAux[i]);
+						if(i != lineAux.length - 1) sb.append(":");
 					} else participa = true;
 				}
+
+				bwgroupMembersTEMP.write(sb.toString());
 
 			} catch (FileNotFoundException e2) {
 				e2.printStackTrace();
@@ -2137,7 +2153,7 @@ public class SeiTchizServer {
 			}
 
 			// Cifrar o ficheiro participants
-			if(sec.cifFile(groupMembersTEMPFile.toString(), groupMembersCifFile.toString(), unwrappedKey) == -1) {
+			if(sec.cifFile(groupMembersFile.toString(), groupMembersCifFile.toString(), unwrappedKey) == -1) {
 				System.out.println("Erro:... Nao foi possivel cifrar o ficheiro dos membros do grupo");
 				return -1;
 			}

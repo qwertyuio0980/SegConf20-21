@@ -541,11 +541,11 @@ public class ClientStub {
 
 			// Adicionar <participante,chave cifrada> à StringBuilder
 			if(i == (participantes.length - 1) && opType == 1){
-				sb.append(participantes[i] + "," + new String(chaveCifrada));	
+				sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada));	
 			}else{
-				sb.append(participantes[i] + "," + new String(chaveCifrada) + ",");
-			}
-			sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada) + ",");
+				sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada) + ",");
+			} 
+			// sb.append(participantes[i] + "," + Base64.getEncoder().encodeToString(chaveCifrada) + ",");
 		}
 
 		// Se for optype de addu adiciona-se o novo participante
