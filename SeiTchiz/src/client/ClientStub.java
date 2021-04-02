@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -488,12 +489,11 @@ public class ClientStub {
 
 			//  Enviar chave para o servidor como uma String
 			System.out.println(wrappedKey);
-			out.writeObject(new String(wrappedKey));
+			out.writeObject(new String(wrappedKey, StandardCharsets.UTF_8));
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
 			
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -510,13 +510,15 @@ public class ClientStub {
 	 * @param array com todos os participantes
 	 * @return string do tipo <userID1,chave cifrada1>,<userID1,chave cifrada1>,...
 	 */
-	public String generateParticipantCipheredKeyPair(String[] participantes, Key groupKey) {
+	public String generateParticipantCipheredKeyPair(String[] participantes, Key groupKey, String participanteNovo) {
 
 		// Criar uma StringBuilder
 		StringBuilder sb = new StringBuilder();
 
 		PublicKey pk = null;
+		PublicKey pkNovo = null;
 		byte[] chaveCifrada = null;
+		byte[] chaveCifradaGajoNovo = null;
 
 		// Percorrer a lista de participantes
 		for(int i = 0; i < participantes.length; i++) {
@@ -533,13 +535,15 @@ public class ClientStub {
 				return null;
 			}
 			// Adicionar <participante,chave cifrada> à StringBuilder 
-			if(i == participantes.length - 1){
-				sb.append(participantes[i] + "," + new String(chaveCifrada));	
-			}else{
-				sb.append(participantes[i] + "," + new String(chaveCifrada) + ",");
-			}
+			
+			sb.append(participantes[i] + "," + new String(chaveCifrada, StandardCharsets.UTF_8) + ",");
+			
 		}
-		System.out.println(sb.toString());
+
+		// Falta buscar o gajo novo
+		pkNovo = getParticipantPK(participanteNovo);
+		chaveCifradaGajoNovo = sec.wrapKey(groupKey, pkNovo);
+		sb.append(participanteNovo + "," + new String(chaveCifradaGajoNovo, StandardCharsets.UTF_8));
 
 		return sb.toString();
 	}
@@ -639,10 +643,10 @@ public class ClientStub {
 
 			// Adicionar o id de cada participante e a chave cifrada 
 			// com a chave pública desse participante ja existente + o id do participante a adicionar e a chave cifrada pela chave publica do mesmo
-			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey);
+			String retorno = generateParticipantCipheredKeyPair(listaParticipantes, groupKey, userID);
 
 			// Enviar unica string que ficara no ficheiro de chaves do grupo
-			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...
+			// com o aspeto <donoID,chave nova>,<participant1,chave nova>,<participant2,chave nova>,...,<participantNovo,chave nova>
 			out.writeObject(retorno);
 			
 			//--------------------------------------------------------------------------------------------
