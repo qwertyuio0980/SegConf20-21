@@ -656,19 +656,23 @@ public class SeiTchizServer {
 					case "m":
 
 						try {
-							// receber <groupID>:<ID do user que fez o pedido>:<mensagem>
+							// receber <groupID>:<ID do user que fez o pedido>
 							aux = (String) inStream.readObject();
 							conteudo = aux.split(":");
 
-							// colocar input correspondente a msg numa var "mensagem"
-							for (int i = 2; i < conteudo.length; i++) {
-								sbMensagem.append(conteudo[i] + ":");
-							}
-							sbMensagem.deleteCharAt(sbMensagem.length() - 1);
-							mensagem = sbMensagem.toString();
+							//nova operacao intermedia de enviar string com a chaveSimetricaCifrada 
+ 							//em allKeys mais recente do userID que quer mandar mensagem enviar estado da operacao
+							//se for string vazia entao o cliente nao pode mandar mensagem por alguma razao
+							String chaveCifradaAEnviar = getCorrectCipheredKey(conteudo[0], conteudo[1]);//TODO:ESTE METODO AINDA NAO ESTA CRIADO E IMPLEMENTADO
+							outStream.writeObject(chaveCifradaAEnviar);
 
-							// enviar estado da operacao
-							outStream.writeObject(msg(conteudo[0], conteudo[1], mensagem));
+							// enviar estado da operacao msg que so e feita se getCorrectCipheredKey nao devolve string vazia
+							if(!chaveCifradaAEnviar.isEmpty()) {
+								String mensagemCifradaEStringified = (String) inStream.readObject();
+
+								//enviar resultado da operacao msg
+								outStream.writeObject(msg(conteudo[0], conteudo[1], mensagem));
+							}
 
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
