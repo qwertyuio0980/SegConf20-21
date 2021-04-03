@@ -2304,7 +2304,6 @@ public class SeiTchizServer {
 			
 			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
-
 			// Obter chave unwrapped
 			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
 
@@ -2367,6 +2366,8 @@ public class SeiTchizServer {
 
             String fileName = null;
 
+			String[] participantsAux = null;
+
 			File groupParticipantsCifFile = null;
 			File groupParticipantsTempFile = null;
 
@@ -2389,7 +2390,6 @@ public class SeiTchizServer {
 			
 			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
-
 			// Obter chave unwrapped
 			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
 
@@ -2455,9 +2455,10 @@ public class SeiTchizServer {
 			sec.decFile(groupParticipantsCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey);
 
 			try (Scanner scParticipants = new Scanner(participantTempFile)) {
-				while (scParticipants.hasNextLine()) {
-					String line = scParticipants.nextLine();
-                    ownerParticipants.append(line + ',');
+				String line = scParticipants.nextLine();
+				participantsAux = line.split(":");
+				for(int i = 0; i < participantsAux.length; i++) {
+					ownerParticipants.append(participantsAux[i] + ',');
 				}
 				scParticipants.close();
 			} catch (Exception e) {
