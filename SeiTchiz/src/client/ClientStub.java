@@ -1072,7 +1072,8 @@ public class ClientStub {
 		try {
 			// enviar tipo de operacao
 			out.writeObject("l");
-			out.writeObject("n");
+			// Enviar foto
+			out.writeObject(photoID);
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();

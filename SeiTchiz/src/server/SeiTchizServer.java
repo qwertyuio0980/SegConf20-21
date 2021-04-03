@@ -3081,6 +3081,7 @@ public class SeiTchizServer {
 			File[] allUserFiles = userStuffFolder.listFiles();
 			for(File userFile: allUserFiles) {
 				File likesFile = new File(userStuffPath + userFile.getName() + "/photos/" + photoID + ".txt");
+				System.out.println(likesFile.toString());
 				if(likesFile.exists()) {
 					//se encontrar incrementar o valor que la estiver por 1 e devolver 0
 					int nLikes = 0;
