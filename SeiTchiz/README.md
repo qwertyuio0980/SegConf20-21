@@ -68,31 +68,26 @@ javac -d bin src/client/SeiTchiz.java src/client/ClientStub.java src/communicati
 PARA CORRER SERVIDOR COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==server.policy server.SeiTchizServer 45678 serverKeyStore passserver
 
-PARA CORRER SERVIDOR SEM POLICIES
-java -cp bin server.SeiTchizServer 45678 serverKeyStore passserver
-
 PARA CORRER CLIENTE COM POLICIES
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 1KS passclient1 client1
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 2KS passclient2 client2
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 3KS passclient3 client3
 java -cp bin -Djava.security.manager -Djava.security.policy==client.policy client.SeiTchiz localhost ts_client 4KS passclient4 client4
 
-PARA CORRER CLIENTE SEM POLICIES
-java -cp bin client.SeiTchiz localhost serverKeyStore 1KS passclient1 client1
-
 PARA CORRER SERVIDOR COM POLICIES POR JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 <keystore> <keystore-password>
+java -cp bin -Djava.security.manager -Djava.security.policy==server.policy -jar SeiTchizServer.jar 45678 serverKeyStore passserver
 
 PARA CORRER CLIENTE COM POLICIES POR JAR
-java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar <serverAddress> <truststore> <keystore> <keystore-password> <clientID>
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar localhost ts_client 1KS passclient1 client1
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar localhost ts_client 2KS passclient2 client2
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar localhost ts_client 3KS passclient3 client3
+java -cp bin -Djava.security.manager -Djava.security.policy==client.policy -jar SeiTchiz.jar localhost ts_client 4KS passclient4 client4
 
 ----------------------
 
 **Criar Chaves & Keystores**
 
 ## Chaves assimétricas
-keytool -genkeypair -alias <ALIASDACHAVE> -keyalg RSA -keysize 2048 -keystore <NOMEFICHEIROKEYSTORE>
-
 keytool -genkeypair -alias serverKeyStore -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/serverKeyStore 
 *Password: passserver
 keytool -genkeypair -alias 1KS -keyalg RSA -keysize 2048 -storetype JKS -keystore keystores/1KS
@@ -126,29 +121,4 @@ keytool -list -keystore keystores.4KS
                 <keystore>        <alias>            <password>
 ------------------------------------------------------------------
 
-**Criar chaves em uma certa keystore**
 
-//Chave simétrica para o servidor:
-keytool -genseckey -alias serverKey -storetype JCEKS -keystore ServerKeyStore
-
-//Chave assimétrica para cada cliente:
-keytool -genkeypair -alias <clientID + 'KS'> -keystore <clientID + 'KS'>
-
-
-**IMPORTANTE**
-
-to do:
-wall
-ginfo(POR TESTAR)
-newgroup
-addu
-removeu
-msg
-collect
-history
-correr com policies
-refazer os jars
-
-CIFRAR COISAS:
-WRAP E PARA CHAVES
-ENCRYPT E PARA CONTEUDOS

@@ -1,7 +1,0 @@
-client1,PubKeys/client1.cer
-client2,PubKeys/client2.cer
-client1,PubKeys/client1.cer
-client1,PubKeys/client1.cer
-client2,PubKeys/client2.cer
-client1,PubKeys/client1.cer
-client2,PubKeys/client2.cer
