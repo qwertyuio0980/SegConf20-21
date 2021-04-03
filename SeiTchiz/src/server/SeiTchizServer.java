@@ -2167,7 +2167,7 @@ public class SeiTchizServer {
 
 			// Decifrar ficheiro participant do userID
 			if(sec.decFile(participantCifFile.toString(), participantFile.toString(), unwrappedKey) == -1) {
-				System.out.println("Erro:... Nao foi possivel cifrar o ficheiro dos membros do grupo");
+				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro das participacoes deste cliente a ser removido");
 				return -1;
 			}
 
@@ -2177,7 +2177,7 @@ public class SeiTchizServer {
 
 				while (scParticipant.hasNextLine()) {
 					String line = scParticipant.nextLine();
-					if (!line.contentEquals(senderID)) {
+					if (!line.contentEquals(senderID + "-" + groupID)) {
 						bwParticipantTEMP.write(line);
 						bwParticipantTEMP.newLine();
 					}
