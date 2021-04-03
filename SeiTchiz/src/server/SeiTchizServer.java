@@ -1402,7 +1402,7 @@ public class SeiTchizServer {
 				oosPhoto.writeObject(baos.toByteArray());
 
 				// Guardar Mac em um ficheiro
-				File macFile = new File(this.userStuffPath + userName + "/photos/photoMac-" + globalCounter + ".cif");
+				File macFile = new File(this.userStuffPath + userName + "/photos/photo-" + globalCounter + "Mac");
 				if(!macFile.createNewFile()) {
 					System.out.println("Erro:... não foi possível criar um ficheiro para guardar a síntese segura da foto");
 				}
@@ -2995,24 +2995,27 @@ public class SeiTchizServer {
 					if(nPhotosCurrentUser > 0) {
 						//percorrer todas as fotos do currentUser e colocar em arrayComTudo: photoID, numero de likes, photoPath
 						for(int j = 0; j < nPhotosCurrentUser; j++) {
-							//add photoID
 							// TODO: mudar para <userID-photoID>
 							String[] aux = photoFiles[j].getName().split("\\.");
-							arrayComTudo.add(aux[0]);
-
-							//add numero de likes
-							File likeFile = new File(userStuffPath + following.get(i) + "/photos/" + aux[0] + ".txt");
-							try(Scanner scLike = new Scanner(likeFile);) {
-								if(scLike.hasNextLine()) {
-									arrayComTudo.add(scLike.nextLine());
+							// Verificar Mac da foto
+							if(verifyPhotoHash(new File(photoFiles[j].toString()), new File(userStuffPath + following.get(i) + "/photos/" + aux[0] + "Mac"))) {
+								//add photoID
+								arrayComTudo.add(aux[0]);
+	
+								//add numero de likes
+								File likeFile = new File(userStuffPath + following.get(i) + "/photos/" + aux[0] + ".txt");
+								try(Scanner scLike = new Scanner(likeFile);) {
+									if(scLike.hasNextLine()) {
+										arrayComTudo.add(scLike.nextLine());
+									}
+								} catch (IOException e) {
+									e.printStackTrace();
+									System.exit(-1);
 								}
-							} catch (IOException e) {
-								e.printStackTrace();
-								System.exit(-1);
+								
+								//add photoPath
+								arrayComTudo.add(userStuffPath + following.get(i) + "/photos/" + photoFiles[j].getName());
 							}
-							
-							//add photoPath
-							arrayComTudo.add(userStuffPath + following.get(i) + "/photos/" + photoFiles[j].getName());
 						}
 					}
 				}
