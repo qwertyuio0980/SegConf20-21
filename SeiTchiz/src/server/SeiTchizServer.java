@@ -1481,6 +1481,8 @@ public class SeiTchizServer {
 				fisMac = new FileInputStream(macFile);
 				oisMac = new ObjectInputStream(fisMac);
 				macPhoto = (byte[]) oisMac.readObject();
+				oisMac.close();
+				fisMac.close();
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
@@ -1650,6 +1652,7 @@ public class SeiTchizServer {
 						FileWriter fwUserOwner = new FileWriter(fUserOwner, true);
 						BufferedWriter bwUserOwner = new BufferedWriter(fwUserOwner);
 						bwUserOwner.write(groupID);
+						bwUserOwner.newLine();
 						bwUserOwner.close();
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -1667,6 +1670,7 @@ public class SeiTchizServer {
 						FileWriter fwUserParticipant = new FileWriter(fUserParticipant, true);
 						BufferedWriter bwUserParticipant = new BufferedWriter(fwUserParticipant);
 						bwUserParticipant.write(senderID + "-" + groupID);
+						bwUserParticipant.newLine();
 						bwUserParticipant.close();
 					} catch (IOException e) {
 						e.printStackTrace();
