@@ -1388,9 +1388,6 @@ public class SeiTchizServer {
 					// fosPhoto.flush();
 					baos.write(byteArray, 0, bytesRead);
 
-					// Adicionar os bytes lidos ao mac
-					mac.update(byteArray);
-
 					offset += bytesRead;
 				}
 		
@@ -1400,8 +1397,6 @@ public class SeiTchizServer {
 					// fosPhoto.flush();
 					baos.write(byteArray, 0, bytesRead);
 
-					// Adicionar os bytes lidos ao Mac
-					mac.update(byteArray);
 				}
 				// ---
 				oosPhoto.writeObject(baos.toByteArray());
@@ -1413,7 +1408,7 @@ public class SeiTchizServer {
 				}
 				FileOutputStream fosMac = new FileOutputStream(macFile);
 				ObjectOutputStream oosMac = new ObjectOutputStream(fosMac);
-				
+				mac.update(baos.toByteArray());
 				oosMac.writeObject(mac.doFinal());
 				// ---
 				
@@ -1421,11 +1416,7 @@ public class SeiTchizServer {
 				oosMac.close();
 				fosMac.close();
 
-
-
-				
-				// TODO: DELETE TEST
-				verifyPhotoHash(new File(photoFile.toString()), new File(macFile.toString()));
+				// verifyPhotoHash(new File(photoFile.toString()), new File(macFile.toString()));
 				
 
 			} catch(FileNotFoundException e) {
@@ -1443,6 +1434,14 @@ public class SeiTchizServer {
 
  
 
+		/**
+		 * Verifica se a sintese segura da foto que foi guardada no ficheiro macFile e igual com a sintese segura 
+		 * produzida por este metodo a partir da foto original no ficheiro photoFile
+		 * @param photoFile ficheiro onde esta guardado a foto original
+		 * @param macFile ficheiro contendo a sintese segura produzida anteriormente
+		 * @return true caso a sintese segura guardada no ficheiro seja igual a sintese segura produzida pelo metodo
+		 * @requires photoFile.exists() && macFile.exists()
+		 */
 		private boolean verifyPhotoHash(File photoFile, File macFile) {
 
 			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
@@ -1452,9 +1451,8 @@ public class SeiTchizServer {
 			// Ler ficheiro contendo a foto e adicionar bytes lidos a Mac
 			FileInputStream fis = null;
 			ObjectInputStream ois = null;
-			byte[] data = new byte[16];
+			byte[] data = null;
 			Mac mac = null;
-			int j = 0;
 			try {
 				mac = Mac.getInstance("HmacSHA1");
 				mac.init(unwrappedKey);
@@ -1462,6 +1460,8 @@ public class SeiTchizServer {
 				ois = new ObjectInputStream(fis);
 				data = (byte[]) ois.readObject();
 				mac.update(data);
+				ois.close();
+				fis.close();
 			} catch (IOException | InvalidKeyException | NoSuchAlgorithmException | ClassNotFoundException e1) {
 				e1.printStackTrace();
 			} finally {
@@ -1481,28 +1481,20 @@ public class SeiTchizServer {
 				fisMac = new FileInputStream(macFile);
 				oisMac = new ObjectInputStream(fisMac);
 				macPhoto = (byte[]) oisMac.readObject();
-				
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
 			// ---
 			byte[] resultado = mac.doFinal();
-		
-
 			// Comparar byte a byte	
 			boolean iguais = true;
-			if (!Arrays.equals(resultado, macPhoto)){
-				System.out.println("deu mal");
-				iguais = false;
+			for(int i = 0; i < resultado.length; i++) {
+				if(Byte.compare(resultado[i],macPhoto[i]) != 0) iguais = false;
 			}
-				
-				// for(int i = 0; i < resultado.length; i++) {
-				// 	if(Byte.compare(resultado[i], macPhoto[i]) != 0) iguais = false;
-				// }
-			
-			// ---
 
-			System.out.println("RESULTADO:.... " + iguais);
+			// System.out.println(Base64.getEncoder().encodeToString(resultado));
+			// System.out.println(Base64.getEncoder().encodeToString(macPhoto));
+			// System.out.println("RESULTADO:.... " + iguais);
 
 			try {
 				fis.close();
