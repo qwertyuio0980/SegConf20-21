@@ -660,18 +660,24 @@ public class SeiTchizServer {
 							aux = (String) inStream.readObject();
 							conteudo = aux.split(":");
 
-							//nova operacao intermedia de enviar string com a chaveSimetricaCifrada 
+							//nova operacao intermedia de enviar string com counter onde esta a chaveSimetricaCifrada e a propria chaveSimetricaCifrada
  							//em allKeys mais recente do userID que quer mandar mensagem enviar estado da operacao
 							//se for string vazia entao o cliente nao pode mandar mensagem por alguma razao
-							String chaveCifradaAEnviar = getCorrectCipheredKey(conteudo[0], conteudo[1]);//TODO:ESTE METODO AINDA NAO ESTA CRIADO E IMPLEMENTADO
-							outStream.writeObject(chaveCifradaAEnviar);
+							String chaveCifradaAEnviar = getCorrectCipheredKey(conteudo[0], conteudo[1]);
+							String counterKey = "";
+							String[] counterEchave ={"", ""};
+							if(chaveCifradaAEnviar.contains(":")) {
+								counterEchave = chaveCifradaAEnviar.split(":");
+								counterKey = counterEchave[0];
+							}
+							outStream.writeObject(counterEchave[1]);
 
 							// enviar estado da operacao msg que so e feita se getCorrectCipheredKey nao devolve string vazia
 							if(!chaveCifradaAEnviar.isEmpty()) {
 								String mensagemCifradaEStringified = (String) inStream.readObject();
 
 								//enviar resultado da operacao msg
-								outStream.writeObject(msg(conteudo[0], conteudo[1], mensagem));
+								outStream.writeObject(msg(conteudo[0], conteudo[1], mensagemCifradaEStringified, counterKey));
 							}
 
 						} catch (ClassNotFoundException e) {
@@ -2274,9 +2280,6 @@ public class SeiTchizServer {
 		private String getCorrectCipheredKey(String groupID, String senderID) {
 
 			String correctCipheredKey = null;
-
-			//------------------------------------------------------
-
             String fileName = null;
 
 			File ownerCifFile = new File(userStuffPath + senderID + "/owner.cif");
@@ -2306,6 +2309,7 @@ public class SeiTchizServer {
 				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro contendo os grupos dos quais o cliente e dono");
 				return "";
 			}
+
             // 1. Procurar no ficheiro owner.txt pelo groupID
 			try (Scanner scOwner = new Scanner(ownerTempFile)) {
 				while (scOwner.hasNextLine()) {
@@ -2360,13 +2364,83 @@ public class SeiTchizServer {
 
 			//com o nome do folder do grupo obtido agora apanha-se o valor do counterKeys
 
-			//CONTINUA AQUI
+			File groupCounterCifFile = new File("files/groups/" + fileName + "/keys/counter.cif");
+			File groupCounterTempFile = new File("files/groups/" + fileName + "/keys/counter.txt");
+			File allKeysCifFile = new File("files/groups/" + fileName + "/keys/allKeys.cif");
+			File allKeysTempFile = new File("files/groups/" + fileName + "/keys/allKeys.txt");
 
+			try {
+				if (groupCounterTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+				if (allKeysTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 
+			// Decifrar owner
+			if(sec.decFile(groupCounterCifFile.toPath().toString(), groupCounterTempFile.toPath().toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro contendo o counter das chaves do grupo");
+				return "";
+			}
 
-			//------------------------------------------------------
+			int counterVal = -1;
 
-			return correctCipheredKey;
+			try(Scanner scCounter = new Scanner(groupCounterTempFile)) {
+				if(scCounter.hasNextLine()) {
+					counterVal = Integer.parseInt(scCounter.nextLine());
+				}
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
+
+			if(counterVal == -1) {
+				System.out.println("Erro:... Nao foi possivel obter o counter das chaves do grupo");
+				return "";
+			}
+
+			System.out.println("valor do counterVal:-----" + counterVal);
+
+			// Apagar o ficheiro temporario groupCounter
+			groupCounterTempFile.delete();
+
+			if(sec.decFile(allKeysCifFile.toPath().toString(), allKeysTempFile.toPath().toString(), unwrappedKey) == -1) {
+				allKeysTempFile.delete();
+				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro contendo as chaves do grupo");
+				return "";
+			}
+
+			String[] aux;
+			String[] aux2;
+
+			try(Scanner scAllKeys = new Scanner(allKeysTempFile)) {
+				while(scAllKeys.hasNextLine()) {
+					String line = scAllKeys.nextLine();
+					if(line.startsWith(Integer.toString(counterVal)) && !scAllKeys.hasNextLine() && line.contains(senderID)) {
+						aux = line.split(":");
+						aux2 = aux[1].split(",");
+						for(int i = 0; i < aux2.length; i++) {
+							if(i % 2 == 0 && aux2[i].equals(senderID)) {
+								correctCipheredKey = aux2[i + 1];
+							}
+						}
+						allKeysTempFile.delete();
+						System.out.println("Erro:... Nao foi possivel encontrar linha com senderID na ultima linha do ficheiro contendo as chaves do grupo");
+						return "";
+					} else {
+						allKeysTempFile.delete();
+						System.out.println("Erro:... Nao foi possivel encontrar linha com senderID na ultima linha do ficheiro contendo as chaves do grupo");
+						return "";
+					}
+				}
+			} catch(IOException e) {
+				e.printStackTrace();
+			}
+
+			System.out.println("valor de counter val: " + counterVal);
+			return counterVal + ":" + correctCipheredKey;
 
 		}
 
@@ -2592,7 +2666,7 @@ public class SeiTchizServer {
 		 * @param mensagem String com a mensagem em si
 		 * @return 0 se a operacao foi realizada com sucesso, -1 caso contrario
 		 */
-		private int msg(String groupID, String senderID, String mensagem) {
+		private int msg(String groupID, String senderID, String mensagem, String keyID) {
 
 			File senderParticipantCifFile = new File(this.userStuffPath + senderID + "/participant.cif");
 			File senderParticipantTempFile = new File(this.userStuffPath + senderID + "/participant.txt");
@@ -2610,12 +2684,11 @@ public class SeiTchizServer {
 				e1.printStackTrace();
 				System.exit(-1);
 			}
-
-			// Decifrar ficheiro participants.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			
 			if(sec.decFile(senderParticipantCifFile.toString(), senderParticipantTempFile.toString(), unwrappedKey) == -1) {
 				System.out.println("Erro:... Não foi possível decifrar o ficheiro dos grupos dos quais o cliente faz parte");
 				senderParticipantTempFile.delete();
-				return false;
+				return -1;
 			}
 
 			//verificar que o senderID pertence ao groupID e caso sim fazer a operacao msg
@@ -2624,7 +2697,7 @@ public class SeiTchizServer {
 					String lineSenderParticipant = scSenderParticipant.nextLine();
 					// pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
 					if (lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
-						msgAux(lineSenderParticipant, senderID, mensagem);
+						msgAux(lineSenderParticipant, senderID, mensagem, keyID);
 						senderParticipantTempFile.delete();
 						return 0;
 					}
@@ -2649,21 +2722,43 @@ public class SeiTchizServer {
 		 * @param senderID String com o ID do cliente que fez o pedido msg
 		 * @param mensagem String com a propria mensagem
 		 */
-		private void msgAux(String groupFolder, String senderID, String mensagem) {
-			// metodo onde se envia mesmo a mensagem (FALTA ALTERAR PARA TER SEGURANCA)
+		private void msgAux(String groupFolder, String senderID, String mensagem, String keyID) {
+
+			File messageCounterCifFile = new File("files/groups/" + groupFolder + "/counter.cif");
+			File messageCounterTempFile = new File("files/groups/" + groupFolder + "/counter.txt");
+
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			try {
+				if (messageCounterTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+			// Decifrar ficheiro participants.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			if(sec.decFile(messageCounterCifFile.toString(), messageCounterTempFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível decifrar o ficheiro com o contador das mensagens");
+				messageCounterTempFile.delete();
+				System.exit(-1);
+			}
 
 			// 1.incrementar valor do counter em counter.txt
-			File fileCounter = new File("files/groups/" + groupFolder + "/counter.txt");
 			int counter = 0; // valor 0 por default so para nao chatear o sonarlint
 			Scanner scCounter;
 			FileWriter fwCounter;
 			try {
-				scCounter = new Scanner(fileCounter);
+				scCounter = new Scanner(messageCounterTempFile);
 				counter = Integer.parseInt(scCounter.nextLine());
 				counter += 1;
 				scCounter.close();
 
-				fwCounter = new FileWriter(fileCounter, false);
+				fwCounter = new FileWriter(messageCounterTempFile, false);
 				fwCounter.write(String.valueOf(counter));
 				fwCounter.close();
 			} catch (IOException e) {
@@ -2671,36 +2766,67 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
+			// Apagar o ficheiro temporario de counter
+			messageCounterTempFile.delete();
+
 			// 2.criar o msg<current counter value> folder
 			File fMsg = new File("files/groups/" + groupFolder + "/msg" + counter);
 			fMsg.mkdir();
 
-			// 3.criar o content.txt com senderID como 1a linha
-			// seguido pela mensagem na linha seguinte
-			File fContent = new File("files/groups/" + groupFolder + "/msg" + counter + "/content.txt");
+			// 3.criar o content file com a mensagem cifrada
+			File fContent = new File("files/groups/" + groupFolder + "/msg" + counter + "/content");
+			try {
+				if (fContent.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+
 			try (FileWriter fwContent = new FileWriter(fContent);
 					BufferedWriter bwContent = new BufferedWriter(fwContent);) {
-				bwContent.write("-" + senderID + ":" + mensagem);
-
+				bwContent.write(mensagem);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
-			// 4.criar o seenby.txt e nao colocar la nada
-			File fSeenBy = new File("files/groups/" + groupFolder + "/msg" + counter + "/seenBy.txt");
+			// 4.criar o seenby.cif vazio
+			File fSeenByCifFile = new File("files/groups/" + groupFolder + "/msg" + counter + "/seenBy.cif");
 			try {
-				fSeenBy.createNewFile();
+				if (fSeenByCifFile.createNewFile()) {
+					// nada acontece aqui
+				}
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
+				System.exit(-1);
 			}
 
-			// 5.criar o notseenby.txt e colocar todos os participants no ficheiro incluindo
+			// 5.criar o notseenby.cif e colocar todos os participants no ficheiro incluindo
 			// o senderID
 			StringBuilder sbParticipants = new StringBuilder();
-			File fParticipants = new File("files/groups/" + groupFolder + "/participants.txt");
-			try (Scanner scParticipants = new Scanner(fParticipants)) {
+
+			File fParticipantsCifFile = new File("files/groups/" + groupFolder + "/participants.cif");
+			File fParticipantsTempFile = new File("files/groups/" + groupFolder + "/participants.txt");
+
+			try {
+				if (fParticipantsTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+			if(sec.decFile(fParticipantsCifFile.toString(), fParticipantsTempFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível decifrar o ficheiro com os participantes do grupo");
+				messageCounterTempFile.delete();
+				System.exit(-1);
+			}
+			
+			try (Scanner scParticipants = new Scanner(fParticipantsTempFile)) {
 				while (scParticipants.hasNextLine()) {
 					String lineParticipants = scParticipants.nextLine();
 					sbParticipants.append(lineParticipants + "\n");
@@ -2710,14 +2836,60 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
-			File fNotSeenBy = new File("files/groups/" + groupFolder + "/msg" + counter + "/notSeenBy.txt");
-			try (FileWriter fwNotSeenBy = new FileWriter(fNotSeenBy);
+			// Apagar o ficheiro temporario de participantes do grupo
+			fParticipantsTempFile.delete();
+
+			File fNotSeenByCifFile = new File("files/groups/" + groupFolder + "/msg" + counter + "/notSeenBy.cif");
+			File fNotSeenByTempFile = new File("files/groups/" + groupFolder + "/msg" + counter + "/notSeenBy.txt");
+
+			try {
+				if (fNotSeenByTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+			try (FileWriter fwNotSeenBy = new FileWriter(fNotSeenByTempFile);
 					BufferedWriter bwNotSeenBy = new BufferedWriter(fwNotSeenBy);) {
 				bwNotSeenBy.write(sbParticipants.toString());
 				bwNotSeenBy.newLine();
 			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			if(sec.cifFile(fNotSeenByTempFile.toString(), fNotSeenByCifFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível cifrar o ficheiro com os participantes do grupo que ainda nao viram a mensagem");
+				System.exit(-1);
+			}
+
+			//6.criar o senderKeyID.cif e colocar nele o identificador da chave keyID
+			File fSenderKeyIDCifFile = new File("files/groups/" + groupFolder + "/msg" + counter + "/senderKeyID.cif");
+			File fSenderKeyIDTempFile = new File("files/groups/" + groupFolder + "/msg" + counter + "/senderKeyID.txt");
+
+			try {
+				if (fSenderKeyIDTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+			try (FileWriter fwSenderKeyID = new FileWriter(fSenderKeyIDTempFile);
+					BufferedWriter bwSenderKeyID = new BufferedWriter(fwSenderKeyID);) {
+				bwSenderKeyID.write(keyID);
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			if(sec.cifFile(fSenderKeyIDTempFile.toString(), fSenderKeyIDCifFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível cifrar o ficheiro com os participantes do grupo que ainda nao viram a mensagem");
+				System.exit(-1);
 			}
 		}
 

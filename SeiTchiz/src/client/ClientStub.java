@@ -25,8 +25,11 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;	
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
@@ -801,7 +804,7 @@ public class ClientStub {
 			try {
 				kstore = KeyStore.getInstance("JKS");
 			} catch (KeyStoreException e2) {
-				e.printStackTrace();
+				e2.printStackTrace();
 			}
 
 			try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
@@ -812,7 +815,7 @@ public class ClientStub {
 
 			try {
 				chavePriv = kstore.getKey(keystore, this.keystorePassword.toCharArray());
-			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | NullPointerException e) {
 				e.printStackTrace();
 			}
 			
@@ -832,8 +835,8 @@ public class ClientStub {
 				c.init(Cipher.ENCRYPT_MODE, chaveSimetricaUnWrapped);
 				byte[] mensagemEmBytes = mensagem.getBytes();
 				mensagemCifrada = c.doFinal();
-			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
-				e.printStackTrace();
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e2) {
+				e2.printStackTrace();
 			}
 
 			//------------------------------------------------------
