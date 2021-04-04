@@ -36,6 +36,7 @@ public class Security {
 	 * @param keyStore nome da keystore que contém a chave pretendida
 	 * @param passwordKS password da keystore
 	 * @param passwordK password da key
+	 * @param storeType tipo de keystore
 	 * @return Chave requerida ou null caso a mesma não exista
 	 */
 	public Key getKey(String alias, String keyStore, String passwordKS, String passwordK, String storeType) {

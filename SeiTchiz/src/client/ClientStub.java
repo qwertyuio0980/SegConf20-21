@@ -800,26 +800,26 @@ public class ClientStub {
 
 			//ESTE BLOCO INTERNO PODE ESTAR MAL FEITO (CONFUNDO ME FACILMENTE COM AS CHAVES E COISAS RELACIONADAS COM MAIS QUE 1 CHAVE)
 			//----------------------------------------------------------------------
-			KeyStore kstore = null;
-			try {
-				kstore = KeyStore.getInstance("JKS");
-			} catch (KeyStoreException e2) {
-				e2.printStackTrace();
-			}
+			// KeyStore kstore = null;
+			// try {
+			// 	kstore = KeyStore.getInstance("JKS");
+			// } catch (KeyStoreException e2) {
+			// 	e2.printStackTrace();
+			// }
 
-			try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
-				kstore.load(kfile, this.keystorePassword.toCharArray());
-			} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
-				e.printStackTrace();
-			}
+			// try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
+			// 	kstore.load(kfile, this.keystorePassword.toCharArray());
+			// } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+			// 	e.printStackTrace();
+			// }
 
-			try {
-				chavePriv = kstore.getKey(keystore, this.keystorePassword.toCharArray());
-			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | NullPointerException e) {
-				e.printStackTrace();
-			}
+			// try {
+			// 	chavePriv = kstore.getKey(keystore, this.keystorePassword.toCharArray());
+			// } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | NullPointerException e) {
+			// 	e.printStackTrace();
+			// }
 			
-			//chavePriv = sec.getKey(, , , , this.storeType); //DESTA NANEIRA NAO TINHA A CERTEZA DOS ARGUMENTOS PODE SER QUE EU TENHA FEITO MAL ACIMA
+			chavePriv = sec.getKey(this.keystore, this.keystore, this.keystorePassword, this.keystorePassword, this.storeType);
 
 
 			//3.2.Obter chave simetrica unwrapped
@@ -841,7 +841,7 @@ public class ClientStub {
 
 			//------------------------------------------------------
 
-			//5.esta mensagem e stringified e enviada
+			//5.esta mensagem e stringified e enviada(VER SE E MELHOR NAO FAZER STRINGFIED AQUI)
 			out.writeObject(Base64.getEncoder().encodeToString(mensagemCifrada));
 			
 			// receber o resultado da operacao
