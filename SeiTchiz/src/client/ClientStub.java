@@ -25,6 +25,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 
+import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;	
 import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
@@ -751,14 +752,95 @@ public class ClientStub {
 	 * @return 0 se a mensagem foi enviada com sucesso para o grupo e -1 caso contrario
 	 */
 	public int msg(String groupID, String senderID, String mensagem) {
+
+		//APAGAR ESTAS LINHAS NO FIM
+		//String originalInput = "test input";
+		//String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
+		//byte[] decodedBytes = Base64.getDecoder().decode(encodedString);
+		//String decodedString = new String(decodedBytes);
+		//Base64.getMimeDecoder().decode(encodedMime);
+		//Base64.getMimeEncoder().encodeToString(encodedAsBytes);
+
 		int resultado = -1;
+		
+		String chaveSimetricaCifradaRecebida = null;
+		byte[] chaveSimetricaCifrada = null;
+		Key chaveSimetricaUnWrapped = null;
+		byte[] mensagemCifrada = null;
+		String mensagemCifradaStringified = null;
+		Key chavePriv = null;
+
 		try {
 			// enviar tipo de operacao
 			out.writeObject("m");
 
-			// enviar groupID:ID do user que fez o pedido:mensagem
-			out.writeObject(groupID + ":" + senderID + ":" + mensagem);
+			//------------------------------------------------------
+			// enviar groupID:ID do user que fez o pedido SEM a mensagem
+			out.writeObject(groupID + ":" + senderID);
 
+			//1.Buscar ao allKeys o counter da linha que tem a chave simetrica que foi wrapped por senderID e a propria chave
+			//(ou seja primeiro procurar na linha em que counter das keys é o counter atual
+			//se senderID nao estiver na linha final que é a linha do counter atual e porque
+			//senderID ja nao faz parte do grupo e entao nao pode mandar mensagem)
+			chaveSimetricaCifradaRecebida = (String) in.readObject();
+
+			//2.1 Se a String voltar vazia aborta-se tudo e a operacao correu mal
+			if(chaveSimetricaCifradaRecebida.isEmpty()) {
+				return resultado;
+			}
+			
+			//2.2.Essa chave vai estar stringified e por isso é preciso voltar a meter em bytes com o encoder base64
+			chaveSimetricaCifrada = Base64.getDecoder().decode(chaveSimetricaCifradaRecebida);
+
+			//3.Essa chave ainda esta wrapped com a chave publica do senderID por isso e preciso dar unwrap dela com a chave PRIVADA do senderID
+			//3.1.Buscar chave privada do senderID
+
+			//ESTE BLOCO INTERNO PODE ESTAR MAL FEITO (CONFUNDO ME FACILMENTE COM AS CHAVES E COISAS RELACIONADAS COM MAIS QUE 1 CHAVE)
+			//----------------------------------------------------------------------
+			KeyStore kstore = null;
+			try {
+				kstore = KeyStore.getInstance("JKS");
+			} catch (KeyStoreException e2) {
+				e.printStackTrace();
+			}
+
+			try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
+				kstore.load(kfile, this.keystorePassword.toCharArray());
+			} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				chavePriv = kstore.getKey(keystore, this.keystorePassword.toCharArray());
+			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			
+			//chavePriv = sec.getKey(, , , , this.storeType); //DESTA NANEIRA NAO TINHA A CERTEZA DOS ARGUMENTOS PODE SER QUE EU TENHA FEITO MAL ACIMA
+
+
+			//3.2.Obter chave simetrica unwrapped
+			chaveSimetricaUnWrapped = sec.unwrapKey(chaveSimetricaCifrada, keyGenSimAlg, chavePriv);
+
+			//4.O resultado do unwrap vai ser a chave simetrica original e é com essa chave que se vai dar wrap Á MENSAGEM que se quer enviar
+			//mensagemCifrada = //COMO FAZER ESTA PARTE?
+
+			// Encriptar mensagem
+			Cipher c = null;
+			try {
+				c = Cipher.getInstance(keyGenSimAlg);
+				c.init(Cipher.ENCRYPT_MODE, chaveSimetricaUnWrapped);
+				byte[] mensagemEmBytes = mensagem.getBytes();
+				mensagemCifrada = c.doFinal();
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+				e.printStackTrace();
+			}
+
+			//------------------------------------------------------
+
+			//5.esta mensagem e stringified e enviada
+			out.writeObject(Base64.getEncoder().encodeToString(mensagemCifrada));
+			
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
 
@@ -929,7 +1011,6 @@ public class ClientStub {
 		return groups;
 	}
 
-
 	/**
 	 * Pede ao servidor o nome do dono e participantes do groupID,
 	 * caso o senderID seja dono ou participante do groupID.
@@ -1072,7 +1153,8 @@ public class ClientStub {
 		try {
 			// enviar tipo de operacao
 			out.writeObject("l");
-			out.writeObject("n");
+			// Enviar foto
+			out.writeObject(photoID);
 
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
