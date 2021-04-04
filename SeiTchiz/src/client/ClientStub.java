@@ -25,6 +25,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 
+import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;	
 import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
@@ -764,8 +765,10 @@ public class ClientStub {
 		
 		String chaveSimetricaCifradaRecebida = null;
 		byte[] chaveSimetricaCifrada = null;
-		byte[] chaveSimetricaUnWrapped = null;
+		Key chaveSimetricaUnWrapped = null;
+		byte[] mensagemCifrada = null;
 		String mensagemCifradaStringified = null;
+		Key chavePriv = null;
 
 		try {
 			// enviar tipo de operacao
@@ -790,20 +793,54 @@ public class ClientStub {
 			chaveSimetricaCifrada = Base64.getDecoder().decode(chaveSimetricaCifradaRecebida);
 
 			//3.Essa chave ainda esta wrapped com a chave publica do senderID por isso e preciso dar unwrap dela com a chave PRIVADA do senderID
+			//3.1.Buscar chave privada do senderID
+
+			//ESTE BLOCO INTERNO PODE ESTAR MAL FEITO (CONFUNDO ME FACILMENTE COM AS CHAVES E COISAS RELACIONADAS COM MAIS QUE 1 CHAVE)
+			//----------------------------------------------------------------------
+			KeyStore kstore = null;
+			try {
+				kstore = KeyStore.getInstance("JKS");
+			} catch (KeyStoreException e2) {
+				e.printStackTrace();
+			}
+
+			try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
+				kstore.load(kfile, this.keystorePassword.toCharArray());
+			} catch (NoSuchAlgorithmException | CertificateException | IOException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				chavePriv = kstore.getKey(keystore, this.keystorePassword.toCharArray());
+			} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			}
+			
+			//chavePriv = sec.getKey(, , , , this.storeType); //DESTA NANEIRA NAO TINHA A CERTEZA DOS ARGUMENTOS PODE SER QUE EU TENHA FEITO MAL ACIMA
 
 
+			//3.2.Obter chave simetrica unwrapped
+			chaveSimetricaUnWrapped = sec.unwrapKey(chaveSimetricaCifrada, keyGenSimAlg, chavePriv);
 
-			//4.O resultado do unwrap vai ser a chave simetrica original e é com essa chave que se vai dar wrap á mensagem que se quer enviar
+			//4.O resultado do unwrap vai ser a chave simetrica original e é com essa chave que se vai dar wrap Á MENSAGEM que se quer enviar
+			//mensagemCifrada = //COMO FAZER ESTA PARTE?
 
-
-
-			//5.esta mensagem que agora esta wrapped com a chave simetrica original vai agora ser stringified com encoder base64
-
-			//6.esta mensagem e enviada
-			out.writeObject(mensagemCifradaStringified);
+			// Encriptar mensagem
+			Cipher c = null;
+			try {
+				c = Cipher.getInstance(keyGenSimAlg);
+				c.init(Cipher.ENCRYPT_MODE, chaveSimetricaUnWrapped);
+				byte[] mensagemEmBytes = mensagem.getBytes();
+				mensagemCifrada = c.doFinal();
+			} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException e) {
+				e.printStackTrace();
+			}
 
 			//------------------------------------------------------
 
+			//5.esta mensagem e stringified e enviada
+			out.writeObject(Base64.getEncoder().encodeToString(mensagemCifrada));
+			
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
 

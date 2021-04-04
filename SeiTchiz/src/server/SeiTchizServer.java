@@ -1436,8 +1436,6 @@ public class SeiTchizServer {
 
 		}
 
- 
-
 		/**
 		 * Verifica se a sintese segura da foto que foi guardada no ficheiro macFile e igual com a sintese segura 
 		 * produzida por este metodo a partir da foto original no ficheiro photoFile
@@ -2039,9 +2037,6 @@ public class SeiTchizServer {
 			return 0;
 		}
 
-	
-
-
 		/**
 		 * Remove o utilizador userID do grupo indicado (groupID) caso o senderID seja o
 		 * dono do grupo
@@ -2270,6 +2265,112 @@ public class SeiTchizServer {
 		}
 
 		/**
+		 * Metodo que obtem a chave mais atualizada no ficheiro allKeys do grupo com groupID dado
+		 * que pertenca ao utilizador senderID
+		 * 
+		 * @param groupID String que representa o id do grupo
+		 * @param senderID String que representa o id do cliente
+		 */
+		private String getCorrectCipheredKey(String groupID, String senderID) {
+
+			String correctCipheredKey = null;
+
+			//------------------------------------------------------
+
+            String fileName = null;
+
+			File ownerCifFile = new File(userStuffPath + senderID + "/owner.cif");
+			File ownerTempFile = new File(userStuffPath + senderID + "/owner.txt");
+
+			File participantCifFile = new File(userStuffPath + senderID + "/participant.cif");
+            File participantTempFile = new File(userStuffPath + senderID + "/participant.txt");
+            
+			try {
+				if (participantTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+				if (ownerTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			// Obter chave unwrapped
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			// Decifrar owner
+			if(sec.decFile(ownerCifFile.toPath().toString(), ownerTempFile.toPath().toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro contendo os grupos dos quais o cliente e dono");
+				return "";
+			}
+            // 1. Procurar no ficheiro owner.txt pelo groupID
+			try (Scanner scOwner = new Scanner(ownerTempFile)) {
+				while (scOwner.hasNextLine()) {
+					String line = scOwner.nextLine();
+                    if(line.equals(groupID)) {
+                        fileName = senderID + "-" + line;
+                    }
+				}
+				scOwner.close();
+			} catch (Exception e) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
+				e.printStackTrace();
+				System.exit(-1);
+			}
+
+			// Decifrar participant
+			if(sec.decFile(participantCifFile.toPath().toString(), participantTempFile.toPath().toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Nao foi possivel decifrar o ficheiro contendo os grupos dos quais o cliente e dono");
+				return "";
+			}
+
+            if(fileName == null) {
+                // 2. Procurar no ficheiro participant.txt pelo groupID
+                try (Scanner scParticipant = new Scanner(participantTempFile)) {
+                    while (scParticipant.hasNextLine()) {
+                        String line = scParticipant.nextLine();
+                        String[] lineAux = line.split("-");
+                        if(lineAux[1].equals(groupID)) {
+                            fileName = line;
+                        }
+                    }
+                    scParticipant.close();
+                } catch (Exception e) {
+					ownerTempFile.delete();
+					participantTempFile.delete();
+                    e.printStackTrace();
+                    System.exit(-1);
+                }
+            }
+
+            //Caso não tenha sido encontrado o grupo nos ficheiros do senderID devolver um estado de erro
+            if(fileName == null) {
+				ownerTempFile.delete();
+				participantTempFile.delete();
+                return "";
+            }
+
+			// Apaga-se o ficheiro
+			ownerTempFile.delete();
+			participantTempFile.delete();
+
+			//com o nome do folder do grupo obtido agora apanha-se o valor do counterKeys
+
+			//CONTINUA AQUI
+
+
+
+			//------------------------------------------------------
+
+			return correctCipheredKey;
+
+		}
+
+		/**
 		 * Devolve todos os grupos que userID eh dono e dos quais participa Caso nao
 		 * seja participante ou dono de nenhum grupo isto eh assinalado
 		 * 
@@ -2493,14 +2594,38 @@ public class SeiTchizServer {
 		 */
 		private int msg(String groupID, String senderID, String mensagem) {
 
-			File senderParticipantFile = new File(userStuffPath + senderID + "/participant.txt");
-			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
+			File senderParticipantCifFile = new File(this.userStuffPath + senderID + "/participant.cif");
+			File senderParticipantTempFile = new File(this.userStuffPath + senderID + "/participant.txt");
 
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+			
+			try {
+				if (senderParticipantTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+			// Decifrar ficheiro participants.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			if(sec.decFile(senderParticipantCifFile.toString(), senderParticipantTempFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível decifrar o ficheiro dos grupos dos quais o cliente faz parte");
+				senderParticipantTempFile.delete();
+				return false;
+			}
+
+			//verificar que o senderID pertence ao groupID e caso sim fazer a operacao msg
+			try (Scanner scSenderParticipant = new Scanner(senderParticipantTempFile)) {
 				while (scSenderParticipant.hasNextLine()) {
 					String lineSenderParticipant = scSenderParticipant.nextLine();
 					// pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
 					if (lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
 						msgAux(lineSenderParticipant, senderID, mensagem);
+						senderParticipantTempFile.delete();
 						return 0;
 					}
 				}
@@ -2509,7 +2634,10 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
+			senderParticipantTempFile.delete();
 			return -1;
+
+
 		}
 
 		/**
@@ -2522,7 +2650,7 @@ public class SeiTchizServer {
 		 * @param mensagem String com a propria mensagem
 		 */
 		private void msgAux(String groupFolder, String senderID, String mensagem) {
-			// metodo onde se envia mesmo a mensagem
+			// metodo onde se envia mesmo a mensagem (FALTA ALTERAR PARA TER SEGURANCA)
 
 			// 1.incrementar valor do counter em counter.txt
 			File fileCounter = new File("files/groups/" + groupFolder + "/counter.txt");
@@ -2604,18 +2732,41 @@ public class SeiTchizServer {
 		 * @return true se o grupo passado como argumento e o correto e false caso contrario
 		 */
 		private boolean isCorrectGroup(String ownerGroupPair, String senderID) {
-			File groupParticipantsFile = new File("files/groups/" + ownerGroupPair + "/participants.txt");
+			File groupParticipantsCifFile = new File("files/groups/" + ownerGroupPair + "/participants.cif");
+			File groupParticipantsTempFile = new File("files/groups/" + ownerGroupPair + "/participants.txt");
 
 			// grupo tem de existir
-			if (!groupParticipantsFile.exists()) {
+			if (!groupParticipantsCifFile.exists()) {
+				return false;
+			}
+
+			// Obter chave privada para fazer unwrap da wrapped key simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
+			try {
+				if (groupParticipantsTempFile.createNewFile()) {
+					// nada acontece aqui
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				System.exit(-1);
+			}
+
+			// Decifrar ficheiro participants.cif e colocar conteúdo no ficheiro users.txt usando a unwrapped chave simétrica
+			if(sec.decFile(groupParticipantsCifFile.toString(), groupParticipantsTempFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível decifrar o ficheiro dos participantes do grupo");
+				groupParticipantsTempFile.delete();
 				return false;
 			}
 
 			// percorre os participants.txt do folder userID-groupID a procura do senderID
-			try (Scanner scGroupParticipants = new Scanner(groupParticipantsFile)) {
+			try (Scanner scGroupParticipants = new Scanner(groupParticipantsTempFile)) {
 				while (scGroupParticipants.hasNextLine()) {
 					String lineGroupParticipants = scGroupParticipants.nextLine();
 					if (lineGroupParticipants.contentEquals(senderID)) {
+						groupParticipantsTempFile.delete();
 						return true;
 					}
 				}
@@ -2624,7 +2775,7 @@ public class SeiTchizServer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
+			groupParticipantsTempFile.delete();
 			return false;
 		}
 
