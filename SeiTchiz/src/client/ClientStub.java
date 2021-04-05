@@ -46,7 +46,7 @@ import security.Security;
 
 public class ClientStub {
 
-	private static final String keyGenSimAlg = "AES";
+	private final String keyGenSimAlg = "AES";
 	private SSLSocket clientSocket;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
@@ -838,7 +838,7 @@ public class ClientStub {
 			// Encriptar mensagem
 			Cipher c = null;
 			try {
-				c = Cipher.getInstance(keyGenSimAlg);
+				c = Cipher.getInstance(this.keyGenSimAlg);
 				c.init(Cipher.ENCRYPT_MODE, chaveSimetricaUnWrapped);
 				byte[] mensagemEmBytes = mensagem.getBytes();
 				c.update(mensagemEmBytes);
@@ -909,18 +909,44 @@ public class ClientStub {
 	 * @return Nova instancia de chave simetrica cifrada pela chave publica do dono do grupo
 	 */
 	public String[] collect(String groupID, String senderID) {
-		String[] listaMensagens = null;
+		String[] resposta = null;
+		List<String> listaMensagens = new ArrayList<>();
 		try {
 			// enviar tipo de operacao
 			out.writeObject("c");
+		
+			// enviar groupID:ID do user que fez o pedido
+			out.writeObject(groupID + ":" + senderID);
 	
-		// enviar groupID:ID do user que fez o pedido
-		out.writeObject(groupID + ":" + senderID);
+			// receber o resultado da operacao
+			resposta = (String[]) in.readObject();
 
-		// receber o resultado da operacao
-		listaMensagens = (String[]) in.readObject();
-		//-----------------
-		//ISTO ESTA MAL OU A MAIS???
+			if(resposta == null) {
+				return null;
+			}
+			
+			// Tratar a resposta
+			// Obter chave privada do cliente
+			Key key = sec.getKey(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.keystorePassword, this.storetype); 
+
+			// 1. Percorrer o array e tratar cada mensagem
+			byte[] mensagemDecifrada = null;
+			for(int i = 0; i < resposta.length; i+=3) {
+				// Transformar a chave em um array de bytes
+				Key unwrappedKey = sec.unwrapKey(Base64.getDecoder().decode(resposta[i+2]), keyGenSimAlg, key) ;
+				// Decifrar a mensagem
+				Cipher c = null;
+				try {
+					c = Cipher.getInstance(keyGenSimAlg);
+					c.init(Cipher.DECRYPT_MODE, unwrappedKey);
+					c.update(resposta[i+1].getBytes());
+					// Adicionar quem enviou a mensagem e a mensagem em si a lista
+					String s = Base64.getEncoder().encodeToString(c.doFinal());
+					listaMensagens.add(resposta[i] + ":" + s);
+				} catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e2) {
+					e2.printStackTrace();
+				}
+			}
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -930,7 +956,7 @@ public class ClientStub {
 			e.printStackTrace();
 		}
 
-		return listaMensagens;
+		return listaMensagens.toArray(new String[0]);
 	}
 
 	/**

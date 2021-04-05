@@ -2991,7 +2991,20 @@ public class SeiTchizServer {
 		 */
 		private int canCollectOrHistory(String groupID, String senderID) {
 
+			// Obter a chave simétrica do servidor
+			Key k = sec.getKey(this.serverAlias, this.serverKeyStore, this.serverKeyStorePassword, this.serverKeyStorePassword, this.storeType);
+			Key unwrappedKey = sec.unwrapKey(sec.getWrappedKey(this.serverSecKey),this.serverSecKeyAlg, k);
+
 			File senderParticipantFile = new File(userStuffPath + senderID + "/participant.txt");
+			File senderParticipantFileCif = new File(userStuffPath + senderID + "/participant.cif");
+
+			// Decifrar ficheiro participant.txt
+			if(sec.decFile(senderParticipantFileCif.toString(), senderParticipantFile.toString(), unwrappedKey) == -1) {
+				System.out.println("Erro:... Não foi possível decifrar o ficheiro dos participantes do grupo");
+				senderParticipantFile.delete();
+				return -1;
+			}
+
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
 
 				while (scSenderParticipant.hasNextLine()) {
@@ -3005,6 +3018,8 @@ public class SeiTchizServer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
+			senderParticipantFile.delete();
 
 			return -1;
 		}
@@ -3024,6 +3039,8 @@ public class SeiTchizServer {
 		 */
 		private String[] collect(String groupID, String senderID) {
 
+			// ArrayList que contem messageSender,messageContent,keyParaDecifrarMsg
+			List<String> mensagens = new ArrayList<String>();
 			String parUserGroup = "";
 
 			// Obter chave simétrica do servidor
@@ -3086,8 +3103,7 @@ public class SeiTchizServer {
 				// percorrer cada folder de mensagens e em cada um deles faz:
 				if (counter > 0) {
 					StringBuilder sbAllMsgs = new StringBuilder();
-					// ArrayList que contem messageSender,messageContent,keyParaDecifrarMsg
-					List<String> mensagens = new ArrayList<String>();
+					
 
 					for (int i = 1; i <= counter; i++) {
 						File currentContentFile = new File(
@@ -3248,7 +3264,6 @@ public class SeiTchizServer {
 							try (Scanner scContent = new Scanner(currentContentFile);) {
 								while (scContent.hasNextLine()) {
 									lineContent = scContent.nextLine();  
-									// sbAllMsgs.append(lineContent);
 								}
 							} catch (FileNotFoundException e2) {
 								e2.printStackTrace();
