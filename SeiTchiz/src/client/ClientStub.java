@@ -1,15 +1,12 @@
 package client;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
@@ -30,14 +27,12 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 
 import java.util.*;
-import java.lang.Object;
 import java.util.Base64;
 
 
@@ -496,6 +491,8 @@ public class ClientStub {
 				return resultado;
 			}
 
+			System.out.println("Chave enconded enviada: " + Base64.getEncoder().encodeToString(wrappedKey));
+
 			// Enviar chave para o servidor como uma String
 			out.writeObject(Base64.getEncoder().encodeToString(wrappedKey));
 
@@ -804,28 +801,6 @@ public class ClientStub {
 
 			//3.Essa chave ainda esta wrapped com a chave publica do senderID por isso e preciso dar unwrap dela com a chave PRIVADA do senderID
 			//3.1.Buscar chave privada do senderID
-
-			//ESTE BLOCO INTERNO PODE ESTAR MAL FEITO (CONFUNDO ME FACILMENTE COM AS CHAVES E COISAS RELACIONADAS COM MAIS QUE 1 CHAVE)
-			//----------------------------------------------------------------------
-			// KeyStore kstore = null;
-			// try {
-			// 	kstore = KeyStore.getInstance("JKS");
-			// } catch (KeyStoreException e2) {
-			// 	e2.printStackTrace();
-			// }
-
-			// try(FileInputStream kfile = new FileInputStream("keystores/" + keystore)) {
-			// 	kstore.load(kfile, this.keystorePassword.toCharArray());
-			// } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
-			// 	e.printStackTrace();
-			// }
-
-			// try {
-			// 	chavePriv = kstore.getKey(keystore, this.keystorePassword.toCharArray());
-			// } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | NullPointerException e) {
-			// 	e.printStackTrace();
-			// }
-			
 			chavePriv = sec.getKey(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.keystorePassword, this.storetype);
 
 
@@ -833,8 +808,6 @@ public class ClientStub {
 			chaveSimetricaUnWrapped = sec.unwrapKey(chaveSimetricaCifrada, keyGenSimAlg, chavePriv);
 
 			//4.O resultado do unwrap vai ser a chave simetrica original e é com essa chave que se vai dar wrap Á MENSAGEM que se quer enviar
-			//mensagemCifrada = //COMO FAZER ESTA PARTE?
-
 			// Encriptar mensagem
 			Cipher c = null;
 			try {
@@ -850,6 +823,7 @@ public class ClientStub {
 			//------------------------------------------------------
 
 			//5.esta mensagem e enviada
+			System.out.println(Base64.getEncoder().encodeToString(mensagemCifrada));
 			out.writeObject(mensagemCifrada);
 			
 			// receber o resultado da operacao
@@ -917,31 +891,41 @@ public class ClientStub {
 		
 			// enviar groupID:ID do user que fez o pedido
 			out.writeObject(groupID + ":" + senderID);
-	
+
 			// receber o resultado da operacao
 			resposta = (String[]) in.readObject();
 
-			if(resposta == null) {
+			if(resposta.length == 0) {
+				System.out.println("Entrou no if null");
 				return null;
 			}
 			
 			// Tratar a resposta
 			// Obter chave privada do cliente
+			System.out.println("Passou 2");
+
 			Key key = sec.getKey(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.keystorePassword, this.storetype); 
 
+			System.out.println("Passou 3");
+
 			// 1. Percorrer o array e tratar cada mensagem
-			byte[] mensagemDecifrada = null;
 			for(int i = 0; i < resposta.length; i+=3) {
+				System.out.println("Entrou no ciclo for");
+				System.out.println("mensagem: " + resposta[i+1]);
+				System.out.println("-------------------------------");
+				System.out.println("chave: " + resposta[i+2]);
 				// Transformar a chave em um array de bytes
-				Key unwrappedKey = sec.unwrapKey(Base64.getDecoder().decode(resposta[i+2]), keyGenSimAlg, key) ;
+				Key unwrappedKey = sec.unwrapKey(Base64.getDecoder().decode(resposta[i+2]), this.keyGenSimAlg, key) ;
 				// Decifrar a mensagem
 				Cipher c = null;
 				try {
-					c = Cipher.getInstance(keyGenSimAlg);
+					c = Cipher.getInstance(this.keyGenSimAlg);
 					c.init(Cipher.DECRYPT_MODE, unwrappedKey);
-					c.update(resposta[i+1].getBytes());
+					c.update(Base64.getDecoder().decode(resposta[i+1]));
+					if(unwrappedKey == null) System.out.println("unwrappedkey é null");
+					if(c == null) System.out.println("Cipher é null");
 					// Adicionar quem enviou a mensagem e a mensagem em si a lista
-					String s = Base64.getEncoder().encodeToString(c.doFinal());
+					String s = new String(c.doFinal());
 					listaMensagens.add(resposta[i] + ":" + s);
 				} catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e2) {
 					e2.printStackTrace();

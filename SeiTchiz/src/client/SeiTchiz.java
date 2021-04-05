@@ -444,6 +444,8 @@ public class SeiTchiz {
 
 				// envia-se o groupID e o senderID
 				resultado = cs.canCollectOrHistory(option[1], args[4]);
+				System.out.println("Passou o CanCollectOrHistory e o resultado é " + resultado);
+				
 				// resultado aqui apenas diz se collect pode ser feito ou se por alguma razao
 				// nao ira devolver mensagem nenhuma
 

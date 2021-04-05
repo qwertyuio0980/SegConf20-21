@@ -407,9 +407,10 @@ public class SeiTchizServer {
 					// receber operacao pedida
 					try {
 						op = (String) inStream.readObject();
-					} catch (ClassNotFoundException e1) {
+					} catch (ClassNotFoundException  | IOException e1) {
 						e1.printStackTrace();
 					}
+					System.out.println("Recebeu opção: " + op);
 
 					String aux = null;
 					String[] conteudo = null;
@@ -712,8 +713,12 @@ public class SeiTchizServer {
 							conteudo = aux.split(":");
 
 							// enviar estado da operacao
-							outStream.writeObject(collect(conteudo[0], conteudo[1]));
-
+							String[] resultado = collect(conteudo[0], conteudo[1]);
+							if(resultado == null) {
+								outStream.writeObject(new String[0]);
+							} else {
+								outStream.writeObject(resultado);
+							}
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -2920,12 +2925,6 @@ public class SeiTchizServer {
 				fMsg.delete();
 			}
 			// ---
-
-
-
-			//VOU FAZER SENDER.CIF
-
-
 		}
 
 		/**
@@ -3010,7 +3009,7 @@ public class SeiTchizServer {
 				while (scSenderParticipant.hasNextLine()) {
 					String lineSenderParticipant = scSenderParticipant.nextLine();
 					// pode ser o grupo procurado ou outro com o mesmo nome mas owner diferente
-					if (lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
+					if (lineSenderParticipant.contains(groupID)) {
 						return 0;
 					}
 				}
@@ -3019,7 +3018,7 @@ public class SeiTchizServer {
 				e.printStackTrace();
 			}
 
-			senderParticipantFile.delete();
+			// senderParticipantFile.delete();
 
 			return -1;
 		}
@@ -3061,8 +3060,7 @@ public class SeiTchizServer {
 
 				while (scSenderParticipant.hasNextLine()) {
 					String lineSenderParticipant = scSenderParticipant.nextLine();
-
-					if (lineSenderParticipant.contains(groupID) && isCorrectGroup(lineSenderParticipant, senderID)) {
+					if (lineSenderParticipant.contains(groupID)) {
 						parUserGroup = lineSenderParticipant;
 						break;
 					}
@@ -3075,9 +3073,9 @@ public class SeiTchizServer {
 			// Deletar ficheiro txt após a procura
 			senderParticipantFile.delete();
 
-			// o canCollectOrHistory ja garante que se vai entrar neste if
 			// Decifrar ficheiro counter
 			if (!parUserGroup.isEmpty()) {
+
 				File fileCounter = new File("files/groups/" + parUserGroup + "/counter.txt");
 				File fileCounterCif = new File("files/groups/" + parUserGroup + "/counter.cif");
 
@@ -3086,7 +3084,7 @@ public class SeiTchizServer {
 					return null;
 				}
 
-				int counter = 0;
+				int counter = -1;
 				Scanner scCounter;
 				try {
 					scCounter = new Scanner(fileCounter);
@@ -3099,16 +3097,17 @@ public class SeiTchizServer {
 				// Apagar ficheiro após a procura
 				fileCounter.delete();
 
+				System.out.println("counter value after getting it from counter.txt: " + counter);
+
 				// 2.se o valor de counter for maior que 0
 				// percorrer cada folder de mensagens e em cada um deles faz:
-				if (counter > 0) {
-					StringBuilder sbAllMsgs = new StringBuilder();
+				if (counter > 0) {		
 					
-
+					//SERA AQUI??????
 					for (int i = 1; i <= counter; i++) {
+						System.out.println("counter corrente dentro do loop: " + i);
+
 						File currentContentFile = new File(
-								"files/groups/" + parUserGroup + "/msg" + i + "/content.txt");
-						File currentContentFileCif = new File(
 								"files/groups/" + parUserGroup + "/msg" + i + "/content");
 						File currentNotSeenByFile = new File(
 								"files/groups/" + parUserGroup + "/msg" + i + "/notSeenBy.txt");
@@ -3127,12 +3126,7 @@ public class SeiTchizServer {
 
 						boolean msgUnread = false;
 
-
 						// Decifrar os ficheiros acima
-						if(sec.decFile(currentContentFileCif.toString(), currentContentFile.toString(), unwrappedKey) == -1) {
-							System.out.println("Erro:... Não foi possível decifrar o ficheiro " + currentContentFileCif.getName());
-							return null;
-						}
 						if(sec.decFile(currentNotSeenByFileCif.toString(), currentNotSeenByFile.toString(), unwrappedKey) == -1) {
 							System.out.println("Erro:... Não foi possível decifrar o ficheiro " + currentNotSeenByFileCif.getName());
 							return null;
@@ -3150,7 +3144,6 @@ public class SeiTchizServer {
 							return null;
 						}
 
-
 						try (Scanner scNotSeenBy = new Scanner(currentNotSeenByFile)) {
 							while (scNotSeenBy.hasNextLine()) {
 								String lineUser = scNotSeenBy.nextLine();
@@ -3162,7 +3155,6 @@ public class SeiTchizServer {
 						} catch (FileNotFoundException e) {
 							currentNotSeenByFile.delete();
 							currentSeenByFile.delete();
-							currentContentFile.delete();
 							e.printStackTrace();
 							return null;
 						}
@@ -3178,7 +3170,6 @@ public class SeiTchizServer {
 							} catch (IOException e1) {
 								currentNotSeenByFile.delete();
 								currentSeenByFile.delete();
-								currentContentFile.delete();
 								e1.printStackTrace();
 								return null;
 							}
@@ -3198,9 +3189,8 @@ public class SeiTchizServer {
 							} catch (IOException e) {
 								currentNotSeenByFile.delete();
 								currentSeenByFile.delete();
-								currentContentFile.delete();
 								e.printStackTrace();
-								return null;							
+								return null;						
 							}
 
 							currentNotSeenByFile.delete();
@@ -3260,35 +3250,44 @@ public class SeiTchizServer {
 
 
 							// 5.faz append do conteudo de sender, content, chave ao arraylist
-							String lineContent = null;
-							try (Scanner scContent = new Scanner(currentContentFile);) {
-								while (scContent.hasNextLine()) {
-									lineContent = scContent.nextLine();  
-								}
-							} catch (FileNotFoundException e2) {
+							byte[] lineContent = null;
+							FileInputStream fis = null;
+							ObjectInputStream ois = null;
+							try {
+								fis = new FileInputStream(currentContentFile);
+								ois = new ObjectInputStream(fis);
+								lineContent = (byte[]) ois.readObject();
+								ois.close();
+								fis.close();
+							} catch (IOException | ClassNotFoundException e2) {
+								System.out.println("--sera que e aqui--");
 								e2.printStackTrace();
 							}
 							
 							mensagens.add(sender);
-							mensagens.add(lineContent);
+							System.out.println("SENDER: " + sender);
+							mensagens.add(Base64.getEncoder().encodeToString(lineContent));
+							System.out.println("CONTENT: " + Base64.getEncoder().encodeToString(lineContent));
 							mensagens.add(chave);
+							System.out.println("CHAVE: " + chave);
 
 							// Deletar os ficheiros txt
 							currentKeyFile.delete();
-							currentContentFile.delete();
 						}
 						// se nao encontrar o senderID no respetivo notseenby.txt passa para prox folder
 						// msg
+
 					}
+
+					return mensagens.toArray(new String[0]);
+
 				} else {
-
+					System.out.println("entramos em null no server por else");
 					return null;
-
 				}
-
 			}
-
-			return mensagens.toArray(new String[0]);
+			System.out.println("entramos em null no server por default case");
+			return null;
 		}
 
 		/**
@@ -3301,7 +3300,6 @@ public class SeiTchizServer {
 		 */
 		private String getKey(String senderID, String chaveID, String groupID){
 
-			File allKeysCifFile = new File("files/groups/" + groupID + "/keys/allKeys.cif");
 			File allKeysTempFile = new File("files/groups/" + groupID + "/keys/allKeys.txt");
 			String[] aux;
 			String[] aux2;
