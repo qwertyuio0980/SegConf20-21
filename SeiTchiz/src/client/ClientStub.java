@@ -756,6 +756,13 @@ public class ClientStub {
 	 */
 	public int msg(String groupID, String senderID, String mensagem) {
 
+		// Enviar parâmetros do pedido
+		// Recebe a chave stringfied e cifrada 
+		// Transforma em bytes e decifra
+		// Cifra a mensagem
+		// Envia mensagem
+		// Recebe resposta 
+
 		//APAGAR ESTAS LINHAS NO FIM
 		//String originalInput = "test input";
 		//String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
@@ -819,7 +826,7 @@ public class ClientStub {
 			// 	e.printStackTrace();
 			// }
 			
-			chavePriv = sec.getKey(this.keystore, this.keystore, this.keystorePassword, this.keystorePassword, this.storeType);
+			chavePriv = sec.getKey(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.keystorePassword, this.storetype);
 
 
 			//3.2.Obter chave simetrica unwrapped
@@ -834,6 +841,7 @@ public class ClientStub {
 				c = Cipher.getInstance(keyGenSimAlg);
 				c.init(Cipher.ENCRYPT_MODE, chaveSimetricaUnWrapped);
 				byte[] mensagemEmBytes = mensagem.getBytes();
+				c.update(mensagemEmBytes);
 				mensagemCifrada = c.doFinal();
 			} catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e2) {
 				e2.printStackTrace();
@@ -841,17 +849,13 @@ public class ClientStub {
 
 			//------------------------------------------------------
 
-			//5.esta mensagem e stringified e enviada(VER SE E MELHOR NAO FAZER STRINGFIED AQUI)
-			out.writeObject(Base64.getEncoder().encodeToString(mensagemCifrada));
+			//5.esta mensagem e enviada
+			out.writeObject(mensagemCifrada);
 			
 			// receber o resultado da operacao
 			resultado = (int) in.readObject();
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 
@@ -1071,7 +1075,7 @@ public class ClientStub {
 	 */
 	public boolean post(String pathFile) {
 
-		File file = new File("Fotos/" + pathFile);
+		// File file = new File("Fotos/" + pathFile);
 		boolean bool = false;
 		try {
 			com.send("p");
