@@ -106,6 +106,7 @@ public class Security {
 
 	/**
 	 * Decifra o conteúdo do ficheiro na path passada cifFile e armazena o conteúdo no ficheiro com path decFile
+	 * 
 	 * @param cifFile ficheiro com conteúdo cifrado
 	 * @param decFile ficheiro no qual o conteúdo decifrado será guardado
 	 * @param key key que será usada para decifrar o ficheiro
@@ -171,6 +172,7 @@ public class Security {
 	/**
 	 * Cifra, usando a PublicKey passada, o conteúdo do ficheiro inputFile e coloca o mesmo no ficheiro outputFile. 
 	 * Ao final do processo deleta o ficheiro inputFile 
+	 * 
 	 * @param inputFile
 	 * @param outputFile
 	 * @param key
@@ -230,6 +232,7 @@ public class Security {
 
 	/**
 	 * Faz um unwrap da chave wrappedKey passada usando a chave key passada
+	 * 
 	 * @param wrappedKey wrapped key
 	 * @param key chave que será usada para fazer unwrap
 	 * @param wrappedKeyAlg algoritmo da wrappedKey
@@ -255,7 +258,7 @@ public class Security {
 	}
 
 	/**
-	 * 
+	 * Metodo que obtem a chave cifrada
 	 */
 	public byte[] getWrappedKey(String serverSecKey) {
 			File f = new File(serverSecKey);
@@ -289,10 +292,6 @@ public class Security {
 			e.printStackTrace();
 			return null;
 		}
-		
         return wrappedKey;
     }
-
-
-
 }

@@ -591,6 +591,7 @@ public class ClientStub {
 
 	/**
 	 * Cria uma chave simétrica usando o algoritmo AES e devolve a mesma em formato byte[]
+	 * 
 	 * @return byte[] da chave criada 
 	 */
 	private Key generateKey() {
@@ -758,15 +759,7 @@ public class ClientStub {
 		// Transforma em bytes e decifra
 		// Cifra a mensagem
 		// Envia mensagem
-		// Recebe resposta 
-
-		//APAGAR ESTAS LINHAS NO FIM
-		//String originalInput = "test input";
-		//String encodedString = Base64.getEncoder().encodeToString(originalInput.getBytes());
-		//byte[] decodedBytes = Base64.getDecoder().decode(encodedString);
-		//String decodedString = new String(decodedBytes);
-		//Base64.getMimeDecoder().decode(encodedMime);
-		//Base64.getMimeEncoder().encodeToString(encodedAsBytes);
+		// Recebe resposta
 
 		int resultado = -1;
 		
@@ -878,9 +871,6 @@ public class ClientStub {
 	 * @return lista de Strings em que cada uma representa o dono de uma mensagem
 	 * ainda nao lida e o conteudo da mesma separada por : e se nao houverem mensagens
 	 * por ler devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
-	 * Metodo que gera uma string da chave simetrica cifrada pela chave publica do dono do grupo
-	 *
-	 * @return Nova instancia de chave simetrica cifrada pela chave publica do dono do grupo
 	 */
 	public String[] collect(String groupID, String senderID) {
 		String[] resposta = null;

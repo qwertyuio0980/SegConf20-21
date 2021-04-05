@@ -70,7 +70,6 @@ public class Com {
 			System.err.println("Error sending object");
 			System.err.println(e.getMessage());
 		}
-
 	}
 
 	/**

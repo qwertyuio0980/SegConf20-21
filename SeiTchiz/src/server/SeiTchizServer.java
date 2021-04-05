@@ -174,6 +174,7 @@ public class SeiTchizServer {
     /**
 	 * Gera uma chave secreta, cifra a mesma com a chave pública do servidor e guarda a mesma
 	 * num ficheiro server.key no keyStorePath passado
+	 * 
 	 * @param keyStorePath caminho do ficheiro server.key
 	 * @return true caso a chave tenha sido criada, cifrada e guardado com sucesso.
 	 * False, caso contrário.
@@ -726,6 +727,7 @@ public class SeiTchizServer {
 						break;
 
 					case "h":
+						// este caso faz collect
 
 						try {
 							// receber <groupID>:<ID do user que fez o pedido>
@@ -733,7 +735,12 @@ public class SeiTchizServer {
 							conteudo = aux.split(":");
 
 							// enviar estado da operacao
-							outStream.writeObject(history(conteudo[0], conteudo[1]));
+							String[] resultado = history(conteudo[0], conteudo[1]);
+							if(resultado == null) {
+								outStream.writeObject(new String[0]);
+							} else {
+								outStream.writeObject(resultado);
+							}
 
 						} catch (ClassNotFoundException e) {
 							// TODO Auto-generated catch block
@@ -872,6 +879,7 @@ public class SeiTchizServer {
 		/**
 		 * Adiciona uma linha no formato <clientID,password> aos registos de clientes no servidor
 		 * e cria os devidos recursos referentes ao novo cliente
+		 * 
 		 * @param clientID String representando o cliente a ser adicionado aos registos
 		 * @param certPath String representa o caminho para o ficheiro contendo o certificado do clientID
 		 * @return 0 se registo foi feito com sucesso, -1 caso contrario
@@ -929,6 +937,7 @@ public class SeiTchizServer {
 
 		/**
 		 * Cria os recursos necessários para o clienteID
+		 * 
 		 * @param clientID cliente aos quais os recursos pertencerão
 		 * @return 0 caso sejam criados todos os recursos com sucesso, -1 caso contrário
 		 * @requires clientID != null && clientID != "" 
@@ -1450,6 +1459,7 @@ public class SeiTchizServer {
 		/**
 		 * Verifica se a sintese segura da foto que foi guardada no ficheiro macFile e igual com a sintese segura 
 		 * produzida por este metodo a partir da foto original no ficheiro photoFile
+		 * 
 		 * @param photoFile ficheiro onde esta guardado a foto original
 		 * @param macFile ficheiro contendo a sintese segura produzida anteriormente
 		 * @return true caso a sintese segura guardada no ficheiro seja igual a sintese segura produzida pelo metodo
@@ -2515,7 +2525,6 @@ public class SeiTchizServer {
 
 			// 3.
 			return grupos.toString();
-			//return null; //ESTE METODO AINDA NAO FOI TESTADO
 		}
 
         /**
@@ -3285,6 +3294,7 @@ public class SeiTchizServer {
 
 		/**
 		 * Procura a chave com identificador chaveID pertencente ao senderID
+		 * 
 		 * @param senderID dono da chave com identificador chaveID
 		 * @param chaveID identificador da chave a ser procurada
 		 * @param groupID identificador do grupo do qual senderID participa e chaveID pertence
@@ -3332,9 +3342,8 @@ public class SeiTchizServer {
 		 */
 		private String[] history(String groupID, String senderID) {
 
-			
+
 			List<String> resposta = new ArrayList<>();
-			String[] listaMensagensDefault = { "-empty" };
 			String parUserGroup = "";
 
 			// Obter chave simétrica do servidor
@@ -3347,7 +3356,7 @@ public class SeiTchizServer {
 			// Decifrar ficheiro participant
 			if(sec.decFile(senderParticipantFileCif.toString(), senderParticipantFile.toString(), unwrappedKey) == -1) {
 				System.out.println("Erro:... Não foi possível decifrar o ficheiro " + senderParticipantFileCif.getName());
-				return listaMensagensDefault;
+				return null;
 			}
 
 			try (Scanner scSenderParticipant = new Scanner(senderParticipantFile)) {
@@ -3363,7 +3372,7 @@ public class SeiTchizServer {
 			} catch (FileNotFoundException e) {
 				System.out.println("Erro:... não foi possivel ler o ficheiro participant");
 				e.printStackTrace();
-				return listaMensagensDefault;
+				return null;
 			}
 
 			// deletar ficheiro participant
@@ -3377,7 +3386,7 @@ public class SeiTchizServer {
 				File fileCounterCif = new File("files/groups/" + parUserGroup + "/counter.cif");
 				if(sec.decFile(fileCounterCif.toString(), fileCounter.toString(), unwrappedKey) == -1) {
 					System.out.println("Erro:... Não foi possível decifrar o ficheiro " + fileCounterCif.getName());
-					return listaMensagensDefault;
+					return null;
 				}
 
 				int counter = 0;
@@ -3389,7 +3398,7 @@ public class SeiTchizServer {
 				} catch (IOException e) {
 					System.out.println("Erro:... não foi possível ler o ficheiro ");
 					e.printStackTrace();
-					return listaMensagensDefault;
+					return null;
 				}
 				fileCounter.delete();
 				// ---
@@ -3445,7 +3454,7 @@ public class SeiTchizServer {
 
 						// se encontrar o senderID no respetivo seenby.txt
 						if (msgRead) {
-							// 3. Buscar a chave que foi usada para cifrar a mensagem
+							// 1. Buscar a chave que foi usada para cifrar a mensagem
 							// Buscar identificador da chave no ficheiro currentKeyFile
 							Scanner scCurrentKey = null;
 							String chaveID = null;
@@ -3462,7 +3471,7 @@ public class SeiTchizServer {
 								return null;
 							}
 
-							// 4. Buscar so senderID da mensagem
+							// 2. Buscar so senderID da mensagem
 							Scanner scSender = null;
 							String sender = null;
 							try {
@@ -3476,7 +3485,7 @@ public class SeiTchizServer {
 							currentSenderFile.delete();
 
 
-							// 5.faz append do conteudo de sender, content, chave ao arraylist
+							// 3.faz append do conteudo de sender, content, chave ao arraylist
 							byte[] lineContent = null;
 							FileInputStream fis = null;
 							ObjectInputStream ois = null;
@@ -3501,23 +3510,15 @@ public class SeiTchizServer {
 						// se nao encontrar o senderID no respetivo seenby.txt passa para prox folder
 						// msg
 					}
+					return resposta.toArray(new String[0]);
 
-					if (sbAllMsgs.length() != 0) {
-						// primeiro apagar o "-" inicial do primeiro user
-						sbAllMsgs.deleteCharAt(0);
-
-						// finalmente passar do stringbuilder para string e fazer split com - para
-						// construir o String[] a enviar
-						// System.out.println(sbAllMsgs.toString().split("-"));
-						return sbAllMsgs.toString().split("-");
-					}
+				} else {
+					System.out.println("entramos em null no server por else");
+					return null;
 				}
 			}
-
-			// 3. se counter.txt tinha valor 0 ou se foi encontrado senderID em nenhum
-			// seenby.txt devolve
-			// o array de Strings contendo apenas -empty
-			return listaMensagensDefault;
+			System.out.println("entramos em null no server por default case");
+			return null;
 		}
 
 		/**
