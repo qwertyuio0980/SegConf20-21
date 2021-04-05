@@ -2416,6 +2416,7 @@ public class SeiTchizServer {
 						for(int i = 0; i < aux2.length; i++) {							
 							if(aux2[i].equals(senderID)) {
 								correctCipheredKey = aux2[i + 1];
+								// allKeysTempFile.delete();
 								return counterVal + ":" + correctCipheredKey;
 							}
 						}
@@ -3097,16 +3098,11 @@ public class SeiTchizServer {
 				// Apagar ficheiro após a procura
 				fileCounter.delete();
 
-				System.out.println("counter value after getting it from counter.txt: " + counter);
-
 				// 2.se o valor de counter for maior que 0
 				// percorrer cada folder de mensagens e em cada um deles faz:
 				if (counter > 0) {		
 					
-					//SERA AQUI??????
 					for (int i = 1; i <= counter; i++) {
-						System.out.println("counter corrente dentro do loop: " + i);
-
 						File currentContentFile = new File(
 								"files/groups/" + parUserGroup + "/msg" + i + "/content");
 						File currentNotSeenByFile = new File(
@@ -3260,16 +3256,13 @@ public class SeiTchizServer {
 								ois.close();
 								fis.close();
 							} catch (IOException | ClassNotFoundException e2) {
-								System.out.println("--sera que e aqui--");
+								System.out.println("Erro...");
 								e2.printStackTrace();
 							}
 							
 							mensagens.add(sender);
-							System.out.println("SENDER: " + sender);
 							mensagens.add(Base64.getEncoder().encodeToString(lineContent));
-							System.out.println("CONTENT: " + Base64.getEncoder().encodeToString(lineContent));
 							mensagens.add(chave);
-							System.out.println("CHAVE: " + chave);
 
 							// Deletar os ficheiros txt
 							currentKeyFile.delete();

@@ -223,7 +223,7 @@ public class Security {
 		}
 		
 		// Deletar ficheiro input
-		// inputF.delete();
+		inputF.delete();
 
 		return 0;
 	}
