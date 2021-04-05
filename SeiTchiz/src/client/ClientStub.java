@@ -896,24 +896,15 @@ public class ClientStub {
 			resposta = (String[]) in.readObject();
 
 			if(resposta.length == 0) {
-				System.out.println("Entrou no if null");
 				return null;
 			}
 			
 			// Tratar a resposta
 			// Obter chave privada do cliente
-			System.out.println("Passou 2");
-
 			Key key = sec.getKey(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.keystorePassword, this.storetype); 
-
-			System.out.println("Passou 3");
 
 			// 1. Percorrer o array e tratar cada mensagem
 			for(int i = 0; i < resposta.length; i+=3) {
-				System.out.println("Entrou no ciclo for");
-				System.out.println("mensagem: " + resposta[i+1]);
-				System.out.println("-------------------------------");
-				System.out.println("chave: " + resposta[i+2]);
 				// Transformar a chave em um array de bytes
 				Key unwrappedKey = sec.unwrapKey(Base64.getDecoder().decode(resposta[i+2]), this.keyGenSimAlg, key) ;
 				// Decifrar a mensagem
@@ -922,8 +913,6 @@ public class ClientStub {
 					c = Cipher.getInstance(this.keyGenSimAlg);
 					c.init(Cipher.DECRYPT_MODE, unwrappedKey);
 					c.update(Base64.getDecoder().decode(resposta[i+1]));
-					if(unwrappedKey == null) System.out.println("unwrappedkey é null");
-					if(c == null) System.out.println("Cipher é null");
 					// Adicionar quem enviou a mensagem e a mensagem em si a lista
 					String s = new String(c.doFinal());
 					listaMensagens.add(resposta[i] + ":" + s);
@@ -955,26 +944,53 @@ public class ClientStub {
 	 * ja lidas devolve-se a lista de strings contendo apenas 1 entrada com conteudo "-empty"
 	 */
 	public String[] history(String groupID, String senderID) {
-		String[] listaMensagens = null;
-		// Obter chave publica do dono a partir do seu certificado
-		KeyStore kstore = null;
+		String[] resposta = null;
+		List<String> listaMensagens = new ArrayList<>();
 		try {
 			// enviar tipo de operacao
 			out.writeObject("h");
-
+		
 			// enviar groupID:ID do user que fez o pedido
 			out.writeObject(groupID + ":" + senderID);
 
 			// receber o resultado da operacao
-			listaMensagens = (String[]) in.readObject();
+			resposta = (String[]) in.readObject();
+
+			if(resposta.length == 0) {
+				return null;
+			}
+			
+			// Tratar a resposta
+			// Obter chave privada do cliente
+			Key key = sec.getKey(this.keystore, "keystores/" + this.keystore, this.keystorePassword, this.keystorePassword, this.storetype); 
+
+			// 1. Percorrer o array e tratar cada mensagem
+			for(int i = 0; i < resposta.length; i+=3) {
+				// Transformar a chave em um array de bytes
+				Key unwrappedKey = sec.unwrapKey(Base64.getDecoder().decode(resposta[i+2]), this.keyGenSimAlg, key) ;
+				// Decifrar a mensagem
+				Cipher c = null;
+				try {
+					c = Cipher.getInstance(this.keyGenSimAlg);
+					c.init(Cipher.DECRYPT_MODE, unwrappedKey);
+					c.update(Base64.getDecoder().decode(resposta[i+1]));
+					// Adicionar quem enviou a mensagem e a mensagem em si a lista
+					String s = new String(c.doFinal());
+					listaMensagens.add(resposta[i] + ":" + s);
+				} catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | InvalidKeyException | IllegalBlockSizeException e2) {
+					e2.printStackTrace();
+				}
+			}
 
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
-		return listaMensagens;
+		return listaMensagens.toArray(new String[0]);
 	}
 
 	/**

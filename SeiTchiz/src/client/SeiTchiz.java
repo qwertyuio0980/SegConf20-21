@@ -455,7 +455,7 @@ public class SeiTchiz {
 
 					if (listaMensagens.length == 1 && listaMensagens == null) {
 						System.out.println(separador);
-						System.out.println("Nao existem novas mensagens por receber");
+						System.out.println("Nao existem novas mensagens por receber.");
 						System.out.println(separador);
 					} else {
 						System.out.println(separador);
@@ -504,7 +504,7 @@ public class SeiTchiz {
 					// envia-se o groupID e o senderID
 					listaMensagens = cs.history(option[1], args[4]);
 
-					if (listaMensagens.length == 1 && listaMensagens[0].contentEquals("-empty")) {
+					if (listaMensagens.length == 1 && listaMensagens == null) {
 						System.out.println(separador);
 						System.out.println(
 								"O cliente nao leu nenhumas mensagens previamente, ou seja, o seu historico esta vazio.");
